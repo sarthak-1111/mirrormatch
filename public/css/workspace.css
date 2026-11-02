@@ -12,6 +12,7 @@
 .ws-end { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-4); }
 .ws-story { font-size: var(--text-sm); font-weight: 600; text-decoration: none; padding: 8px 4px; }
 .ws-story:hover { text-decoration: underline; text-underline-offset: 4px; }
+.ws-try { min-height: 38px; padding: 8px 14px; font-size: var(--text-sm); white-space: nowrap; }
 
 .ws-tabs { display: flex; gap: var(--space-1); height: 100%; }
 .ws-tabs [role='tab'] {

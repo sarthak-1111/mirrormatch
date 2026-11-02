@@ -13,14 +13,20 @@
 <body>
   <a class="sr-only" href="#app">Skip to content</a>
   <header class="topbar">
-    <a class="brand" href="#/" aria-label="Hue and Hem, your orders">
+    <a class="brand" href="#/" aria-label="Hue and Hem, start">
       <img src="/assets/logo.svg" alt="" />
       <b>Hue &amp; Hem</b><span>Returns</span>
     </a>
     <div class="spacer"></div>
     <span id="mode-chip" class="chip" hidden></span>
-    <button id="trace-toggle" class="icon-btn" aria-pressed="false" aria-controls="trace" hidden>Agent trace</button>
+    <button id="trace-toggle" class="icon-btn" aria-pressed="false" aria-controls="trace" hidden>How it decided</button>
   </header>
+  <nav class="site-tabs" id="site-tabs" aria-label="MirrorMatch demo" hidden>
+    <a href="/#/" aria-current="page">Try it</a>
+    <a href="/story.html">Alex's story</a>
+    <a href="/workspace.html">Watch the agent</a>
+    <a href="/merchant">For stores</a>
+  </nav>
   <div id="layout" class="layout">
     <main id="app" tabindex="-1" aria-live="polite"></main>
     <aside id="trace" class="trace" aria-label="Agent trace" hidden></aside>

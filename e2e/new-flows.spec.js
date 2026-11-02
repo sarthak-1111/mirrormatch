@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const fixture = fileURLToPath(new URL('../test/fixtures/synthetic-face.jpg', import.meta.url));
 
 async function startReturn(page, order, reason) {
-  await page.goto('/');
+  await page.goto('/#/orders');
   await page.locator(`[data-order="${order}"]`).click();
   await page.getByRole('radio', { name: reason }).check();
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -63,12 +63,12 @@ test('dress return: complete the look with lips, add-on is opt-in and priced', a
 // (test/looks.test.js): the shared e2e server rate-limits API calls per IP, so this file stays lean.
 
 test('skincare return: "It didn\'t suit my skin" reads the skin and offers a texture exchange', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/orders');
   // The skincare reason is not offered for colour products.
   await page.locator('[data-order="HH-10421"]').click();
   await expect(page.getByRole('radio', { name: "The shade didn't match" })).toBeVisible();
   await expect(page.getByRole('radio', { name: "It didn't suit my skin" })).toHaveCount(0);
-  await page.goto('/');
+  await page.goto('/#/orders');
   await page.locator('[data-order="HH-10462"]').click();
   // Colour reasons don't apply to skincare; the skin reason doesn't apply to colour products.
   await expect(page.getByRole('radio', { name: "The shade didn't match" })).toHaveCount(0);

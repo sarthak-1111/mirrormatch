@@ -157,12 +157,136 @@ async function route() {
     renderSession();
   } else {
     state.session = null;
-    renderOrders();
+    const demo = /[?&](embed|autoplay)\b/.test(location.search);
+    if (hash.startsWith('#/orders') || demo) renderOrders();
+    else renderHome();
+  }
+}
+
+function siteTabs(show) {
+  const el = document.getElementById('site-tabs');
+  if (el) el.hidden = !show || /[?&]embed\b/.test(location.search);
+}
+
+// ---------- home: "Try it" (pick what you're returning, then one photo) ----------
+// Each choice is one of the demo store's orders; the return, reason, offer and consent steps
+// are the same server calls the orders page makes, so the agent and its policy run unchanged.
+const QUICK = {
+  lipstick: { order: 'HH-10421', reason: 'wrong_shade', label: 'Lipstick', kind: 'face', tip: 'a straight-on selfie in daylight, with your face filling most of the photo.' },
+  foundation: { order: 'HH-10388', reason: 'wrong_shade', label: 'Foundation', kind: 'face', tip: 'a straight-on selfie in daylight, bare skin if you can, face filling most of the photo.' },
+  hair: { order: 'HH-10455', reason: 'wrong_shade', label: 'Hair colour', kind: 'face', tip: 'a straight-on selfie in daylight, with your hair visible around your face.' },
+  dress: { order: 'HH-10307', reason: 'colour_didnt_suit', label: 'Dress', kind: 'body', tip: 'a photo from the waist up, facing the camera, arms relaxed.' },
+};
+
+function quickLine(key) {
+  const order = state.orders?.find((o) => o.id === QUICK[key]?.order);
+  return order?.lines?.[0] ? { order, line: order.lines[0] } : null;
+}
+
+const uploadLabel = (key) => (key === 'dress' ? 'Upload a waist-up photo' : 'Upload a selfie');
+
+function renderHome() {
+  $sticky.hidden = true;
+  $traceToggle.hidden = true;
+  $trace.hidden = true;
+  $layout.classList.remove('with-trace');
+  siteTabs(true);
+  const keys = Object.keys(QUICK).filter((k) => quickLine(k));
+  if (!keys.length) return renderOrders();
+  const pick = keys.includes(state.homePick) ? state.homePick : keys[0];
+  state.homePick = pick;
+  const passport = readPassport();
+  $app.innerHTML = `
+    <section class="home stack-lg">
+      <div>
+        <p class="eyebrow">Hue &amp; Hem · returns demo</p>
+        <h1>Colour not right? See your match on you.</h1>
+        <p class="lede">Add a photo. We read your skin tone and show the closest shades in stock, on your own face.</p>
+      </div>
+      <fieldset class="home-step">
+        <legend>1. What are you sending back?</legend>
+        <div class="pick-grid">
+          ${keys
+            .map((k) => {
+              const { line } = quickLine(k);
+              return `
+            <div class="pick-tile">
+              <input type="radio" name="home-pick" id="hp-${k}" value="${k}" ${k === pick ? 'checked' : ''} />
+              <label for="hp-${k}"><img src="${esc(line.product.image)}" alt="" width="40" height="52" /><span><b>${esc(QUICK[k].label)}</b><small>Returning ${esc(line.product.shadeName)}</small></span></label>
+            </div>`;
+            })
+            .join('')}
+        </div>
+      </fieldset>
+      <div class="home-step">
+        <p class="legend">2. Add a photo</p>
+        <div class="btn-col">
+          <button class="btn block accent upload-btn" data-action="home-upload" id="home-upload" aria-describedby="home-tip home-privacy">${uploadLabel(pick)}</button>
+          <input id="home-file" type="file" accept="image/*" class="sr-only" tabindex="-1" aria-hidden="true" />
+          <button class="btn block secondary" data-action="home-sample">No photo? Use YouCam's sample model</button>
+        </div>
+        <p class="home-note" id="home-tip"><b>Tip:</b> ${esc(QUICK[pick].tip)}</p>
+        <p class="home-note" id="home-privacy">Your photo is used only for this try-on, then deleted from our server and YouCam's. Never used for marketing or training. Adding a photo means you agree.</p>
+      </div>
+      ${passport ? '<section class="card passport-shelf stack" id="passport-shelf" aria-labelledby="shelf-title" hidden></section>' : ''}
+      <p class="footer-note">Hue &amp; Hem is a fictional demo store. <a href="#/orders">Browse its orders instead</a></p>
+    </section>`;
+  $app.querySelector('#home-file').addEventListener('change', onHomeFile);
+  if (passport) loadPassportShelf(passport);
+  $app.querySelectorAll('input[name="home-pick"]').forEach((r) =>
+    r.addEventListener('change', () => {
+      state.homePick = r.value;
+      document.getElementById('home-upload').textContent = uploadLabel(r.value);
+      document.getElementById('home-tip').innerHTML = `<b>Tip:</b> ${esc(QUICK[r.value].tip)}`;
+    }),
+  );
+  focusTitle();
+}
+
+async function onHomeFile(e) {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  let captured;
+  try {
+    captured = await readPhoto(file);
+  } catch (err) {
+    toast(err.message);
+    return;
+  }
+  await quickStart(captured);
+}
+
+/** Start the chosen demo return and go straight to the photo: return → reason → accept → consent. */
+async function quickStart(captured) {
+  const key = state.homePick || 'lipstick';
+  const q = QUICK[key];
+  const found = quickLine(key);
+  if (!found) return toast('That demo order is missing. Please reload the page.');
+  siteTabs(false);
+  viewProcessing(captured.sample ? "Loading YouCam's sample model…" : 'Getting your photo ready…', 'Then we read your skin tone.');
+  try {
+    let v = await api('POST', '/api/returns', { orderId: found.order.id, lineId: found.line.lineId });
+    const ev = (type, payload = {}) => api('POST', `/api/session/${v.id}/event`, { type, ...payload });
+    v = await ev('reason', { reason: q.reason });
+    if (v.step === 'offer') v = await ev('accept_mirrormatch');
+    if (v.step === 'consent') v = await ev('consent', { accepted: true });
+    if (v.step !== 'capture') throw new Error("This demo return couldn't start. Please try again.");
+    state.session = v;
+    state.selected = null;
+    state.addOn = null;
+    state.captured = captured;
+    state.autoSubmit = true;
+    location.hash = `#/return/${v.id}`;
+  } catch (err) {
+    toast(err.guidance || err.message);
+    renderHome();
   }
 }
 
 // ---------- views ----------
 function renderOrders() {
+  siteTabs(true);
   $sticky.hidden = true;
   $traceToggle.hidden = true;
   $trace.hidden = true;
@@ -173,7 +297,7 @@ function renderOrders() {
     <section class="stack-lg">
       <div>
         <p class="eyebrow">Your orders</p>
-        <h1>Hi ${esc(first)}, need to return something?</h1>
+        <h1>${/[?&](embed|autoplay)\b/.test(location.search) ? `Hi ${esc(first)}, need to return something?` : 'Anything you need to return?'}</h1>
         <p class="lede">Returns are free within 30 days of delivery. If a colour wasn't right, we'll help you find one that is.</p>
       </div>
       ${passport ? '<section class="card passport-shelf stack" id="passport-shelf" aria-labelledby="shelf-title" hidden></section>' : ''}
@@ -253,6 +377,7 @@ async function loadPassportShelf(passport) {
 }
 
 function renderSession() {
+  siteTabs(false);
   const s = state.session;
   $traceToggle.hidden = false;
   renderTrace();
@@ -377,7 +502,7 @@ function viewConsent(s) {
   $app.innerHTML = `
     <section class="stack-lg">
       <div class="stack">
-        <p class="eyebrow">Step 1 of 3 · Selfie</p>
+        <p class="eyebrow">Your selfie</p>
         <h1>Before we take a photo</h1>
         <ul class="privacy">
           <li><b>Used only for this return:</b> ${s.returned.category === 'skincare' ? 'to read your skin (shine, hydration and redness). No previews.' : 'to measure your skin tone and show previews.'}</li>
@@ -395,32 +520,57 @@ function viewConsent(s) {
 
 function viewCapture(s) {
   $sticky.hidden = true;
+  if (state.autoSubmit && state.captured && !s.guidance) {
+    state.autoSubmit = false;
+    actions['submit-photo']();
+    return;
+  }
+  state.autoSubmit = false;
+  const budget = s.guidanceCode === 'budget';
+  const retry = Boolean(s.guidance) && !budget;
+  const tried = retry ? state.captured?.dataUrl : null;
+  const sampleBtn = `<button class="btn block ${budget ? 'accent' : 'secondary'}" data-action="use-sample" data-kind="${s.returned.category === 'dress' ? 'body' : 'face'}" aria-describedby="sample-note">Use YouCam's sample model</button>`;
   const body = s.returned.category === 'dress';
   const hasCamera = Boolean(navigator.mediaDevices?.getUserMedia) && window.isSecureContext;
-  $app.innerHTML = `
-    <section class="stack-lg">
-      <div class="stack">
-        <p class="eyebrow">Step 1 of 3 · ${body ? 'Photo' : 'Selfie'}</p>
-        <h1>${body ? 'A photo from the waist up' : 'Take a quick selfie'}</h1>
-        <p class="lede">${esc(s.copy.capture)}</p>
-      </div>
-      ${s.guidance ? `<div class="banner warn" role="alert"><span aria-hidden="true">↺</span><div><b>Let's try that again</b>${esc(s.guidance)}</div></div>` : ''}
+  const boxHtml = `
       <div class="capture-box" id="capture-box">
         <div class="capture-empty" id="capture-empty">
           <div class="stack">
             <p style="margin:0">${body ? 'Prop your phone up or use a mirror: face the camera, waist up, arms relaxed.' : 'Face the camera in soft, even light.'}</p>
-            ${hasCamera ? '<button class="btn accent" data-action="camera">Use camera</button>' : ''}
+            ${hasCamera ? `<button class="btn ${retry ? 'secondary' : 'accent'}" data-action="camera">Use camera</button>` : ''}
           </div>
         </div>
-      </div>
+      </div>`;
+  const actionsHtml = `
       <div class="btn-col" id="capture-actions">
-        <label class="btn block secondary" for="file-input" style="cursor:pointer">Upload a photo</label>
-        <input id="file-input" type="file" accept="image/jpeg,image/png" capture="user" class="sr-only" />
-        <button class="btn block secondary" data-action="use-sample" data-kind="${body ? 'body' : 'face'}" aria-describedby="sample-note">Use YouCam's sample model</button>
+        ${budget ? sampleBtn : ''}
+        <label class="btn block ${retry ? 'accent' : 'secondary'}" for="file-input" style="cursor:pointer">${retry ? 'Upload another photo' : 'Upload a photo'}</label>
+        <input id="file-input" type="file" accept="image/*" class="sr-only" />
+        ${budget ? '' : sampleBtn}
         <p class="muted small" id="sample-note" style="margin:0;text-align:center">No photo handy? Try it with YouCam's official ${body ? 'waist-up' : 'selfie'} sample image.</p>
         ${s.canEscalate ? '<button class="btn block secondary" data-action="escalate">Talk to a shade specialist</button>' : ''}
         ${refundLink()}
+      </div>`;
+  $app.innerHTML = `
+    <section class="stack-lg">
+      <div class="stack">
+        <p class="eyebrow">${body ? 'Your photo' : 'Your selfie'}</p>
+        <h1>${retry ? "Let's try another photo" : body ? 'A photo from the waist up' : 'Take a quick selfie'}</h1>
+        ${retry ? '' : `<p class="lede">${esc(s.copy.capture)}</p>`}
       </div>
+      ${s.guidance
+        ? budget
+          ? `<div class="banner info" role="status"><span aria-hidden="true">ℹ</span><div><b>Live photo reading is paused for today</b>${esc(s.guidance)}</div></div>`
+          : `<div class="retry" role="alert">
+              ${tried ? `<img class="retry-thumb" src="${tried}" alt="The photo you tried" />` : ''}
+              <div class="grow">
+                <p class="retry-label">Why it didn't work</p>
+                <p class="retry-why">${esc(s.guidanceWhy || "We couldn't use that photo.")}</p>
+                <p class="retry-do"><b>Try this:</b> ${esc(s.guidance)}</p>
+              </div>
+            </div>`
+        : ''}
+      ${retry || budget ? actionsHtml + boxHtml : boxHtml + actionsHtml}
     </section>`;
   $app.querySelector('#file-input').addEventListener('change', onFile);
   focusTitle();
@@ -460,6 +610,7 @@ function toneCard(s) {
         </div>
       </div>
       <p style="margin:0" id="tone-summary">${esc(p.summary)}</p>
+      ${s.qualityNote ? `<p class="quality-note">${esc(s.qualityNote)}</p>` : ''}
       <details class="how">
         <summary>How we measured this</summary>
         <p>YouCam's skin-tone analysis measured your skin, lip, eye and hair colours. We converted them to CIELAB and ranked in-stock options by colour distance (CIEDE2000) plus undertone rules. Measured on this photo only; lighting can shift results.</p>
@@ -589,7 +740,7 @@ function viewSkincare(s) {
   $app.innerHTML = `
     <section class="stack-lg">
       <div class="stack">
-        <p class="eyebrow">Step 2 of 3 · Your match</p>
+        <p class="eyebrow">Your match</p>
         <h1>A better texture for your skin</h1>
         ${canSpeak() ? '<button class="btn ghost listen" data-action="listen" aria-pressed="false"><span aria-hidden="true">🔊</span><span class="lbl">Read my results aloud</span></button>' : ''}
       </div>
@@ -637,7 +788,7 @@ function viewMatches(s) {
   $app.innerHTML = `
     <section class="stack-lg">
       <div class="stack">
-        <p class="eyebrow">Step 2 of 3 · Your match</p>
+        <p class="eyebrow">Your match</p>
         <h1>${s.returned.category === 'dress' ? 'Colours picked for you' : 'Shades picked for you'}</h1>
         ${canSpeak() ? '<button class="btn ghost listen" data-action="listen" aria-pressed="false"><span aria-hidden="true">🔊</span><span class="lbl">Read my results aloud</span></button>' : ''}
       </div>
@@ -645,7 +796,7 @@ function viewMatches(s) {
       ${skinCard(s)}
       <div class="stack">
         <h2>${esc(s.matches?.intro ?? '')}</h2>
-        <p class="muted small" style="margin-top:4px">Step 3 of 3 · See them on you. Tap a preview to choose.</p>
+        <p class="muted small" style="margin-top:4px">See them on you. Tap a preview to choose.</p>
         <div class="tryon-grid" role="list" id="tryon-grid">
           ${options.map((o) => tryonCard(s, o)).join('')}
         </div>
@@ -861,7 +1012,7 @@ function viewExchanged(s) {
       </ol>
       <div class="banner ok"><span aria-hidden="true">🔒</span><div><b>Your photo has been deleted.</b>So have the previews, here and on the processing service.</div></div>
       ${offerPassport ? passportOffer(profile) : ''}
-      <a class="btn block secondary" href="#/">Back to orders</a>
+      <a class="btn block secondary" href="#/">Start again</a>
       <p class="footer-note">Demo store: no real order was placed.</p>
     </section>`;
   focusTitle();
@@ -891,7 +1042,7 @@ function viewRefunded(s) {
       <div class="done-icon" aria-hidden="true">✓</div>
       <div class="stack"><h1>Refund on its way</h1><p class="lede">${esc(s.refund.message)}</p></div>
       ${s.attempts.photo ? '<div class="banner ok"><span aria-hidden="true">🔒</span><div><b>Your photo has been deleted.</b></div></div>' : ''}
-      <a class="btn block secondary" href="#/">Back to orders</a>
+      <a class="btn block secondary" href="#/">Start again</a>
       <p class="footer-note">Demo store: no real refund was issued.</p>
     </section>`;
   focusTitle();
@@ -903,13 +1054,13 @@ function viewEscalated(s) {
     <section class="stack-lg">
       ${s.profile ? toneCard(s) : ''}
       <div class="stack">
-        <p class="eyebrow">A person will help</p>
-        <h1>We'd rather not guess</h1>
+        <p class="eyebrow">A specialist will follow up</p>
+        <h1>${s.escalation?.code === 'analysis_failed' ? "We couldn't read your photos" : s.escalation?.code === 'low_confidence' ? 'No clearly better match in stock' : "Let's get you some help"}</h1>
         <p class="lede">${esc(s.escalation?.message ?? '')}</p>
       </div>
       <div class="btn-col">
-        <button class="btn block" data-action="refund-review">Continue to refund</button>
-        <a class="btn block secondary" href="#/">Back to orders</a>
+        <a class="btn block accent" href="#/">${s.escalation?.code === 'low_confidence' ? 'Start again' : 'Try another photo'}</a>
+        <button class="btn block secondary" data-action="refund-review">Continue to refund</button>
       </div>
     </section>`;
   focusTitle();
@@ -1082,7 +1233,7 @@ const actions = {
     if (!p?.skinHex) return;
     const ok = writePassport({ skinHex: p.skinHex, lipHex: p.lipHex || null, hairHex: p.hairHex || null, depthLabel: p.depthLabel, undertone: p.undertone, kept: state.kept || null, savedAt: new Date().toISOString().slice(0, 10) });
     if (card) card.innerHTML = ok
-      ? '<p style="margin:0"><b>Saved on this device.</b> Your orders page will now show shades picked for you. You can forget them there any time.</p>'
+      ? '<p style="margin:0"><b>Saved on this device.</b> The start page will now show shades picked for you. You can forget them there any time.</p>'
       : '<p style="margin:0">This browser blocks saving, so nothing was stored.</p>';
   },
   'skip-passport'() {
@@ -1101,6 +1252,18 @@ const actions = {
     await sendEvent('exchange', { productId: el.dataset.pid, ...(el.dataset.addon ? { addOnId: el.dataset.addon } : {}) });
   },
   escalate: () => sendEvent('escalate'),
+  'home-upload': () => document.getElementById('home-file')?.click(),
+  async 'home-sample'(el) {
+    el.disabled = true;
+    try {
+      const kind = QUICK[state.homePick || 'lipstick']?.kind ?? 'face';
+      const res = await fetch(`/api/samples/${kind}`);
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'The sample photo is unavailable. Please add your own photo instead.');
+      await quickStart(await sampleCapture(await res.blob(), kind));
+    } finally {
+      el.disabled = false;
+    }
+  },
   // YouCam's official sample photo (face for makeup, waist-up body for dresses). The original
   // bytes are sent unchanged, so repeat demo runs hit the server's photo-hash cache.
   async 'use-sample'(el) {
@@ -1186,19 +1349,32 @@ function stopCamera() {
 async function onFile(e) {
   const file = e.target.files?.[0];
   if (!file) return;
-  if (!/^image\/(jpeg|png)$/.test(file.type)) {
-    toast('Please choose a JPG or PNG photo.');
-    return;
-  }
-  const url = URL.createObjectURL(file);
-  const img = new Image();
-  img.onload = () => {
-    state.captured = processImage(img, img.naturalWidth, img.naturalHeight);
-    URL.revokeObjectURL(url);
+  try {
+    state.captured = await readPhoto(file);
+    if (state.session?.guidance) return actions['submit-photo']();
     showCaptured();
-  };
-  img.onerror = () => toast("We couldn't read that photo. Try a JPG or PNG.");
-  img.src = url;
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+/** Any image the browser can open (JPG, PNG, WebP, AVIF, HEIC on iPhone…), re-encoded as JPEG. */
+function readPhoto(file) {
+  return new Promise((resolve, reject) => {
+    if (file.type && !file.type.startsWith('image/')) return reject(new Error('Please choose a photo.'));
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      if (Math.min(img.naturalWidth, img.naturalHeight) < 320) return reject(new Error('That photo is very small. Please use one at least 320 pixels wide.'));
+      resolve(processImage(img, img.naturalWidth, img.naturalHeight));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("This browser couldn't open that photo. Try a JPG or PNG."));
+    };
+    img.src = url;
+  });
 }
 
 function lumaStats(data) {
@@ -1298,7 +1474,7 @@ if (EMBED) {
   document.documentElement.classList.add('embed');
   // Hide the chrome at once (before the stylesheet arrives) so it never flashes.
   const hide = document.createElement('style');
-  hide.textContent = 'html.embed .topbar, html.embed #trace, html.embed #trace-toggle { display: none !important; }';
+  hide.textContent = 'html.embed .topbar, html.embed #site-tabs, html.embed #trace, html.embed #trace-toggle { display: none !important; }';
   document.head.appendChild(hide);
   loadExtraCss();
   state.traceOpen = false; // the workspace shows the agent console instead

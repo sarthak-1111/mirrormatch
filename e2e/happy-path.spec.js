@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const fixture = fileURLToPath(new URL('../test/fixtures/synthetic-face.jpg', import.meta.url));
 
 test('lipstick return becomes an exchange, and the dashboard shows it live', async ({ page, context }) => {
-  await page.goto('/');
+  await page.goto('/#/orders');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('need to return');
   await page.locator('[data-order="HH-10421"]').click();
 
@@ -48,7 +48,7 @@ test('lipstick return becomes an exchange, and the dashboard shows it live', asy
   // Opt-in colour passport: tone numbers only, on this device; the orders page then picks for you.
   await page.getByRole('button', { name: 'Save my colour profile' }).click();
   await expect(page.getByText('Saved on this device.')).toBeVisible();
-  await page.getByRole('link', { name: 'Back to orders' }).click();
+  await page.getByRole('link', { name: 'Start again' }).click();
   await expect(page.locator('#passport-shelf')).toContainText('Picked for you');
   await page.getByRole('button', { name: 'Forget my colours' }).click();
   await expect(page.locator('#passport-shelf')).toHaveCount(0);
@@ -69,15 +69,27 @@ test('lipstick return becomes an exchange, and the dashboard shows it live', asy
   await expect(dash.getByRole('heading', { name: 'Who is each shade for?' })).toBeVisible();
 });
 
-test('the story page leads into the demo store', async ({ page }) => {
+test('the story page leads to Try it', async ({ page }) => {
   await page.goto('/story.html');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('small disappointment');
-  await page.getByRole('link', { name: "Walk through Alex's return" }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('need to return');
+  await page.getByRole('link', { name: 'Try it with your photo' }).first().click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('See your match on you');
+});
+
+test('Try it: pick what you are returning, add one photo, see your matches', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('See your match on you');
+  await expect(page.getByRole('navigation', { name: 'MirrorMatch demo' }).getByRole('link', { name: 'Try it' })).toHaveAttribute('aria-current', 'page');
+  await page.getByRole('radio', { name: /Hair colour/ }).check();
+  await expect(page.getByRole('button', { name: 'Upload a selfie' })).toBeVisible();
+  await page.locator('#home-file').setInputFiles(fixture);
+  await expect(page.getByText('Your skin tone')).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('.tryon')).toHaveCount(3);
+  await expect(page.getByRole('button', { name: /continue to refund/i })).toBeVisible();
 });
 
 test('damaged items skip MirrorMatch and refund in one step', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/orders');
   await page.locator('[data-order="HH-10388"]').click();
   await page.getByRole('radio', { name: 'It arrived damaged' }).check();
   await page.getByRole('button', { name: 'Continue' }).click();

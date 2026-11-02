@@ -53,7 +53,7 @@ test('autopilot (lipstick) reaches the exchange while the agent console follows 
   await page.goto('/workspace.html');
   // One thing at a time: the first tab is only the picker and the phone.
   await expect(page.getByRole('heading', { name: 'Watch a return become an exchange' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Try it' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Watch a return' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#panel-agent')).toBeHidden();
   await expect(page.locator('#panel-store')).toBeHidden();
   await expect(page.locator('#ws-env')).toContainText('Mock');
