@@ -1,6 +1,7 @@
 // The MirrorMatch agent: a deterministic planner that decides the next step of a return from
 // tool results, records a PII-free trace (step, tool, timing, units), and asks the optional
 // LLM only to reword text. Every branch here is covered by unit tests.
+import { guidanceFor } from '../youcam/errors.js';
 import { copy } from './copy.js';
 import { reword } from './llm.js';
 import { ToolError } from './tools.js';
@@ -128,9 +129,7 @@ export class Agent {
       tone = await this.call(session, 'analyze_skin_tone', { session, hint: this.youcam.mode === 'mock' ? hint : undefined });
     } catch (e) {
       if (!(e instanceof ToolError)) throw e;
-      if (e.code === 'unit_floor' || e.code === 'CreditInsufficiency') {
-        return this.escalate(session, 'credit', copy.analysisFailed());
-      }
+      if (e.code === 'unit_floor' || e.code === 'CreditInsufficiency') return this.budgetPaused(session);
       if (e.retake) return this.needRetake(session, e.guidance, e.code);
       session.attempts.analysis += 1;
       if (session.attempts.analysis >= POLICY.maxAnalysisFailures) {
@@ -142,6 +141,8 @@ export class Agent {
 
     const profile = tone.profile;
     session.profile = profile;
+    session.qualityNote = tone.qualityIssues?.length ? copy.qualityNote(tone.qualityIssues) : null;
+    if (session.qualityNote) this.decide(session, `Face quality flags (${tone.qualityIssues.join(', ')}) → keep the reading with a note instead of a paid retake.`);
     this.events.add('tone_analyzed', { sessionId: session.id, productId: session.returnedId, profileKey: profile.profileKey });
 
     const { order, returned } = this.ctx(session);
@@ -208,7 +209,7 @@ export class Agent {
       ({ skin } = await this.call(session, 'analyze_skin', { session, hint: this.youcam.mode === 'mock' ? hint : undefined }));
     } catch (e) {
       if (!(e instanceof ToolError)) throw e;
-      if (e.code === 'unit_floor' || e.code === 'CreditInsufficiency') return this.escalate(session, 'credit', copy.skinAnalysisFailed());
+      if (e.code === 'unit_floor' || e.code === 'CreditInsufficiency') return this.budgetPaused(session);
       if (e.retake) return this.needRetake(session, e.guidance, e.code);
       session.attempts.analysis += 1;
       if (session.attempts.analysis >= POLICY.maxAnalysisFailures) {
@@ -240,7 +241,20 @@ export class Agent {
     session.step = 'matches';
   }
 
+  /** The hosted demo's unit guard tripped. Not the shopper's fault: keep them in the flow, say so
+   *  plainly, and point at the cached sample photo (0 units). Never escalate or blame the photo. */
+  budgetPaused(session) {
+    this.decide(session, 'Demo unit budget reached → no new YouCam reading; offer the cached sample photo instead (0 units).');
+    session.step = 'capture';
+    session.guidance = copy.demoBudget();
+    session.guidanceCode = 'budget';
+    session.guidanceWhy = null;
+    this.events.add('photo_retake', { sessionId: session.id, code: 'demo_budget' });
+  }
+
   needRetake(session, guidance, code) {
+    session.guidanceCode = code;
+    session.guidanceWhy = guidanceFor(code).why ?? null;
     session.step = 'capture';
     session.guidance = guidance;
     this.events.add('photo_retake', { sessionId: session.id, code });
@@ -455,6 +469,9 @@ export class Agent {
       returned: ctx ? publicProduct(ctx.returned) : null,
       notEligibleWhy: session.notEligibleWhy ?? null,
       guidance: session.guidance ?? null,
+      guidanceCode: session.guidance ? session.guidanceCode ?? null : null,
+      guidanceWhy: session.guidance ? session.guidanceWhy ?? null : null,
+      qualityNote: session.qualityNote ?? null,
       canEscalate: Boolean(session.canEscalate),
       attempts: session.attempts,
       hasPhoto: Boolean(session.photo),

@@ -2,6 +2,33 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mockApp, runToMatches, settle, FAKE_IMAGE, GOOD_STATS } from './helpers.js';
+import { config as baseConfig } from '../server/config.js';
+
+async function toPhotoStep(agent, orderId) {
+  let v = await agent.start({ orderId });
+  v = await agent.handle(v.id, 'reason', { reason: 'wrong_shade' });
+  v = await agent.handle(v.id, 'accept_mirrormatch');
+  return agent.handle(v.id, 'consent', { accepted: true });
+}
+
+test('demo unit budget used up → stays on the photo step with an honest note, never escalates', async () => {
+  const { agent } = await mockApp({ budget: { ...baseConfig.budget, dailyUnitCap: 1 } });
+  let v = await toPhotoStep(agent, 'HH-10421');
+  v = await agent.handle(v.id, 'photo', { image: FAKE_IMAGE, width: 900, height: 1200, stats: GOOD_STATS });
+  assert.equal(v.step, 'capture');
+  assert.equal(v.guidanceCode, 'budget');
+  assert.match(v.guidance, /Your photo is fine/);
+  assert.equal(v.escalation, null);
+});
+
+test('a failed photo says why it failed and what to do next', async () => {
+  const { agent } = await mockApp();
+  let v = await toPhotoStep(agent, 'HH-10455');
+  v = await agent.handle(v.id, 'photo', { image: FAKE_IMAGE, width: 900, height: 1200, stats: GOOD_STATS, hint: { forceError: 'error_face_position_too_small' } });
+  assert.equal(v.step, 'capture');
+  assert.match(v.guidanceWhy, /face is too small/);
+  assert.match(v.guidance, /closer/);
+});
 
 test('happy path: lipstick return → matches → 3 renders → exchange, photo deleted', async () => {
   const { agent, events } = await mockApp();

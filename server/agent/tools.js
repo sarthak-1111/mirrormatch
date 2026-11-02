@@ -129,14 +129,16 @@ export function createTools({ youcam, meter, catalog, events, config, demoCache,
         await demoCache.setJson(cacheKey, { color, faceQuality });
       }
       const issues = qualityIssues(faceQuality);
-      if (!color?.skin_color) issues.push('error_no_face');
-      if (issues.length) {
-        const g = guidanceFor(issues[0]);
-        throw new ToolError(`face quality: ${issues.join(', ')}`, { code: issues[0], guidance: g.message, retake: true });
+      // No face or no colour reading: ask for a retake. A reading with only soft quality flags
+      // (light, size, angle) is kept with a note: the units are already spent and the result is usable.
+      if (!color?.skin_color || issues.includes('error_no_face')) {
+        const code = issues.includes('error_no_face') || !color?.skin_color ? 'error_no_face' : issues[0];
+        const g = guidanceFor(code);
+        throw new ToolError(`face quality: ${[...new Set([code, ...issues])].join(', ')}`, { code, guidance: g.message, retake: true });
       }
       const profile = buildToneProfile(color);
       return {
-        data: { profile, faceQuality, cached: cachedHit, taskId },
+        data: { profile, faceQuality, qualityIssues: issues, cached: cachedHit, taskId },
         units,
         cached: cachedHit,
         summary: `${profile.profileLabel} (ITA ${profile.ita}°, hue ${profile.hueAngle}°, contrast ${profile.contrast})${cachedHit ? ' [cache]' : session.toneVia === 'mcp' ? ' over MCP' : ''}`,

@@ -52,6 +52,13 @@ export const copy = {
   lowConfidence: (returned) =>
     `We couldn't find an in-stock ${CAT_NOUN[returned.category]} that's a clearly better match than ${returned.shadeName}.`,
   analysisFailed: () => "We couldn't measure your skin tone from the photos.",
+  // The hosted demo's unit guard (daily cap or safety floor). Not the shopper's fault, so say so.
+  demoBudget: () =>
+    "Your photo is fine: this live demo has used its YouCam budget for today, so it can't read new photos right now. YouCam's sample model still works (it replays a real result at no cost), or try again tomorrow.",
+  qualityNote: (issues) =>
+    issues.includes('lighting')
+      ? 'The light in this photo was uneven, so treat the match as a starting point. Daylight from a window gives the truest reading.'
+      : 'Your face was small or turned in this photo, so treat the match as a starting point. A closer, straight-on selfie gives the truest reading.',
   skinAnalysisFailed: () => "We couldn't read your skin from the photos.",
   skincareLowConfidence: (returned) =>
     `Your skin reading suggests ${returned.shadeName} already suits your skin today, so a different texture may not be the fix.`,
