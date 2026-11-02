@@ -2,12 +2,10 @@
 
 **The final cut is 2:55**, 1920×1080, with captions burned in. Everything shown is a real run of this repo in **live** mode against the YouCam API, called through YouCam's hosted MCP servers. The video file is not in the repo. It is uploaded to YouTube, and the link is in the Devpost submission.
 
-> **Note:** the video was filmed just before the interface moved to tabs and the current design tokens. The returns, the YouCam calls, the agent and the numbers are the same; the live demo and the screenshots show the newer, calmer layout (the workspace's "Try it" tab is the phone and the picker; the agent console, store view and setup now sit in their own tabs).
-
 ## How it was made (and what is not literal)
 
-- **Footage.** The story page, the workspace and the dashboard were recorded on desktop (1440×900). In the workspace, the shopper app runs in a phone frame and **autopilot** plays each return through the real UI (the same buttons a shopper presses). Recordings are scripted with Playwright and captured frame by frame over the Chrome DevTools screencast. Every autopilot step is time-stamped from the app's own messages, so the edit follows the real run.
-- **Live calls, real numbers.** The four returns were filmed one after another on one live server, using YouCam's official sample model. The agent console, the badges and the dashboard show that server's real trace: tool names, timings, units. The lipstick and dress tone analyses were live (11.2 s and 7.8 s); the hair-colour and foundation returns reuse the same selfie's tone result from the demo cache (0 units), and the console says `[cache]`. All renders, the skin analysis and the two "complete the look" previews were live (for example 3 clothes renders in parallel, 14.5 s; lips on the dress render, 23.5 s). The merchant's proposed-shade preview was served from the demo cache (0 units), and the page says so.
+- **Footage.** The story page, the workspace and the dashboard were recorded on desktop (1440×900), in the current tabbed interface. In the workspace's "Try it" tab, the shopper app runs in a phone frame and **autopilot** plays each return through the real UI (the same buttons a shopper presses), while the progress bar and "Latest from the agent" follow it beside the phone. Recordings are scripted with Playwright and captured frame by frame over the Chrome DevTools screencast. Every autopilot step is time-stamped from the app's own messages, so the edit follows the real run.
+- **Live calls, real numbers.** The four returns were filmed one after another on one live server, using YouCam's official sample model. The agent's steps, the badges and the dashboard show that server's real trace: tool names, timings, units. The lipstick and dress tone analyses were live (8.9 s and 14.7 s); the hair-colour and foundation returns reuse the same selfie's tone result from the demo cache (0 units), and the trace says `[cache]`. All renders, the skin analysis (5.6 s, 9 units), the two "complete the look" previews and the merchant's proposed-shade preview were live (for example 3 lipstick renders in parallel, the slowest 36.4 s; 3 clothes renders, 22.5 s; lips on the dress render, 6.1 s). The four returns and the preview used 67 units.
 - **Shortened waits, labelled.** Each wait for YouCam is shortened in the edit, and a badge gives the real duration from the trace.
 - **Synthetic demo data** on the dashboard keeps its on-screen label; the fit notes drafted from it say "Synthetic demo data". The live tiles and events come only from the filmed sessions.
 - **People and brands.** Alex is a character in the demo story. The model photos are YouCam's official sample images. Hue & Hem and every product are fictional. No third-party brands appear.
@@ -28,7 +26,7 @@ The YouCam APIs are named in **bold**.
 
 ### 0:23–1:16: The workspace, and the lipstick return on autopilot
 
-**On screen:** the workspace (phone, agent console, merchant strip, environment). Autopilot opens the order, picks "The shade didn't match", accepts the offer (the refund button stays visible), gives consent and uses YouCam's sample model. The tone card (Medium · Warm) and the console rows. Shell, Bare Honey and Coral Bay rendered on the same face, the before/after slider, then Bare Honey with a matching blush in one makeup call. The exchange, and the merchant strip ticking up.
+**On screen:** the workspace's "Try it" tab (the four returns to pick, the progress bar, the latest agent steps, and the phone). Autopilot opens the order, picks "The shade didn't match", accepts the offer (the refund button stays visible), gives consent and uses YouCam's sample model. The tone card (Medium · Warm) and the agent's steps in plain words. Shell, Bare Honey and Coral Bay rendered on the same face, the before/after slider, then Bare Honey with a matching blush in one makeup call. The exchange, then the Store view tab with it counted live.
 
 > **0:23.9** This is the MirrorMatch workspace: the shopper's phone, the agent and the store, all connected. On autopilot, the agent runs Alex's return by itself.
 > **0:35.7** YouCam's **AI Facial Color Tones Analyzer** measures their skin, lip, eye and hair colour.
@@ -45,7 +43,7 @@ The YouCam APIs are named in **bold**.
 
 ### 1:28–1:41: Foundation and Skin AI
 
-**On screen:** the 3W Sand return. The "Your skin today" card (low shine, well hydrated, even tone → natural finish, light to medium coverage for 4W Honey), the console row for skin analysis (4 concerns, 9 units), then the shades on the same photo.
+**On screen:** the 3W Sand return. The "Your skin today" card (low shine, well hydrated, even tone → natural finish, light to medium coverage for 4W Honey), the agent's step for the skin analysis (9 units), then the shades on the same photo.
 
 > **1:28.5** For foundation, YouCam's **AI Skin Analysis** gently reads oiliness, moisture and redness, so the exchange gets the right finish, not just the right shade.
 
@@ -58,7 +56,7 @@ The YouCam APIs are named in **bold**.
 
 ### 2:01–2:36: The merchant, and the agent's suggestions
 
-**On screen:** `/merchant` after the four filmed returns (4 exchanges). The "Who is each shade for?" grid and its gap cards. "What the agent suggests": a proposed new lipstick shade for an under-served profile with its preview on the sample model, approved (logged only). The agent traces with units per call.
+**On screen:** `/merchant` after the four filmed returns (4 exchanges), one tab at a time: Overview, then Shade fit ("Who is each shade for?" and its gap cards), then Suggestions (a proposed new lipstick shade for an under-served profile, previewed live on the sample model and approved, which only logs it), then Demo history (labelled synthetic) and the Agent log with units per call.
 
 > **2:01.4** The merchant sees it live: returns started, exchanges accepted, and refund value kept.
 > **2:09.5** Every colour return is a lesson. This grid shows who each shade is for, and where the range has gaps, before more returns arrive.
@@ -76,7 +74,7 @@ The YouCam APIs are named in **bold**.
 ## Checklist (against the rules)
 
 - [x] Between 1 and 3 minutes (2:55)
-- [x] Shows the app working: the shopper app in a phone frame, the merchant dashboard on desktop
+- [x] Shows the app working: the shopper app in a phone frame inside the tabbed workspace, the merchant dashboard on desktop
 - [x] Names the YouCam APIs used: AI Facial Color Tones Analyzer, AI Skin Analysis, AI Makeup Virtual Try-On, AI Hair Color, AI Clothes Virtual Try-On, and the MCP servers. The end card lists the feature names and units.
 - [x] No copyrighted music: an original CC0 score
 - [x] No third-party trademarks: a fictional store, and YouCam named only as the API provider
@@ -85,4 +83,4 @@ The YouCam APIs are named in **bold**.
 
 ## Re-recording it yourself
 
-Run the server in live mode with `DEMO_CACHE=1`, open `/workspace.html` and press a "Run a return for me" button. The first run of each flow calls YouCam; repeats replay the cache at 0 units. The pipeline used for this cut is `capture.py --flow workspace --autopilot <lipstick|hair|foundation|dress>` and `--flow merchant-tour`.
+Run the server in live mode with `DEMO_CACHE=1`, open `/workspace.html` and pick a return under "Try it". The first run of each flow calls YouCam; repeats replay the cache at 0 units. The pipeline used for this cut is `capture.py --flow workspace --autopilot <lipstick|hair|foundation|dress>` and `--flow merchant-tour`.

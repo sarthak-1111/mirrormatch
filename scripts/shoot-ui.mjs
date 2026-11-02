@@ -87,8 +87,13 @@ if (want('phone')) {
     ['dress', '#look-card .look-result img', 'phone-lips-on-dress', '#look-card'],
     ['foundation', '#skin-card', 'phone-skin'],
   ];
+  // --tall: a full 390×844 phone screen (for the video's end card) instead of the browser viewport.
+  const phone = args.includes('--tall')
+    ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, userAgent: devices['iPhone 13'].userAgent }
+    : { ...devices['iPhone 13'], deviceScaleFactor: 2 };
   for (const [f, waitSel, name, frameSel] of shots) {
-    const ctx = await browser.newContext({ ...devices['iPhone 13'], deviceScaleFactor: 2 });
+    if (only && arg('flows') && !arg('flows').split(',').includes(f)) continue;
+    const ctx = await browser.newContext(phone);
     const page = await ctx.newPage();
     await page.goto(`${base}/?autoplay=${f}`);
     await page.locator(waitSel).first().waitFor({ state: 'visible', timeout: 240000 });
