@@ -4,6 +4,8 @@
 
 **Track:** eCommerce VTO (makeup try-on + clothes try-on in one flow)
 
+**Demo video:** https://youtu.be/nAcqqcLyoc0
+
 **Live demo:** https://sarthak-1111.github.io/mirrormatch/ (pick what you're returning, then upload a selfie or use YouCam's sample model)
 
 ---

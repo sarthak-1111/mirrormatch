@@ -2,7 +2,7 @@
 
 **The returns desk with a mirror: see the right match on you before you send it back.**
 
-### ▶ Live demo: **https://sarthak-1111.github.io/mirrormatch/**
+### ▶ Live demo: **https://sarthak-1111.github.io/mirrormatch/** · Demo video (2:56): **https://youtu.be/nAcqqcLyoc0**
 *Opens on **Try it**, two steps: pick what you're returning (lipstick, foundation, hair colour or a dress), then upload a selfie, or tap **Use YouCam's sample model** (replays of real YouCam results, 0 units). Your own photo runs live YouCam calls, capped per day; if a photo can't be read, the app says why and lets you upload another. Tabs switch to **Alex's story**, **Watch the agent** (a return playing by itself, with every agent step) and **For stores** (the merchant dashboard). The demo runs on the author's workstation through a Cloudflare tunnel; if it's resting, `npm run mock` runs everything locally with no key.*
 
 When a shopper starts a return because *"the shade didn't match"*, *"the colour didn't suit me"* or *"it didn't suit my skin"*, MirrorMatch:
