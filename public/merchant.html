@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Returns intelligence · Hue &amp; Hem</title>
+  <meta name="description" content="SecondTry merchant dashboard: refunds converted to exchanges, and which products get returned by which tone profiles." />
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="stylesheet" href="/css/merchant.css" />
+</head>
+<body class="merchant">
+  <a class="sr-only" href="#dash">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Hue and Hem shopper view">
+      <img src="/assets/logo.svg" alt="" />
+      <b>Hue &amp; Hem</b><span>Returns intelligence · SecondTry</span>
+    </a>
+    <div class="spacer"></div>
+    <span id="units-chip" class="chip" title="YouCam unit balance (from the credit endpoint)"></span>
+    <span id="mode-chip" class="chip"></span>
+  </header>
+  <main id="dash" class="dash" tabindex="-1">
+    <section aria-labelledby="live-h" class="dash-section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Live · demo sessions on this server</p>
+          <h1 id="live-h">Refunds turned into exchanges</h1>
+        </div>
+        <a class="btn secondary" href="/" target="_blank" rel="noopener">Open shopper view ↗</a>
+      </div>
+      <div class="kpis" id="kpis" aria-live="polite"></div>
+      <div class="grid-2">
+        <div class="card">
+          <h2>Live returns by tone profile</h2>
+          <p class="muted small">Product × tone profile, from sessions on this server only.</p>
+          <div id="live-heat"></div>
+          <div id="live-insights" class="insights"></div>
+        </div>
+        <div class="card">
+          <h2>Event feed</h2>
+          <p class="muted small">Streams as shoppers use SecondTry. No photos or personal data are stored.</p>
+          <ol id="feed" class="feed" aria-live="polite"></ol>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="synth-h" class="dash-section synthetic">
+      <div class="synthetic-banner" role="note">
+        <b>Synthetic demo data</b>
+        <span id="synth-disclaimer"></span>
+      </div>
+      <h2 id="synth-h">Which products get returned by which tone profiles</h2>
+      <p class="muted small" id="synth-sub"></p>
+      <div id="synth-heat"></div>
+      <h3 style="margin-top:18px">Insights (computed by the same matcher the shopper flow uses)</h3>
+      <div id="synth-insights" class="insights"></div>
+    </section>
+
+    <section aria-labelledby="trace-h" class="dash-section">
+      <h2 id="trace-h">Agent traces</h2>
+      <p class="muted small">Each return session: tools called, timing and YouCam units. No selfies, colours or raw API output.</p>
+      <div id="traces" class="traces"></div>
+    </section>
+
+    <section aria-labelledby="units-h" class="dash-section">
+      <h2 id="units-h">YouCam unit budget</h2>
+      <div id="units" class="card flat"></div>
+    </section>
+  </main>
+  <script type="module" src="/js/merchant.js"></script>
+</body>
+</html>
