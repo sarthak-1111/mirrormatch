@@ -1,6 +1,6 @@
 // Captures the 5 README screenshots from a running server (live mode + DEMO_CACHE=1 recommended,
 // so re-runs reuse cached renders and spend 0 units). Photos must be your own or YouCam samples.
-// Usage: node scripts/screenshots.mjs --base http://localhost:3000 --selfie <face.jpg> --waist <waist-up.jpg>
+// Usage: node scripts/screenshots.mjs --base http://localhost:3000 --selfie <face.jpg> --waist <waist-up.jpg> [--only 4,5]
 import { chromium, devices } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 
@@ -11,6 +11,8 @@ const arg = (k, d) => {
 };
 const base = arg('base', 'http://localhost:3000');
 const out = arg('out', 'docs/screenshots');
+const only = arg('only');
+const want = (...n) => !only || n.some((x) => only.split(',').includes(String(x)));
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch().catch(() => chromium.launch({ channel: 'chrome' }));
 
@@ -32,7 +34,7 @@ async function toMatches(page, photo) {
 }
 
 // 1 + 2: mobile, lipstick return: offer screen, then matches + try-on
-{
+if (want(1, 2)) {
   const ctx = await browser.newContext({ ...devices['iPhone 13'], deviceScaleFactor: 2 });
   const page = await ctx.newPage();
   await runReturn(page, { order: 'HH-10421', reason: "The shade didn't match" });
@@ -46,7 +48,7 @@ async function toMatches(page, photo) {
   await ctx.close();
 }
 // 3: mobile, dress return with clothes try-on
-{
+if (want(3)) {
   const ctx = await browser.newContext({ ...devices['iPhone 13'], deviceScaleFactor: 2 });
   const page = await ctx.newPage();
   await runReturn(page, { order: 'HH-10307', reason: "The colour didn't suit me" });
@@ -59,7 +61,7 @@ async function toMatches(page, photo) {
   await ctx.close();
 }
 // 4: desktop, shopper flow with the agent trace panel (foundation return)
-{
+if (want(4)) {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 1.5 });
   const page = await ctx.newPage();
   await runReturn(page, { order: 'HH-10388', reason: "The shade didn't match" });
@@ -69,7 +71,7 @@ async function toMatches(page, photo) {
   await ctx.close();
 }
 // 5: desktop, merchant dashboard
-{
+if (want(5)) {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 1000 }, deviceScaleFactor: 1.5 });
   const page = await ctx.newPage();
   await page.goto(`${base}/merchant`);

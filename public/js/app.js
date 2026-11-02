@@ -522,11 +522,18 @@ function renderTrace() {
   $layout.classList.toggle('with-trace', state.traceOpen);
   if (!state.traceOpen) return;
   const tools = s.trace.filter((t) => t.kind === 'tool');
-  const totalMs = tools.reduce((a, t) => a + (t.ms || 0), 0);
+  // Wall-clock time inside tool calls: parallel renders overlap, so merge their intervals.
+  const spans = tools.map((t) => [Date.parse(t.at), Date.parse(t.at) + (t.ms || 0)]).sort((a, b) => a[0] - b[0]);
+  let totalMs = 0;
+  let end = -Infinity;
+  for (const [a, b] of spans) {
+    if (b > end) totalMs += b - Math.max(a, end);
+    end = Math.max(end, b);
+  }
   $trace.innerHTML = `
     <div class="trace-panel">
       <div class="row" style="justify-content:space-between"><h2>Agent trace</h2><button class="icon-btn" style="background:#2d2724;color:#efe8e1;border-color:#3a332f" data-action="toggle-trace">Hide</button></div>
-      <div class="sum"><span>${tools.length} tool calls</span><span>${(totalMs / 1000).toFixed(1)} s</span><span>${s.unitsUsed} units</span><span>renders ${s.rendersUsed}/${s.maxRenders}</span><span>${s.mode === 'live' ? 'live API' : 'mock'}</span></div>
+      <div class="sum"><span>${tools.length} tool calls</span><span title="Wall-clock time spent in tool calls (parallel previews overlap)">${(totalMs / 1000).toFixed(1)} s in tools</span><span>${s.unitsUsed} units</span><span>renders ${s.rendersUsed}/${s.maxRenders}</span><span>${s.mode === 'live' ? 'live API' : 'mock'}</span></div>
       <ol class="trace-list">
         ${s.trace
           .map((t, i) => {
