@@ -16,7 +16,16 @@ export const MCP_TOOLS = {
   'makeup-vto': ['beauty', 'AI-Makeup-Virtual-Try-On'],
   'cloth-v4': ['fashion', 'AI-Clothes-Virtual-Try-On'],
   cloth: ['fashion', 'AI-Clothes-Virtual-Try-On'],
+  'skin-analysis': ['beauty', 'AI-Skin-Analysis'],
+  'hair-color': ['beauty', 'AI-Hair-Color-Virtual-Try-On'],
 };
+
+/** Does a finished task payload carry the result this feature should return? */
+export function hasTaskResult(feature, data) {
+  if (feature === 'skin-tone-analysis') return Boolean(data?.results?.color);
+  if (feature === 'skin-analysis') return Array.isArray(data?.results?.output) || Boolean(data?.results?.url);
+  return Boolean(data?.results?.url);
+}
 
 export class McpSession {
   constructor(url, apiKey) {
@@ -141,8 +150,7 @@ export class McpYouCamClient extends YouCamClient {
         const done = await this.pollTask(feature, taskId);
         Object.assign(data, done);
       }
-      const hasResult = feature === 'skin-tone-analysis' ? Boolean(data.results?.color) : Boolean(data.results?.url);
-      if (!hasResult) throw new YouCamError('MCP task finished without a result', { code: 'mcp_incomplete', feature });
+      if (!hasTaskResult(feature, data)) throw new YouCamError('MCP task finished without a result', { code: 'mcp_incomplete', feature });
       const ms = Date.now() - t0;
       const entry = this.meter.record({ feature, ok: true, ms, sessionId });
       return { data, taskId, ms, units: entry.units, via: 'mcp' };

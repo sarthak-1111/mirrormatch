@@ -51,5 +51,7 @@ export class Catalog {
 export function publicProduct(p) {
   if (!p) return null;
   const { id, sku, category, productLine, shadeName, shadeCode, hex, undertone, temperature, family, finish, price, stock, image, garmentImage } = p;
-  return { id, sku, category, productLine, shadeName, shadeCode, hex, undertone, temperature, family, finish, price, inStock: stock > 0, image, garmentImage };
+  // Hair colour (level, tone) and skincare (variant, texture, blurb) fields, when present.
+  const { hairLevel, hairTone, variant, texture, blurb } = p;
+  return { id, sku, category, productLine, shadeName, shadeCode, hex, undertone, temperature, family, finish, price, inStock: stock > 0, image, garmentImage, hairLevel, hairTone, variant, texture, blurb };
 }

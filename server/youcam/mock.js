@@ -63,7 +63,32 @@ export class MockYouCamClient {
           },
         },
       };
+    } else if (feature === 'skin-analysis') {
+      // Same shape as the live SD JSON result (verified 2026-11-02). Default reading: a little
+      // shine, comfortable hydration, some redness. Tests can pass hint.skin to change it.
+      if (hint?.forceSkinError) {
+        this.meter.record({ feature, ok: false, ms: Date.now() - t0, sessionId });
+        const e = new YouCamError('Mock skin analysis error', { code: hint.forceSkinError, feature });
+        e.taskId = taskId;
+        throw e;
+      }
+      const s = { oiliness: 42, moisture: 64, redness: 55, type: 'Oily', tZone: 'Oily', uZone: 'Normal', ...(hint?.skin ?? {}) };
+      const score = (type, raw) => ({ type, raw_score: raw, ui_score: Math.min(99, Math.round(raw * 0.6 + 40)), mask_urls: [] });
+      data = {
+        task_status: 'success',
+        mock: true,
+        results: {
+          output: [
+            ...(body.dst_actions ?? []).filter((a) => a !== 'skin_type' && s[a] != null).map((a) => score(a, s[a])),
+            { type: 'skin_type', region: 'whole', skin_type: s.type, mask_urls: [] },
+            { type: 'skin_type', region: 't_zone', skin_type: s.tZone, mask_urls: [] },
+            { type: 'skin_type', region: 'u_zone', skin_type: s.uZone, mask_urls: [] },
+            { type: 'all', score: 80 },
+          ],
+        },
+      };
     } else {
+      // makeup-vto, cloth-v4 and hair-color: the "render" is the source image itself.
       data = { task_status: 'success', mock: true, results: { url: `mock://${taskId}` }, src: body.src_file_id };
     }
     this.tasks.set(taskId, { feature, body });

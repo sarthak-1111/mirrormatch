@@ -130,11 +130,65 @@ const dresses = [
   })),
 );
 
+// Hair colour kits: hex is the colour sent to YouCam hair-color; level is the colourist's
+// 1 (black) … 10 (lightest blonde) scale; tone drives the undertone rules in server/color/hair.js.
+const hairColours = [
+  ['H01', 'Ash Blonde', '#B5A589', 8, 'ash', 9],
+  ['H02', 'Honey Blonde', '#C79A5B', 8, 'golden', 11],
+  ['H03', 'Caramel', '#A26E3E', 7, 'caramel', 8],
+  ['H04', 'Copper', '#9E4F2A', 6, 'copper', 7],
+  ['H05', 'Golden Brown', '#7A5230', 5, 'golden', 10],
+  ['H06', 'Chestnut', '#6A4027', 5, 'natural', 12],
+  ['H07', 'Ash Brown', '#66594D', 5, 'ash', 6],
+  ['H08', 'Mocha', '#4B3426', 4, 'natural', 9],
+  ['H09', 'Burgundy', '#5E2232', 4, 'burgundy', 5],
+  ['H10', 'Espresso', '#2B201B', 2, 'natural', 14],
+  ['H11', 'Platinum', '#D9D3C7', 10, 'ash', 0],
+].map(([code, name, hex, level, tone, stock]) => ({
+  id: `hair-${code.toLowerCase()}`,
+  sku: `HH-GH-${code}`,
+  category: 'hair',
+  productLine: 'Gloss Hair Colour',
+  shadeName: name,
+  shadeCode: code,
+  hex,
+  hairLevel: level,
+  hairTone: tone,
+  undertone: { golden: 'warm', copper: 'warm', caramel: 'warm', ash: 'cool', burgundy: 'cool' }[tone] ?? 'neutral',
+  finish: 'gloss',
+  price: 18,
+  stock,
+  image: `/assets/products/${code.toLowerCase()}.svg`,
+}));
+
+// Skincare: one moisturiser in three textures. The hex is the packaging tint (no colour matching);
+// the variant is chosen from YouCam skin analysis (server/color/skin.js).
+const moisturisers = [
+  ['light', 'Light gel', 'gel', '#CFE6E1', 'For skin with some shine: hydrates without heaviness.', 13],
+  ['balanced', 'Balanced', 'lotion', '#EFE3D3', 'For comfortable, balanced skin.', 15],
+  ['rich', 'Rich', 'cream', '#E6CFB0', 'For skin that wants more hydration.', 10],
+].map(([variant, name, texture, hex, blurb, stock]) => ({
+  id: `care-${variant}`,
+  sku: `HH-CM-${variant.slice(0, 3).toUpperCase()}`,
+  category: 'skincare',
+  productLine: 'Cloud Moisturiser',
+  shadeName: name,
+  shadeCode: name,
+  hex,
+  variant,
+  texture,
+  blurb,
+  finish: texture,
+  price: 28,
+  stock,
+  image: `/assets/products/care-${variant}.svg`,
+}));
+
 const daysAgo = (d) => new Date(Date.UTC(2026, 10, 2) - d * 86400000).toISOString().slice(0, 10);
 
 const catalog = {
   store: { name: 'Hue & Hem', note: 'Fictional demo store. All product names are invented.' },
-  products: [...lipsticks, ...foundations, ...dresses],
+  products: [...lipsticks, ...foundations, ...dresses, ...hairColours, ...moisturisers],
   orders: [
     {
       id: 'HH-10421',
@@ -156,6 +210,20 @@ const catalog = {
       deliveredOn: daysAgo(12),
       customer: { firstName: 'Alex' },
       lines: [{ lineId: 'HH-10307-1', productId: 'dress-wrap-camel', qty: 1, price: 68 }],
+    },
+    {
+      id: 'HH-10455',
+      placedOn: daysAgo(8),
+      deliveredOn: daysAgo(5),
+      customer: { firstName: 'Alex' },
+      lines: [{ lineId: 'HH-10455-1', productId: 'hair-h01', qty: 1, price: 18 }],
+    },
+    {
+      id: 'HH-10462',
+      placedOn: daysAgo(7),
+      deliveredOn: daysAgo(4),
+      customer: { firstName: 'Alex' },
+      lines: [{ lineId: 'HH-10462-1', productId: 'care-rich', qty: 1, price: 28 }],
     },
   ],
 };
