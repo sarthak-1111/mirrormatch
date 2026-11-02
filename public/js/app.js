@@ -353,7 +353,7 @@ const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
 function viewMatches(s) {
   const options = [
-    { role: 'returned', product: s.returned, reason: s.matches?.returnedCaution || 'The one you bought.', badge: 'You returned' },
+    { role: 'returned', product: s.returned, reason: s.matches?.returnedCaution || 'The one you bought.', badge: 'Returned' },
     ...s.picks.map((p, i) => ({ role: `pick${i + 1}`, product: p.product, reason: p.reason, deltaE: p.deltaE, badge: i === 0 ? 'Best match' : 'Also great', offer: p.offer })),
   ];
   if (!state.selected || !s.picks.some((p) => p.product.id === state.selected)) state.selected = s.picks[0]?.product.id ?? null;
@@ -373,6 +373,9 @@ function viewMatches(s) {
         <p class="muted small" style="text-align:center;margin-top:2px">${esc(s.copy.tryonLabel)}. Colours on screens vary.</p>
       </div>
       <div class="stack" id="reasons">
+        ${s.matches?.returnedCaution
+          ? `<div class="card tint match"><div class="match-head"><span class="swatch" style="background:${esc(s.returned.hex)}"></span><div class="grow"><div style="font-weight:600">Why ${esc(s.returned.shadeName)} may not have worked</div></div></div><p class="reason">${esc(s.matches.returnedCaution)} That's about the colour, not about you.</p></div>`
+          : ''}
         ${s.picks
           .map(
             (p, i) => `

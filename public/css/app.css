@@ -195,7 +195,8 @@ details.how summary { cursor: pointer; color: var(--ink-2); }
 .tryon .img img { width: 100%; height: 100%; object-fit: cover; }
 .tryon .label-vp { position: absolute; left: 8px; bottom: 8px; right: 8px; font-size: 11px; color: #fff; background: rgba(20, 16, 14, 0.62); border-radius: 8px; padding: 4px 6px; text-align: center; }
 .tryon .cap { padding: 10px 12px; display: flex; gap: 8px; align-items: center; }
-.tryon .cap .name { font-weight: 600; font-size: 14.5px; }
+.tryon .cap .name { font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tryon .cap .badge { white-space: nowrap; }
 .tryon button.select { all: unset; cursor: pointer; display: block; }
 .tryon button.select:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
 .tryon .failed { display: grid; place-items: center; height: 100%; padding: 16px; text-align: center; font-size: 13px; color: var(--muted); }

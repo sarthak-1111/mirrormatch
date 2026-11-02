@@ -329,6 +329,7 @@ export class Agent {
             confidence: session.matches.confidence,
             returnedScore: session.matches.returnedScore,
             returnedCaution: session.matches.returnedCaution,
+            returnedReason: session.matches.returnedReason,
             intro: ctx ? copy.matchesIntro(ctx.returned, session.picks.map((x) => x.product)) : '',
           }
         : null,
