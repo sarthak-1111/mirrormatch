@@ -29,7 +29,11 @@ export const copy = {
   matchesIntro: (returned, picks) => {
     const noun = CAT_NOUN[returned.category];
     if (!picks.length) return `We couldn't find a better ${noun} in stock right now.`;
-    return `Here are ${picks.length === 1 ? 'the closest in-stock ' + noun : `the ${picks.length} closest in-stock ${noun}s`} for you, next to ${returned.shadeName}.`;
+    if (returned.category === 'skincare') {
+      return picks.length === 1 ? `The texture that suits your skin today, instead of ${returned.shadeName}.` : `Textures that suit your skin today, instead of ${returned.shadeName}.`;
+    }
+    if (picks.length === 1) return `Here's the closest in-stock ${noun} for you, next to ${returned.shadeName}.`;
+    return `Here are the ${picks.length} closest in-stock ${noun}s for you, next to ${returned.shadeName}.`;
   },
   rendering: () => 'Creating previews on your photo…',
   tryonLabel: () => 'Visual preview, not a guarantee',

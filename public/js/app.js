@@ -534,7 +534,7 @@ function lookCard(s) {
       const on = state.addOn?.lipId === look.lipId && state.addOn?.dressId === look.dressId;
       inner = `${head}
         <div class="look-result">
-          <div class="look-img">${lookImg(s, look, `Your photo in the ${pick.product.shadeName} dress wearing ${look.lip?.shadeName ?? 'the lipstick'}`)}</div>
+          <div class="look-img zoom">${lookImg(s, look, `Your photo in the ${pick.product.shadeName} dress wearing ${look.lip?.shadeName ?? 'the lipstick'}`)}</div>
           <div class="stack" style="gap:6px">
             <div class="row" style="gap:8px"><span class="swatch" style="background:${esc(look.lip.hex)}"></span><div class="grow"><div style="font-weight:600">${esc(look.lip.shadeName)}</div><div class="small muted">${esc(look.lip.productLine)} · ${money(look.lip.price)}</div></div></div>
             <p class="reason" style="margin:0">${esc(look.lipReason)}</p>
