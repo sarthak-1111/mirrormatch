@@ -69,6 +69,8 @@ export const config = {
   sessionTtlMin: num(process.env.SESSION_TTL_MIN, 20),
   rateLimitPerMin: num(process.env.RATE_LIMIT_PER_MIN, 60),
   dataDir: resolve(ROOT, process.env.DATA_DIR || 'data'),
+  // PERSIST_EVENTS=0 keeps live dashboard events in memory only (e2e runs, hosted demo).
+  persistEvents: process.env.PERSIST_EVENTS !== '0',
 };
 
 export const llmEnabled = () => Boolean(config.llm.baseUrl && config.llm.model);

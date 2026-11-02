@@ -70,7 +70,7 @@ Every call is server-side. Units were verified live with `GET /s2s/v2.0/credit/f
 | **AI Facial Color Tones Analyzer** (Skin) | `POST /s2s/v2.0/task/skin-tone-analysis` + `GET …/{task_id}` | Measures skin, lip, eye, eyebrow and hair colour, plus face-quality flags (face found, lighting, angle) | **20** |
 | **AI Makeup Virtual Try-On** (Beauty) | `POST /s2s/v2.0/task/makeup-vto` + `GET …/{task_id}` | Renders the returned lipstick or foundation shade and the top 2 matches on the shopper's selfie, using the exact catalogue hex (`lip_color`, `foundation`) | **1** |
 | **AI Clothes Virtual Try-On** (Fashion) | `POST /s2s/v2.0/task/cloth-v4` + `GET …/{task_id}` | Renders the returned dress colourway and the top 2 colourways on the shopper's waist-up photo | **2** |
-| File API | `POST /s2s/v2.0/file` → PUT to the pre-signed URL | Uploads the selfie once per session, and each garment reference once per 25 days | 0 |
+| File API | `POST /s2s/v2.0/file` → PUT to the pre-signed URL | Uploads the selfie and the garment references once per session (task delete also removes input files, so nothing is reused across sessions) | 0 |
 | Task delete | `POST /s2s/v2.0/task/delete` | Deletes every task's input and output files when the return ends | 0 |
 | Credit | `GET /s2s/v1.0/client/credit` | Balance at startup and after each return; enforces the unit floor | 0 |
 | Feature cost | `GET /s2s/v2.0/credit/feature-cost` | Real per-call costs at startup, used for unit metering | 0 |
@@ -78,7 +78,7 @@ Every call is server-side. Units were verified live with `GET /s2s/v2.0/credit/f
 
 A typical return costs **23 units** (lipstick or foundation: 20 + 3 × 1) or **26 units** (dress: 20 + 3 × 2). Cached repeats cost 0.
 
-The YouCam MCP servers (beauty and fashion) were also tested and work. See `API_NOTES.md` for why the agent calls REST directly.
+**Transport: YouCam's MCP servers.** The agent's three AI tasks run as tool calls on YouCam's hosted MCP servers (`mcp-api-01.makeupar.com/mcp/beauty` for `AI-Facial-Color-Tones-Analyzer` and `AI-Makeup-Virtual-Try-On`, `/mcp/fashion` for `AI-Clothes-Virtual-Try-On`). Each tool gets the same request body as REST, with `polling: true`. This was verified live end to end for all three features. If an MCP call fails at the transport level, the client falls back to the REST task endpoint automatically, so the shopper never sees an outage. Task errors such as `error_no_face` still come back as friendly guidance. Upload, credit, download and task delete stay on REST, so metering and privacy cleanup work the same either way. Set `YOUCAM_TRANSPORT=rest` to skip MCP.
 
 ## Architecture
 
@@ -93,17 +93,19 @@ flowchart LR
     T["8 tools<br/>get_order · check_photo_quality · analyze_skin_tone<br/>find_alternatives · render_tryon · check_stock_and_policy<br/>create_exchange · escalate_to_human"]
     C["Colour engine<br/>CIELAB · CIEDE2000 · ITA · undertone"]
     P["Policy engine<br/>price diff · stock · render cap · escalation"]
-    Y["YouCam client<br/>file → task → poll → delete<br/>unit meter · retries · cache"]
+    Y["YouCam client<br/>MCP tool calls (default) · REST fallback<br/>file → task → poll → delete<br/>unit meter · retries · cache"]
     L["LLM (optional)<br/>wording only, validated"]
     E["Event log (live)<br/>+ synthetic history (separate)"]
     SS["Session store<br/>photo in memory only, TTL wipe"]
   end
   YC[("YouCam API<br/>yce-api-01.makeupar.com")]
+  YM[("YouCam MCP servers<br/>mcp/beauty · mcp/fashion")]
   S -- "photo (JPEG ≤1024px), events" --> A
   A --> T
   T --> C & P & Y
   A -. "reword text" .-> L
-  Y -- "Bearer key (server only)" --> YC
+  Y -- "tools/call (Bearer, server only)" --> YM
+  Y -- "files · fallback · delete" --> YC
   A --> E --> M
   A --> SS
 ```
@@ -171,7 +173,7 @@ To run without a key, use `npm run mock` (or leave `YOUCAM_API_KEY` empty). The 
 
 Tests:
 ```bash
-npm test                      # 35 unit tests: colour science, matching, policy, agent decision paths
+npm test                      # 40 unit tests: colour science, matching, policy, agent decision paths, MCP parsing
 npx playwright install chromium   # once (or set PW_CHANNEL=chrome to use local Chrome)
 npm run test:e2e              # end-to-end happy path in a real browser (mock mode)
 npm run secret-scan           # checks every tracked file for keys
@@ -192,7 +194,9 @@ Live API verification (spends about 24 units): `node scripts/verify-api.mjs --fa
 | `RATE_LIMIT_PER_MIN` | 60 | Per-IP limit on API writes |
 | `DEMO_CACHE` | 0 | Opt-in on-disk cache of tone results and renders, keyed by the photo's SHA-256. **Use only with your own photo** |
 | `SESSION_TTL_MIN` | 20 | Idle sessions are wiped after this |
+| `PERSIST_EVENTS` | 1 | `0` keeps live dashboard events in memory only (used by the e2e tests; handy on a hosted demo) |
 | `PORT`, `HOST` | 3000, 127.0.0.1 | Server |
+| `YOUCAM_TRANSPORT` | `mcp` | `mcp`: AI tasks go through YouCam's MCP servers, with REST fallback. `rest`: call the REST task endpoints directly |
 | `YOUCAM_CLOTH_FEATURE`, `YOUCAM_GARMENT_CATEGORY`, `YOUCAM_FACE_STRICTNESS` | `cloth-v4`, `full_body`, `medium` | Verified defaults |
 
 ### Credits note
@@ -222,13 +226,13 @@ YouCam charges only for successful tasks, so a bad photo costs nothing.
 - The garment references are self-made procedural drawings, so try-on fidelity for real fabrics and fits will differ. Fit is out of scope; SecondTry is about colour.
 - The store, orders, stock and exchanges are mocks, and there is no payment or shipping integration.
 - The live dashboard is in-memory plus a local JSONL file, for a single server.
-- YouCam processing takes about 7 s for analysis and 7–20 s per render, so the "about 30 seconds" promise depends on network and queue time.
+- YouCam processing takes about 7–11 s for analysis and 7–22 s per render (the three previews run in parallel), so the "about 30 seconds" promise depends on network and queue time.
 
 ## Roadmap
 
 - **Returns-portal webhook integration for real stores.** Subscribe to a returns platform's `return.created` webhook, and launch SecondTry only when the return reason is colour-related. Write the exchange back through the store's order API, and post `exchange_created` / `refund_chosen` back to the portal.
 - YouCam webhooks instead of polling, for lower latency.
-- An MCP transport for the YouCam client (already verified), so the same tools can be offered to LLM-driven agents.
+- Publish SecondTry's own eight tools as an MCP server, so a store's existing support assistant can run a SecondTry return.
 - Per-merchant catalogue import: map existing shade swatches to CIELAB with a calibration card.
 - Feed insights back to product pages ("deep · warm shoppers usually choose Shade 5W"), and A/B-test the recommendations.
 - Fit and size alongside colour for apparel.
@@ -240,7 +244,7 @@ server/            Express app, agent, tools, colour + policy engines, YouCam cl
   agent/           agent.js (planner + trace), tools.js (8 tools), copy.js, llm.js
   color/           color.js (Lab, ΔE2000, ITA), tone.js (profile), match.js (scoring)
   policy/          policy.js (exchange rules)
-  youcam/          client.js (REST V2), mock.js, meter.js, errors.js
+  youcam/          mcp.js (MCP transport, default), client.js (REST V2 + fallback), mock.js, meter.js, errors.js
   store/           catalog, sessions, events, insights, caches
 public/            shopper flow (index.html), merchant dashboard (merchant.html), assets
 data/              catalog.json, synthetic-history.json (labelled synthetic)

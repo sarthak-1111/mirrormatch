@@ -135,7 +135,7 @@ Total for this verification: 1000 → 954 units (46 spent, matching the meter).
 - **Dress returns:** **one waist-up photo** serves both skin-tone-analysis (strictness `low`) and cloth-v4. A close-up selfie fails cloth-v4 with `error_pose`.
 - **Error and failure cost:** errors cost 0 units, so a failed photo is free to retry. Only successes are metered.
 - **Expected wait:** one return takes about 7 s for analysis plus about 7–18 s for previews (3 run in parallel). That's within the "about 30 seconds" promise.
-- **Garment references:** self-made product PNGs work well as `ref_file_id`. Each one is uploaded once and its `file_id` reused for 25 days.
+- **Garment references:** self-made product PNGs work well as `ref_file_id`. Verified live: `POST /s2s/v2.0/task/delete` also deletes a task's **input** files, including the garment reference. A garment `file_id` reused after its first session's cleanup fails with `error_download_image`. So garments are uploaded once per session (0 units, about 0.3 s).
 
 ## MCP servers (live check: `node scripts/check-mcp.mjs beauty`)
 
@@ -143,13 +143,29 @@ Total for this verification: 1000 → 954 units (46 spent, matching the meter).
 - Every task tool takes `{ request: <same body as REST>, polling: bool }`.
 - `https://mcp-api-01.makeupar.com/mcp/fashion`: `AI-Clothes-Virtual-Try-On`, `AI-Fabric-Virtual-Try-On`, and the same utility tools.
 
-## MCP decision
+## MCP decision: MCP is the agent's transport
 
-The MCP servers **work** and could carry the agent's two YouCam tools: `upload_file`, then `AI-Facial-Color-Tones-Analyzer` / `AI-Makeup-Virtual-Try-On` / `AI-Clothes-Virtual-Try-On` with `polling: true`.
+The brief said: "If they work, use them for the agentic layer. Otherwise call REST directly." They work, so the agent's YouCam tasks run as MCP tool calls by default (`server/youcam/mcp.js`, `YOUCAM_TRANSPORT=mcp`).
 
-SecondTry's agent still calls **REST directly** by default, for three reasons:
-1. The agent's planner is deterministic code, not an LLM choosing tools, so MCP's tool-discovery benefit doesn't apply.
-2. REST gives us exact control over metering, retries, timeouts and `task/delete` for privacy.
-3. Shopper-facing latency is lower without an extra hop.
+| Agent tool | MCP server | MCP tool | Arguments |
+|---|---|---|---|
+| `analyze_skin_tone` | `/mcp/beauty` | `AI-Facial-Color-Tones-Analyzer` | `{ request: { src_file_id, face_angle_strictness_level }, polling: true }` |
+| `render_tryon` (lipstick, foundation) | `/mcp/beauty` | `AI-Makeup-Virtual-Try-On` | `{ request: { src_file_id, version, effects }, polling: true }` |
+| `render_tryon` (dress) | `/mcp/fashion` | `AI-Clothes-Virtual-Try-On` | `{ request: { src_file_id, ref_file_id, garment_category }, polling: true }` |
 
-The YouCam client sits behind one interface (`server/youcam/client.js`), so an MCP transport can be swapped in. See the roadmap in the README.
+How it works:
+- **Session.** `initialize` → `notifications/initialized` once per server, then `tools/call`. The `Mcp-Session-Id` header is reused, and replies can be JSON or SSE.
+- **Result.** The finished task is in `structuredContent.result.data` (or the same JSON as text): `task_status: "success"` with `results`, exactly like the REST poll payload. If the tool returns before the task finishes but gives a `task_id`, the client finishes by polling REST.
+- **Validation.** A reply only counts if it contains the expected result (`results.color` for tone, `results.url` for renders). Otherwise it's treated as a transport failure. Live, the server sometimes replied `{ error_message, request_id }` instead of a task payload.
+- **Fallback.** Transport or protocol failures (HTTP errors, timeouts, malformed or incomplete replies) fall back to the REST task endpoint for that call. Task errors (`error_no_face`, `error_pose`, …) are real answers: they are not retried, and they become retake guidance.
+- **What stays on REST.** File upload (we upload a binary with `PUT` instead of base64 through `upload_file`), credit and feature cost, result download, and `task/delete` for privacy. Metering is identical: units come from the feature-cost table and are charged only on success.
+
+Verified live on 2026-11-02 (traces show "over MCP"):
+
+| Flow | Calls | Latency | Units |
+|---|---|---|---|
+| Lipstick return | tone + 3 × makeup-vto, all via MCP | tone 10.5 s, makeup 10–17 s each (parallel) | 23 |
+| Dress return | tone + 3 × cloth-v4, all via MCP | tone 8–11 s, cloth 12–22 s each (parallel) | 26 |
+| Cleanup | REST `task/delete` | | 0 (4/4 tasks deleted) |
+
+The planner stays deterministic code, not an LLM choosing tools. That keeps matching, policy and exchange auditable and testable. MCP gives a standard tool interface to YouCam's features, so a future LLM-driven planner could use the same tools unchanged.

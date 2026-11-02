@@ -1,7 +1,7 @@
 import { config, llmEnabled } from './config.js';
 import { createApp } from './app.js';
 
-const { app, init } = createApp(config);
+const { app, init } = createApp(config, { persistEvents: config.persistEvents });
 await init();
 app.listen(config.port, config.host, () => {
   console.log(`SecondTry running at http://${config.host === '0.0.0.0' ? 'localhost' : config.host}:${config.port}`);

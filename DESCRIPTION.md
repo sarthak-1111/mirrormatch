@@ -35,6 +35,7 @@ SecondTry is a returns desk for a demo store, "Hue & Hem" (fictional, no real br
 
 - **Three YouCam AI APIs plus the platform APIs, end to end on the V2 server-to-server flow.** The flow is: File API registration, PUT to the pre-signed URL, create the task, poll, download the result, then `task/delete`.
   - Credit and feature-cost endpoints check the balance at startup and meter every call. Costs were verified live: 20 units for tone, 1 for makeup try-on, 2 for clothes try-on.
+  - **The agent's YouCam calls run through YouCam's hosted MCP servers** (beauty and fashion): `AI-Facial-Color-Tones-Analyzer`, `AI-Makeup-Virtual-Try-On` and `AI-Clothes-Virtual-Try-On` as tool calls. A REST fallback means an MCP hiccup never reaches the shopper. Verified live end to end.
   - The clothes and look template catalogues were also checked.
   - We verified the API live before building on it: latency, error codes, and which photo framing works for both tone analysis and cloth-v4. One waist-up photo works at `low` strictness. A close-up selfie fails cloth-v4 with `error_pose`.
 - **A tool-using agent with a deterministic planner.** It has eight tools: `get_order`, `check_photo_quality`, `analyze_skin_tone`, `find_alternatives`, `render_tryon`, `check_stock_and_policy`, `create_exchange` and `escalate_to_human`.
@@ -50,7 +51,7 @@ SecondTry is a returns desk for a demo store, "Hue & Hem" (fictional, no real br
   - A unit floor, an optional daily cap for hosted demos, and a free pre-check before the 20-unit analysis.
 - **An optional LLM, for wording only.** It works with any OpenAI-compatible endpoint (we used a local `gpt-oss:120b`). It only rewords the tone summary; its output is validated (facts kept, no judgemental words) and it never blocks the flow. The app works fully with templated text and only a YouCam key.
 - **Quality:**
-  - 35 unit tests covering colour maths, matching, the exchange policy and every agent decision path.
+  - 40 unit tests covering colour maths, matching, the exchange policy, every agent decision path and the MCP transport.
   - A Playwright end-to-end happy path, and a mock mode so judges can run it without spending units.
   - Plain Node + Express with no build step. MIT licensed.
 
@@ -96,12 +97,12 @@ It also closes the loop: the same matching engine explains the returns to the me
 
 - A returns-portal **webhook integration** for real stores: trigger on `return.created` with a colour reason, and write the exchange back via the store's order API.
 - YouCam webhooks instead of polling.
-- An MCP transport for the agent's YouCam tools (already verified working).
+- Publishing SecondTry's own tools as an MCP server, so a store's support assistant can run a SecondTry return.
 - Catalogue import with swatch calibration.
 - Pushing insights back to product pages.
 
 ## Built with
 
-YouCam AI Facial Color Tones Analyzer · YouCam AI Makeup Virtual Try-On · YouCam AI Clothes Virtual Try-On (cloth-v4) · YouCam File / Credit / Task APIs · Node.js · Express · vanilla JS · CIELAB / CIEDE2000 · Playwright · optional OpenAI-compatible LLM (local gpt-oss:120b)
+YouCam AI Facial Color Tones Analyzer · YouCam AI Makeup Virtual Try-On · YouCam AI Clothes Virtual Try-On (cloth-v4) · YouCam MCP servers (beauty, fashion) · YouCam File / Credit / Task APIs · Node.js · Express · vanilla JS · CIELAB / CIEDE2000 · Playwright · optional OpenAI-compatible LLM (local gpt-oss:120b)
 
 **Try it:** `npm install && npm start` with a `YOUCAM_API_KEY` in `.env`, or `npm run mock` with no key. Repo: https://github.com/sarthak-1111/secondtry

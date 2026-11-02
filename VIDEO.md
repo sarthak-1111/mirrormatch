@@ -69,7 +69,7 @@ Each section below lists its shots, then the voiceover.
 - **1:50:** desktop `/merchant`. The live KPI tiles update: returns started, exchanges accepted, refund value retained. The event feed scrolls.
 - **1:58:** live heatmap (product × tone profile) and an insight card.
 - **2:04:** scroll to the dashed **Synthetic demo data** section. Point at the label.
-- **2:08:** agent traces: expand the lipstick session showing `analyze_skin_tone` 20 units, `find_alternatives`, `check_stock_and_policy`, `render_tryon` ×3 (1 unit each), `create_exchange`, and "deleted 4/4 YouCam tasks".
+- **2:08:** agent traces: expand the lipstick session showing `analyze_skin_tone` 20 units "over MCP", `find_alternatives`, `check_stock_and_policy`, `render_tryon` ×3 (1 unit each, "over MCP"), `create_exchange`, and "deleted 4/4 YouCam tasks".
 - **2:16:** the unit budget card: balance from the credit API and the per-feature costs.
 
 **Voiceover:**
@@ -78,7 +78,7 @@ Each section below lists its shots, then the voiceover.
 >
 > **1:58** "And a heatmap of which products get returned by which tone profiles, with a recommendation from the same matcher. This section is synthetic demo data, clearly labelled; the live numbers only come from real sessions."
 >
-> **2:08** "Under the hood it's an agent with eight tools. Every step, tool, timing and YouCam unit is traced, with no photos logged. Decisions are code; an optional LLM only polishes wording. Renders are capped at three per return and cached, and the credit API is checked at startup."
+> **2:08** "Under the hood: an agent with eight tools, calling YouCam through its **MCP servers**. Every step, timing and unit is traced, with no photos logged. Decisions are code; an LLM only polishes wording. Renders are capped at three and cached."
 
 ## 2:20–2:40: Close
 
@@ -97,5 +97,5 @@ Each section below lists its shots, then the voiceover.
 - [ ] "Visual preview, not a guarantee" readable
 - [ ] Agent trace with units
 - [ ] Synthetic demo data label visible
-- [ ] YouCam APIs named in the voiceover: Facial Color Tones Analyzer, Makeup VTO, Clothes VTO (and the File, Credit and Task delete APIs if time allows)
+- [ ] YouCam APIs named in the voiceover: Facial Color Tones Analyzer, Makeup VTO, Clothes VTO, the MCP servers (and the File, Credit and Task delete APIs if time allows)
 - [ ] Under 3:00, uploaded **public** to YouTube, link pasted in the Devpost form
