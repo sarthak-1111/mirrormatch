@@ -107,25 +107,49 @@ Errors: `error_pose`, `error_invalid_ref`, `error_apply_region_mismatch`, `error
 | `InvalidTaskId`, `TaskTimeout`, 429, 5xx | polling | "Something went wrong on our side…" | retry with backoff; 2 analysis failures → escalate to a human |
 | 401 `InvalidApiKey` / `InactiveApiKey` / `ExpiredApiKey` | any | generic error | logged; mock mode suggested |
 
-## Latency (live)
+## Live verification (2026-11-02, `scripts/verify-api.mjs`, YouCam official sample photos)
 
-To be filled in from `scripts/verify-api.mjs` output (see the table below).
+| Call | Result | Latency | Units (measured by balance delta) |
+|---|---|---|---|
+| `GET /client/credit` | `results[0] = {type: ApiPaygToken, amount_dec: 1000}` | 0.6 s | 0 |
+| `GET /credit/feature-cost` | 22 SKUs. **skin-tone-analysis 20, makeup-vto 1, cloth-v4 2**, cloth/cloth-v3 2, look-vto 2, skin-analysis 9–22 | 1.9 s | 0 |
+| `GET /task/template/cloth` | 120 templates in 14 categories (e.g. Feminine 21, Sports 20). One plain dress (`flowy_black_dress_feminine`) | 0.8 s | 0 |
+| `GET /task/template/look-vto` | Themed looks (Animals, Horoscope, …). Not usable for exact catalogue shades | 0.8 s | 0 |
+| File register + PUT (770×1024 JPEG) | `file_id` returned; PUT 200 | 0.3–1.1 s | 0 |
+| skin-tone-analysis, close-up selfie | `face_quality` all `good`; all 7 colour fields returned | **6.5 s** | **20** |
+| skin-tone-analysis, **waist-up** photo, strictness `high` | `error_face_angle_downward` | 9.8 s | 0 |
+| skin-tone-analysis, **waist-up** photo, strictness `low` | success, all colours | 6.7 s | 20 |
+| skin-tone-analysis, full-length photo (tiny face) | `error_no_face` | 9.7 s | 0 |
+| skin-tone-analysis, image with no face | `error_no_face`, "No face was detected in the source image." | 6.6 s | 0 |
+| makeup-vto `lip_color` (matte, intensity 75) | `results.url`; realistic | **6.8–17.8 s** (first call slower) | **1** |
+| makeup-vto `foundation` | `results.url`; natural, no retouch with `skin_smooth` 0/0 | 6.8 s | 1 |
+| cloth-v4, close-up selfie + dress | `error_pose`: "No body pose was detected in the user image" | 2.4 s | 0 |
+| cloth-v4, full-length photo + self-made dress PNG, `full_body` | success, very convincing | **13.4 s** | **2** |
+| cloth-v4, **waist-up** photo + dress PNG, `full_body` | success (renders the visible part of the dress) | 14.0 s | 2 |
+| `POST /task/delete` | `{status:200}` for each finished task | 0.3–0.7 s | 0 |
 
-| Call | Measured | Notes |
-|---|---|---|
-| File register + PUT | pending live check | |
-| skin-tone-analysis (task + poll) | pending live check | |
-| makeup-vto (task + poll) | pending live check | |
-| cloth-v4 (task + poll) | pending live check | |
+Total for this verification: 1000 → 954 units (46 spent, matching the meter).
 
-## MCP servers
+**Design decisions from these results**
+- **Lipstick and foundation returns:** a close-up selfie, tone strictness `medium`. Same photo for makeup-vto.
+- **Dress returns:** **one waist-up photo** serves both skin-tone-analysis (strictness `low`) and cloth-v4. A close-up selfie fails cloth-v4 with `error_pose`.
+- **Error and failure cost:** errors cost 0 units, so a failed photo is free to retry. Only successes are metered.
+- **Expected wait:** one return takes about 7 s for analysis plus about 7–18 s for previews (3 run in parallel). That's within the "about 30 seconds" promise.
+- **Garment references:** self-made product PNGs work well as `ref_file_id`. Each one is uploaded once and its `file_id` reused for 25 days.
 
-The docs list hosted MCP servers on streamable HTTP with Bearer auth:
-- `https://mcp-api-01.makeupar.com/mcp/beauty`: tools include `AI_Facial_Color_Tones_Analyzer`, `AI_Makeup_Virtual_Try_On`, `AI_Skin_Analysis`, `AI_Look_Virtual_Try_On`, `File_Upload` (an *interactive* browser widget), `Get_Running_Task_Status`, `Get_Feature_Cost`.
-- `https://mcp-api-01.makeupar.com/mcp/fashion`: tools include `AI_Clothes_Virtual_Try_On`, `AI_Fabric_Virtual_Try_On`, plus the same utility tools.
+## MCP servers (live check: `node scripts/check-mcp.mjs beauty`)
 
-Assessment: see "MCP decision" below. Live `tools/list` check is pending.
+- `https://mcp-api-01.makeupar.com/mcp/beauty`: `initialize` → "YouCam for Beauty & Skin Care" v1.0.1, streamable HTTP, Bearer auth. `tools/list` → **50 tools**, including `AI-Facial-Color-Tones-Analyzer`, `AI-Makeup-Virtual-Try-On`, `AI-Look-Virtual-Try-On`, `AI-Skin-Analysis`, `Get-Running-Task-Status`, `Get-Feature-Cost`, `upload_file` (base64 → `file_id`) and `File-Upload` (interactive widget).
+- Every task tool takes `{ request: <same body as REST>, polling: bool }`.
+- `https://mcp-api-01.makeupar.com/mcp/fashion`: `AI-Clothes-Virtual-Try-On`, `AI-Fabric-Virtual-Try-On`, and the same utility tools.
 
 ## MCP decision
 
-Pending live check (`node scripts/check-mcp.mjs beauty`).
+The MCP servers **work** and could carry the agent's two YouCam tools: `upload_file`, then `AI-Facial-Color-Tones-Analyzer` / `AI-Makeup-Virtual-Try-On` / `AI-Clothes-Virtual-Try-On` with `polling: true`.
+
+SecondTry's agent still calls **REST directly** by default, for three reasons:
+1. The agent's planner is deterministic code, not an LLM choosing tools, so MCP's tool-discovery benefit doesn't apply.
+2. REST gives us exact control over metering, retries, timeouts and `task/delete` for privacy.
+3. Shopper-facing latency is lower without an extra hop.
+
+The YouCam client sits behind one interface (`server/youcam/client.js`), so an MCP transport can be swapped in. See the roadmap in the README.

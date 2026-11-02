@@ -149,7 +149,14 @@ if (body && garment) {
 const noface = arg('noface');
 if (noface) {
   const nfId = await step('upload no-face image', async () => yc.uploadImage(readFileSync(noface), { contentType: ct(noface), fileName: basename(noface) }));
-  if (nfId) await step('skin-tone-analysis on a no-face image (expect error, 0 units)', async () => yc.runAndWait('skin-tone-analysis', { src_file_id: nfId }));
+  if (nfId) {
+    await step(`skin-tone-analysis on ${basename(noface)} (strictness ${arg('strict') || 'high'})`, async () => {
+      const r = await yc.runAndWait('skin-tone-analysis', { src_file_id: nfId, face_angle_strictness_level: arg('strict') || 'high' });
+      tasks.push(r.taskId);
+      saveRaw(`skin-tone-${basename(noface)}`, r.data);
+      return { ms: r.ms, units: r.units, faceQuality: r.data.results?.face_quality, skin: Boolean(r.data.results?.color?.skin_color) };
+    });
+  }
 }
 
 for (const t of tasks) await step(`POST /s2s/v2.0/task/delete`, async () => ((await yc.deleteTask(t)) ? 'deleted' : 'not deleted'));
