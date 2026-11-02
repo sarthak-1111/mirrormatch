@@ -1163,7 +1163,7 @@ const autopilot = (() => {
           <span class="ap-title">Autopilot demo: choosing the top match</span>
           <button type="button" class="ap-stop" data-ap="stop">Stop</button>
         </div>
-        <p class="ap-caption" role="status" aria-live="polite"><span class="ap-n"></span><span class="ap-text"></span></p>`;
+        <p class="ap-caption" ${inFrame ? 'aria-live="off"' : 'role="status" aria-live="polite"'}><span class="ap-n"></span><span class="ap-text"></span></p>`;
       document.body.appendChild(el);
       el.querySelector('[data-ap="stop"]').addEventListener('click', () => stop('user'));
     }

@@ -54,16 +54,13 @@ function wallClockMs(tools) {
 }
 
 function follow(id) {
-  if (id === consoleState.id) return;
+  // Back on the orders page: keep the last return's trace on screen until a new one starts.
+  if (!id || id === consoleState.id) return;
   clearTimeout(consoleState.timer);
   Object.assign(consoleState, { id, trace: null, seen: 0, endedPolls: 0 });
   $('console-list').innerHTML = '';
   $('console-sum').innerHTML = '';
-  $('console-empty').hidden = Boolean(id);
-  if (!id) {
-    $('ws-session').textContent = 'No return open in the phone.';
-    return;
-  }
+  $('console-empty').hidden = true;
   poll();
 }
 
@@ -72,7 +69,13 @@ async function poll() {
   if (!id) return;
   let t;
   try {
-    t = await getJson(`/api/trace/${encodeURIComponent(id)}`);
+    const r = await fetch(`/api/trace/${encodeURIComponent(id)}`);
+    if (r.status === 404) {
+      if (id === consoleState.id) $('ws-session').textContent = 'That return is no longer on this server.';
+      return;
+    }
+    if (!r.ok) throw new Error(String(r.status));
+    t = await r.json();
   } catch {
     if (id === consoleState.id) consoleState.timer = setTimeout(poll, 3000);
     return;
@@ -139,11 +142,21 @@ function setRunning(running) {
 function sendToApp(msg) {
   frame.contentWindow?.postMessage({ source: 'mirrormatch-workspace', ...msg }, location.origin);
 }
+let heardFromAutopilot = false;
+let watchdog = null;
 apButtons.forEach((b) =>
   b.addEventListener('click', () => {
     setRunning(true);
+    heardFromAutopilot = false;
     $('ap-caption').textContent = `Starting the ${b.dataset.flow} return…`;
     sendToApp({ type: 'autopilot-start', flow: b.dataset.flow });
+    // If the phone app hasn't loaded yet, the message is lost: hand the buttons back.
+    clearTimeout(watchdog);
+    watchdog = setTimeout(() => {
+      if (heardFromAutopilot) return;
+      setRunning(false);
+      $('ap-caption').textContent = 'The app in the phone is still loading. Please try again in a moment.';
+    }, 4000);
   }),
 );
 apStop.addEventListener('click', () => sendToApp({ type: 'autopilot-stop' }));
@@ -154,6 +167,7 @@ window.addEventListener('message', (e) => {
   if (!m || m.source !== 'mirrormatch-app') return;
   if (m.type === 'session') follow(m.id);
   if (m.type === 'autopilot') {
+    heardFromAutopilot = true;
     $('ap-caption').textContent = m.status === 'running' && m.step ? `Step ${m.step} of ${m.total}: ${m.caption}` : m.caption;
     setRunning(m.status === 'running');
   }
