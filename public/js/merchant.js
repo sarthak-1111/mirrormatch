@@ -16,6 +16,8 @@ const EVENT_LABEL = {
   exchange_created: 'Exchange created',
   refund_chosen: 'Refund chosen',
   escalated: 'Escalated to a specialist',
+  suggestion_approved: 'Suggestion approved (logged only)',
+  suggestion_dismissed: 'Suggestion dismissed',
 };
 
 let summary = null;
@@ -39,6 +41,7 @@ async function load() {
   renderTraces(traces);
   renderUnits(s.units, s.mode);
   loadFit().catch(() => {}); // live escalations and stock can change the gap cards
+  loadSuggestions().catch(() => {});
 }
 
 function renderChips(s) {
@@ -133,6 +136,7 @@ function feedItem(e, isNew = false) {
   if (e.type === 'exchange_created' && products[e.toProductId]) detail = `${p?.shadeName ?? ''} → ${products[e.toProductId].shadeName} · ${money(e.value)} kept`;
   if (e.type === 'tone_analyzed') detail += ` · ${String(e.profileKey).replace('-', ' · ')}`;
   if (e.type === 'refund_chosen') detail += ` · ${money(e.value)}`;
+  if (e.type.startsWith('suggestion_')) detail = String(e.suggestionId ?? '').replace(/^(shade|note):/, '').replaceAll(':', ' · ');
   return `<li class="${isNew ? 'new' : ''}"><time datetime="${esc(e.at)}">${esc(t)}</time><div><span class="t">${esc(EVENT_LABEL[e.type] ?? e.type)}</span><div class="muted small">${esc(detail)}</div></div></li>`;
 }
 
@@ -281,6 +285,151 @@ async function loadFit() {
     ? cards.map(gapCard).join('')
     : `<div class="empty">Every reference profile has at least two good in-stock options in this category.</div>`;
 }
+
+// ---------- agent suggestions (deterministic drafts; approve/dismiss only log an event) ----------
+const previewState = new Map(); // suggestion id -> { status, url?, cached?, units?, error? }
+let suggSig = '';
+let suggMeta = { mode: 'mock', previewLabel: 'Visual preview, not a guarantee' };
+
+function labText(lab) {
+  return `L* ${lab.L} · a* ${lab.a} · b* ${lab.b}`;
+}
+
+function decisionLine(s) {
+  if (!s.decision) return '';
+  const t = new Date(s.decision.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return `<p class="sugg-decided ${esc(s.decision.decision)}" role="status">${s.decision.decision === 'approved' ? 'Approved' : 'Dismissed'} at ${esc(t)} · logged as an event only</p>`;
+}
+
+function decisionButtons(s) {
+  const d = s.decision?.decision;
+  return `
+    <div class="sugg-actions">
+      <button type="button" class="btn small-btn" data-sugg="approved" data-id="${esc(s.id)}" ${d === 'approved' ? 'aria-pressed="true"' : 'aria-pressed="false"'}>Approve</button>
+      <button type="button" class="btn secondary small-btn" data-sugg="dismissed" data-id="${esc(s.id)}" ${d === 'dismissed' ? 'aria-pressed="true"' : 'aria-pressed="false"'}>Dismiss</button>
+    </div>`;
+}
+
+function previewBlock(s) {
+  if (!s.previewable) return '<p class="muted small" style="margin:0">Clothes try-on needs a garment image, so a proposed colourway has no preview yet.</p>';
+  const p = previewState.get(s.id);
+  const mock = suggMeta.mode === 'mock';
+  let inner = '';
+  if (p?.status === 'loading') inner = '<div class="sugg-img skeleton" role="img" aria-label="Preview loading"></div>';
+  if (p?.status === 'done') {
+    inner = `
+      <figure class="sugg-img">
+        <img src="${esc(p.url)}" alt="YouCam's sample model wearing the proposed ${esc(s.category === 'foundation' ? 'foundation' : 'lipstick')} colour ${esc(s.hex)}" />
+        ${mock ? `<div class="mock-tint" style="background:${esc(s.hex)}"></div>` : ''}
+        <figcaption class="label-vp">${mock ? 'Mock preview · ' : ''}${esc(suggMeta.previewLabel)}</figcaption>
+      </figure>
+      <p class="muted small" style="margin:0">${p.cached ? 'From cache · 0 units' : `Rendered with makeup-vto · ${esc(p.units)} unit${p.units === 1 ? '' : 's'}`} · YouCam official sample image</p>`;
+  }
+  if (p?.status === 'error') inner = `<p class="small sugg-err" role="alert">${esc(p.error)}</p>`;
+  return `
+    ${inner}
+    ${p?.status === 'done' ? '' : `<button type="button" class="btn secondary small-btn" data-preview="${esc(s.id)}" ${p?.status === 'loading' ? 'disabled' : ''}>Preview on the sample model</button>
+    <p class="muted small" style="margin:0">Renders this exact colour on YouCam's sample model (1 unit, then cached). ${esc(suggMeta.previewLabel)}.</p>`}`;
+}
+
+function shadeCard(s) {
+  return `
+    <article class="card sugg shade ${s.decision?.decision === 'dismissed' ? 'dismissed' : ''}" aria-labelledby="t-${esc(s.id)}">
+      <p class="sugg-kind"><span id="t-${esc(s.id)}">${esc(s.title)}</span> · ${esc(s.profileLabel)}${s.liveEscalations ? ' · <span class="live-tag">live escalations</span>' : ''}</p>
+      <div class="sugg-colour">
+        <span class="sugg-swatch" style="background:${esc(s.hex)}" role="img" aria-label="Proposed colour ${esc(s.hex)}"></span>
+        <dl class="sugg-dl">
+          <dt>Hex</dt><dd><code>${esc(s.hex)}</code></dd>
+          <dt>CIELAB</dt><dd>${esc(labText(s.lab))}</dd>
+          <dt>Matcher fit</dt><dd>${esc(s.fit.level)} for ${esc(s.profileLabel.toLowerCase())}${s.alsoFits.length ? `; also good for ${esc(s.alsoFits.map((a) => a.label.toLowerCase()).join(', '))}` : ''}</dd>
+          ${s.nearest ? `<dt>Nearest now</dt><dd><span class="swatch" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;border-width:1px;background:${esc(s.nearest.hex)}"></span> ${esc(s.nearest.shadeName)} · ΔE00 ${esc(s.nearest.deltaE)}</dd>` : ''}
+        </dl>
+      </div>
+      <p class="sugg-text">${esc(s.text)}</p>
+      <div class="sugg-preview">${previewBlock(s)}</div>
+      ${decisionLine(s)}
+      ${decisionButtons(s)}
+    </article>`;
+}
+
+function noteCard(s) {
+  const from = s.hex;
+  return `
+    <article class="card sugg note ${s.synthetic ? 'synth' : ''} ${s.decision?.decision === 'dismissed' ? 'dismissed' : ''}" aria-labelledby="t-${esc(s.id)}">
+      <p class="sugg-kind"><span id="t-${esc(s.id)}">${esc(s.title)}</span> · ${esc(s.productName)}${s.synthetic ? ' <span class="synth-tag">Synthetic demo data</span>' : ' · <span class="live-tag">live</span>'}</p>
+      <blockquote class="sugg-quote">${esc(s.note)}</blockquote>
+      <div class="swatches small muted">
+        <span class="swatch" style="background:${esc(from)}" aria-hidden="true"></span>${esc(s.shadeName)}
+        ${s.recommendName ? ` → <span class="swatch" style="background:${esc(s.recommendHex ?? '#ccc')}" aria-hidden="true"></span>${esc(s.recommendName)} (${s.recommendBasis === 'live_exchanges' ? 'what shoppers chose' : "matcher's pick"})` : ''}
+      </div>
+      <p class="muted small" style="margin:0">${esc(s.basis)}${s.wording === 'llm' ? ' Reworded by the LLM (wording only).' : ''}</p>
+      ${decisionLine(s)}
+      ${decisionButtons(s)}
+    </article>`;
+}
+
+function renderSuggestions(list) {
+  const host = $('sugg-list');
+  host.innerHTML = list.length
+    ? list.map((s) => (s.kind === 'shade' ? shadeCard(s) : noteCard(s))).join('')
+    : '<div class="empty">No suggestions right now: every reference profile has at least two good options, and no product stands out in returns.</div>';
+}
+
+let suggestions = [];
+async function loadSuggestions(force = false) {
+  const j = await fetch('/api/merchant/suggestions').then((r) => r.json());
+  suggMeta = { mode: j.mode, previewLabel: j.previewLabel };
+  $('sugg-llm').textContent = j.llm ? ' · wording by the optional LLM' : '';
+  const sig = JSON.stringify(j.suggestions);
+  if (!force && sig === suggSig) return; // unchanged: keep focus and previews as they are
+  suggSig = sig;
+  suggestions = j.suggestions;
+  renderSuggestions(suggestions);
+}
+
+function rerenderKeepingFocus(selector) {
+  renderSuggestions(suggestions);
+  if (selector) document.querySelector(selector)?.focus();
+}
+
+$('sugg-list').addEventListener('click', async (e) => {
+  const dec = e.target.closest('button[data-sugg]');
+  const pre = e.target.closest('button[data-preview]');
+  if (dec) {
+    const id = dec.dataset.id;
+    const decision = dec.dataset.sugg;
+    dec.disabled = true;
+    try {
+      const r = await fetch(`/api/merchant/suggestions/${encodeURIComponent(id)}/decision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision }),
+      });
+      if (!r.ok) throw new Error();
+      const j = await r.json();
+      const s = suggestions.find((x) => x.id === id);
+      if (s) s.decision = { decision, at: j.at };
+      suggSig = JSON.stringify(suggestions);
+      rerenderKeepingFocus(`button[data-sugg="${decision}"][data-id="${CSS.escape(id)}"]`);
+    } catch {
+      dec.disabled = false;
+    }
+  }
+  if (pre) {
+    const id = pre.dataset.preview;
+    previewState.set(id, { status: 'loading' });
+    rerenderKeepingFocus();
+    try {
+      const r = await fetch(`/api/merchant/suggestions/${encodeURIComponent(id)}/preview`, { method: 'POST' });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'The preview could not be rendered right now.');
+      previewState.set(id, { status: 'done', url: j.url, cached: j.cached, units: j.units });
+    } catch (err) {
+      previewState.set(id, { status: 'error', error: err.message });
+    }
+    rerenderKeepingFocus();
+  }
+});
 
 let reloadTimer = null;
 function connect() {

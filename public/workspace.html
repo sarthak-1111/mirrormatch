@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Workspace · MirrorMatch</title>
+  <meta name="description" content="MirrorMatch workspace: the shopper app, the agent's live trace, the merchant view and what is connected, on one screen." />
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="stylesheet" href="/css/merchant.css" />
+  <link rel="stylesheet" href="/css/workspace.css" />
+</head>
+<body class="merchant workspace">
+  <a class="sr-only" href="#ws">Skip to the workspace</a>
+  <header class="topbar">
+    <a class="brand" href="/story.html" aria-label="MirrorMatch story">
+      <img src="/assets/logo.svg" alt="" />
+      <b>MirrorMatch</b><span>Workspace · Hue &amp; Hem</span>
+    </a>
+    <div class="spacer"></div>
+    <nav class="ws-nav" aria-label="Pages">
+      <a href="/story.html">Story</a>
+      <a href="/" target="_blank" rel="noopener">Shopper app ↗</a>
+      <a href="/merchant" target="_blank" rel="noopener">Merchant dashboard ↗</a>
+    </nav>
+    <span id="mode-chip" class="chip" hidden></span>
+  </header>
+
+  <main id="ws" class="ws" tabindex="-1">
+    <section class="ws-left" aria-labelledby="phone-h">
+      <h1 id="phone-h" class="sr-only">Shopper app</h1>
+      <div class="ws-autopilot card flat" aria-labelledby="ap-h">
+        <div class="ws-ap-head">
+          <h2 id="ap-h">Run a return for me</h2>
+          <p class="muted small">The app plays a whole return by itself, pressing the same buttons a shopper would. Stop any time.</p>
+        </div>
+        <div class="ws-ap-buttons" role="group" aria-label="Autopilot">
+          <button type="button" class="btn accent" data-flow="lipstick">Lipstick</button>
+          <button type="button" class="btn secondary" data-flow="dress">Dress</button>
+          <button type="button" class="btn ghost" id="ap-stop" disabled>Stop</button>
+        </div>
+        <p class="ws-ap-caption" id="ap-caption" role="status" aria-live="polite">Uses YouCam's official sample model. With the demo cache on, repeat runs cost 0 units.</p>
+      </div>
+      <div class="phone" id="phone">
+        <iframe id="app-frame" src="/?embed=1" title="MirrorMatch shopper app, phone view"></iframe>
+      </div>
+    </section>
+
+    <div class="ws-right">
+      <section class="ws-console" aria-labelledby="console-h">
+        <div class="ws-console-head">
+          <div>
+            <p class="eyebrow">Agent console · live</p>
+            <h2 id="console-h">What the agent is doing</h2>
+          </div>
+          <p class="ws-session" id="ws-session" aria-live="polite">No return yet.</p>
+        </div>
+        <div class="trace-panel ws-trace" id="console">
+          <div class="sum" id="console-sum"></div>
+          <ol class="trace-list" id="console-list"></ol>
+          <p class="ws-empty" id="console-empty">Start a return in the phone (or press <b>Lipstick</b> above). Each tool call, decision, timing and YouCam unit appears here as it happens.</p>
+          <p class="ws-note">No photos, colour values or raw API output are logged.</p>
+        </div>
+      </section>
+
+      <div class="ws-grid">
+        <section class="card ws-merchant" aria-labelledby="merchant-h">
+          <div class="ws-card-head">
+            <h2 id="merchant-h">Merchant · live</h2>
+            <a href="/merchant" target="_blank" rel="noopener">Dashboard ↗</a>
+          </div>
+          <div class="ws-kpis" id="ws-kpis" aria-live="polite"></div>
+          <h3>Latest events</h3>
+          <ol class="feed ws-feed" id="ws-feed"></ol>
+          <h3>Agent suggestions</h3>
+          <div id="ws-suggestions" class="ws-suggestions"></div>
+        </section>
+
+        <section class="card ws-env" aria-labelledby="env-h">
+          <div class="ws-card-head">
+            <h2 id="env-h">Environment</h2>
+            <span class="muted small">from <code>/api/health</code></span>
+          </div>
+          <dl class="ws-dl" id="ws-env"></dl>
+          <h3>Privacy</h3>
+          <ul class="ws-privacy" id="ws-privacy"></ul>
+        </section>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="/js/workspace.js"></script>
+</body>
+</html>
