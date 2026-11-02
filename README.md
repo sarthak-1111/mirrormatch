@@ -1,36 +1,47 @@
 # MirrorMatch
 
-**The returns desk that gets it right the second time.**
+**The returns desk with a mirror: see the right match on you before you send it back.**
 
-When a shopper starts a return because *"the shade didn't match"* or *"the colour didn't suit me"*, MirrorMatch:
-1. asks for a selfie and measures their skin tone,
-2. finds the right shade or colourway in the store's catalogue,
-3. shows the alternatives on the shopper's own face or body with virtual try-on, and
+### ▶ Live demo: **https://sarthak-1111.github.io/mirrormatch/**
+*Opens the connected workspace (phone, agent console, merchant view). Press **Run a return for me** and the app plays a whole return by itself with YouCam's sample model: replays of real YouCam results, 0 units. Or upload your own selfie in the phone (live YouCam calls, capped per day). The demo runs on the author's workstation through a Cloudflare tunnel; if it's resting, `npm run mock` runs everything locally with no key.*
+
+When a shopper starts a return because *"the shade didn't match"*, *"the colour didn't suit me"* or *"it didn't suit my skin"*, MirrorMatch:
+1. asks for one photo and measures their skin tone (and, for foundation and skincare, reads their skin),
+2. finds the right shade, colourway or texture in the store's catalogue with plain, explainable colour science,
+3. shows the alternatives on the shopper's own face, hair or body with virtual try-on, and completes the look (lips over the new dress, a matching blush),
 4. offers an instant exchange instead of a refund. The refund stays one tap away.
 
-Merchants get a dashboard: refunds turned into exchanges, and which products get returned by which tone profiles.
+Merchants get a live dashboard: refunds turned into exchanges, which products get returned by which tone profiles, gaps in the shade range, and the agent's drafted fixes, waiting for a person to approve.
 
-Built for the **YouCam API Skin AI & eCommerce VTO Hackathon**, **eCommerce VTO** track. Makeup try-on and clothes try-on work together in one returns flow.
+Built for the **YouCam API Skin AI & eCommerce VTO Hackathon**, **eCommerce VTO** track, with **five YouCam AI APIs**: Facial Color Tones Analyzer, Skin Analysis, Makeup Virtual Try-On, Hair Color and Clothes Virtual Try-On. Makeup try-on and clothes try-on work together in one returns flow, down to one image of the shopper wearing the new dress *and* the matching lipstick.
 
-Demo store: **Hue & Hem**, a fictional shop. No real brands. Start with the one-minute story at **`/story.html`**.
+Demo store: **Hue & Hem**, a fictional shop. No real brands. Start with the one-minute story at **`/story.html`**, or the workspace at **`/workspace.html`**.
 
 **Why it's different.** Shade finders guess *before* a purchase. A return is the only time a store learns what actually failed: *this shade, on this tone profile, didn't work*. MirrorMatch turns each of those moments into a saved sale for the shopper and a fix for the store's catalogue.
+
+| The workspace: autopilot, agent console, merchant view | Hair colour, before / after | Lips on the new dress (makeup + clothes) |
+|---|---|---|
+| ![Workspace](docs/screenshots/10-workspace.png) | ![Hair colour before and after](docs/screenshots/11-hair-colour.png) | ![Lipstick rendered over the dress try-on](docs/screenshots/12-lips-on-dress.png) |
 
 | Return offer | Lipstick try-on | Before / after on you |
 |---|---|---|
 | ![Return offer](docs/screenshots/01-return-offer.png) | ![Lipstick matches and try-on](docs/screenshots/02-lipstick-tryon.png) | ![Before and after slider](docs/screenshots/06-before-after.png) |
 
-| Dress try-on | Colour passport ("Picked for you") | Agent trace (desktop) |
+| Your skin today (Skin AI) | Dress try-on | Colour passport ("Picked for you") |
 |---|---|---|
-| ![Dress colourway try-on](docs/screenshots/03-dress-tryon.png) | ![Colour passport](docs/screenshots/09-colour-passport.png) | ![Agent trace](docs/screenshots/04-agent-trace.png) |
+| ![Skin analysis card](docs/screenshots/13-skin-analysis.png) | ![Dress colourway try-on](docs/screenshots/03-dress-tryon.png) | ![Colour passport](docs/screenshots/09-colour-passport.png) |
 
-| Merchant dashboard | Who is each shade for? | Alex's story |
+| Merchant dashboard | Who is each shade for? | The agent's suggestions |
 |---|---|---|
-| ![Merchant dashboard](docs/screenshots/05-merchant-dashboard.png) | ![Shade-fit matrix with gap cards](docs/screenshots/08-shade-fit.png) | ![Story page](docs/screenshots/07-story.png) |
+| ![Merchant dashboard](docs/screenshots/05-merchant-dashboard.png) | ![Shade-fit matrix with gap cards](docs/screenshots/08-shade-fit.png) | ![Agent suggestions](docs/screenshots/14-agent-suggestions.png) |
+
+| Agent trace | Alex's story |
+|---|---|
+| ![Agent trace](docs/screenshots/04-agent-trace.png) | ![Story page](docs/screenshots/07-story.png) |
 
 *The people in the screenshots are YouCam's official API sample images (see `ASSETS.md`). Every preview is labelled "Visual preview, not a guarantee".*
 
-**Demo video (2:52):** Alex's story, then live runs of a lipstick return (with the before/after and the colour passport) and a dress return, followed by the merchant dashboard, the shade-fit grid and the agent trace. The video is linked from the Devpost submission. [`VIDEO.md`](VIDEO.md) has the timeline, the narration, and what was shortened in the edit.
+**Demo video (2:55):** Alex's story, then the workspace on autopilot: live runs of a lipstick return (try-on, before/after, a matching blush), a hair-colour return, a foundation return with skin analysis, and a dress return with lips tried on over the new dress, followed by the merchant dashboard, the shade-fit grid and the agent's suggestions. The video is linked from the Devpost submission. [`VIDEO.md`](VIDEO.md) has the timeline, the narration, and what was shortened in the edit.
 
 ---
 
@@ -118,7 +129,7 @@ Every call is server-side. Units were verified live with `GET /s2s/v2.0/credit/f
 
 A typical return costs **23 units** (lipstick or foundation: 20 + 3 × 1) or **26 units** (dress: 20 + 3 × 2). Cached repeats cost 0. New flows: hair colour **23** (20 + 3 × 1), foundation with the skin reading **32** (23 + 9), skincare **9** (skin analysis only, no try-on). Each opt-in "complete the look" preview adds **1** (at most 2 per return).
 
-### New: complete the look, hair colour and Skin AI
+### Complete the look, hair colour and Skin AI
 
 - **Lips to match the new dress.** After a dress return finds a better colourway, "Complete the look: lips for {colour}" picks the in-stock lipstick that suits both the shopper's measured profile and the new dress (personal fit + temperature, intensity and red-clash rules, one-line reason). The cloth-v4 render is uploaded as a new file and makeup-vto puts the lipstick on it: the shopper wearing the new dress *and* the matching lipstick. Adding the lipstick is a separate, unticked, clearly priced checkbox; the exchange stays free and the refund stays one tap away.
 - **Matching blush.** On lipstick results, "See it with a matching blush" renders `lip_color` + `blush` in one makeup-vto call. The blush follows the lipstick's hue, nudged toward the undertone. A styling idea, nothing to buy.
@@ -127,7 +138,7 @@ A typical return costs **23 units** (lipstick or foundation: 20 + 3 × 1) or **2
 - **Skincare returns** (order HH-10462, *Cloud Moisturiser · Rich*, reason "It didn't suit my skin", offered for skincare only): skin analysis picks Light gel, Balanced or Rich by rule; if the returned texture already suits, the agent escalates instead of guessing. No try-on.
 - Every step is in the agent trace (tool, timing, units, YouCam feature, "over MCP"), respects `budgetCheck` and the demo cache (photo hash + feature + params), and has mock outputs. Look previews have their own cap (`POLICY.maxLookRendersPerReturn = 2`) on top of the 3 core renders.
 
-**Transport: YouCam's MCP servers.** The agent's three AI tasks run as tool calls on YouCam's hosted MCP servers (`mcp-api-01.makeupar.com/mcp/beauty` for `AI-Facial-Color-Tones-Analyzer` and `AI-Makeup-Virtual-Try-On`, `/mcp/fashion` for `AI-Clothes-Virtual-Try-On`). Each tool gets the same request body as REST, with `polling: true`. This was verified live end to end for all three features. If an MCP call fails at the transport level, the client falls back to the REST task endpoint automatically, so the shopper never sees an outage. Task errors such as `error_no_face` still come back as friendly guidance. Upload, credit, download and task delete stay on REST, so metering and privacy cleanup work the same either way. Set `YOUCAM_TRANSPORT=rest` to skip MCP.
+**Transport: YouCam's MCP servers.** The agent's five AI features run as tool calls on YouCam's hosted MCP servers (`mcp-api-01.makeupar.com/mcp/beauty` for `AI-Facial-Color-Tones-Analyzer`, `AI-Skin-Analysis`, `AI-Makeup-Virtual-Try-On` and `AI-Hair-Color-Virtual-Try-On`; `/mcp/fashion` for `AI-Clothes-Virtual-Try-On`). Each tool gets the same request body as REST, with `polling: true`. This was verified live end to end for all five features. If an MCP call fails at the transport level, the client falls back to the REST task endpoint automatically, so the shopper never sees an outage. Task errors such as `error_no_face` still come back as friendly guidance. Upload, credit, download and task delete stay on REST, so metering and privacy cleanup work the same either way. Set `YOUCAM_TRANSPORT=rest` to skip MCP.
 
 ## Architecture
 
@@ -224,16 +235,22 @@ To run without a key, use `npm run mock` (or leave `YOUCAM_API_KEY` empty). The 
 
 Tests:
 ```bash
-npm test                      # 66 unit tests: colour science, matching, policy, agent decision paths, MCP parsing,
-                              #   shade-fit matrix and gaps, webhook, colour passport, suggestions, sample route, workspace endpoints
+npm test                      # 92 unit tests: colour science, matching, hair and skin rules, look pairing, policy,
+                              #   agent decision paths, MCP parsing, shade-fit matrix and gaps, webhook, colour passport,
+                              #   suggestions, sample route, workspace endpoints
 npx playwright install chromium   # once (or set PW_CHANNEL=chrome to use local Chrome)
-npm run test:e2e              # 6 end-to-end tests in a real browser (mock mode): the happy path with the
+npm run test:e2e              # 9 end-to-end tests in a real browser (mock mode): the happy path with the
                               #   before/after slider, passport and dashboard; the story page; a damaged-item refund;
-                              #   the workspace autopilot to an exchange; Stop; approving a merchant suggestion
+                              #   hair colour; lips on the dress (opt-in add-on); a skincare return; the workspace
+                              #   autopilot to an exchange; Stop; approving a merchant suggestion
 npm run secret-scan           # checks every tracked file for keys
 ```
 
 Live API verification (spends about 24 units): `node scripts/verify-api.mjs --face selfie.jpg --body waist-up.jpg --garment public/assets/garments/dress-wrap-cobalt.png`
+
+### The hosted demo (how the live link works)
+
+The live link (https://sarthak-1111.github.io/mirrormatch/) is a small page on this repo's `gh-pages` branch. It reads `live.json` for the current address of a **Cloudflare quick tunnel** (`cloudflared tunnel --url http://127.0.0.1:3900`) in front of this app running on the author's workstation, checks `/api/health`, and forwards you to the workspace (desktop) or the story (phone). A small watchdog keeps the server and the tunnel running and rewrites `live.json` if the tunnel's address changes. The hosted app runs with `DEMO_CACHE=1` (sample-model runs replay real YouCam results, 0 units), `DAILY_UNIT_CAP=60` and `UNIT_FLOOR=40` for visitors' own photos, `TRUST_CF_IP=1`, and the LLM off. If the workstation is offline the page says so and points to the video and `npm run mock`.
 
 ### Environment variables
 
@@ -251,6 +268,8 @@ Live API verification (spends about 24 units): `node scripts/verify-api.mjs --fa
 | `PERSIST_EVENTS` | 1 | `0` keeps live dashboard events in memory only (used by the e2e tests; handy on a hosted demo) |
 | `WEBHOOK_SECRET` | empty | When set, the returns-portal webhook requires the `X-MirrorMatch-Secret` header |
 | `SAMPLES_DIR` | `samples-local` | Where YouCam's sample photos (`face.jpg`, `body.jpg`) are read from for "Use YouCam's sample model". Gitignored; never commit photos of people |
+| `TRUST_CF_IP` | 0 | `1` behind a Cloudflare tunnel: rate-limit per visitor using `CF-Connecting-IP` (trusted only when the hop is loopback) |
+| `DEMO_CACHE_DIR` | `.cache/demo` | Where the demo cache lives |
 | `PORT`, `HOST` | 3000, 127.0.0.1 | Server |
 | `YOUCAM_TRANSPORT` | `mcp` | `mcp`: AI tasks go through YouCam's MCP servers, with REST fallback. `rest`: call the REST task endpoints directly |
 | `YOUCAM_CLOTH_FEATURE`, `YOUCAM_GARMENT_CATEGORY`, `YOUCAM_FACE_STRICTNESS` | `cloth-v4`, `full_body`, `medium` | Verified defaults |
@@ -259,7 +278,7 @@ Live API verification (spends about 24 units): `node scripts/verify-api.mjs --fa
 
 Each participant gets 1,000 free units. MirrorMatch protects them in five ways:
 1. It checks the balance at startup and logs the cost of every call.
-2. It caps renders at 3 per return.
+2. It caps renders at 3 per return (plus at most 2 opt-in look previews), and a hosted demo can set a daily unit cap.
 3. It caches tone results and renders per session, so a repeat render request is free.
 4. It refuses paid calls below `UNIT_FLOOR`.
 5. It runs the free photo pre-check before the 20-unit analysis.
