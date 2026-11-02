@@ -63,7 +63,10 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
   const hits = new Map();
   app.use('/api', (req, res, next) => {
     if (req.method === 'GET' && !req.path.startsWith('/session')) return next();
-    const ip = req.ip || 'local';
+    // Behind a Cloudflare tunnel every request arrives from loopback; the visitor's address is in
+    // CF-Connecting-IP. Trust that header only when configured (TRUST_CF_IP=1) and the hop is local.
+    const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+    const ip = (config.trustCfIp && local && req.get('CF-Connecting-IP')) || req.ip || 'local';
     const now = Date.now();
     const h = hits.get(ip) ?? { start: now, n: 0 };
     if (now - h.start > 60000) Object.assign(h, { start: now, n: 0 });
@@ -81,6 +84,8 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
     });
 
   app.get('/api/health', (req, res) => {
+    // Readable cross-origin so the stable demo link (GitHub Pages) can check the demo is up.
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.json({
       ok: true,
       mode: youcam.mode,

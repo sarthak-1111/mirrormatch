@@ -68,6 +68,8 @@ export const config = {
   },
   sessionTtlMin: num(process.env.SESSION_TTL_MIN, 20),
   rateLimitPerMin: num(process.env.RATE_LIMIT_PER_MIN, 60),
+  // Hosted behind a Cloudflare tunnel: rate-limit by CF-Connecting-IP (only trusted on loopback).
+  trustCfIp: process.env.TRUST_CF_IP === '1',
   dataDir: resolve(ROOT, process.env.DATA_DIR || 'data'),
   // PERSIST_EVENTS=0 keeps live dashboard events in memory only (e2e runs, hosted demo).
   persistEvents: process.env.PERSIST_EVENTS !== '0',
