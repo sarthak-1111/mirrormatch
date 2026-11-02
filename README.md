@@ -3,7 +3,7 @@
 **The returns desk with a mirror: see the right match on you before you send it back.**
 
 ### ▶ Live demo: **https://sarthak-1111.github.io/mirrormatch/**
-*Opens the connected workspace (phone, agent console, merchant view). Press **Run a return for me** and the app plays a whole return by itself with YouCam's sample model: replays of real YouCam results, 0 units. Or upload your own selfie in the phone (live YouCam calls, capped per day). The demo runs on the author's workstation through a Cloudflare tunnel; if it's resting, `npm run mock` runs everything locally with no key.*
+*Opens the workspace on its first tab, **Try it**: pick Lipstick, Dress, Hair colour or Foundation and the app plays a whole return by itself with YouCam's sample model: replays of real YouCam results, 0 units. Or upload your own selfie in the phone (live YouCam calls, capped per day). The demo runs on the author's workstation through a Cloudflare tunnel; if it's resting, `npm run mock` runs everything locally with no key.*
 
 When a shopper starts a return because *"the shade didn't match"*, *"the colour didn't suit me"* or *"it didn't suit my skin"*, MirrorMatch:
 1. asks for one photo and measures their skin tone (and, for foundation and skincare, reads their skin),
@@ -19,7 +19,7 @@ Demo store: **Hue & Hem**, a fictional shop. No real brands. Start with the one-
 
 **Why it's different.** Shade finders guess *before* a purchase. A return is the only time a store learns what actually failed: *this shade, on this tone profile, didn't work*. MirrorMatch turns each of those moments into a saved sale for the shopper and a fix for the store's catalogue.
 
-| The workspace: autopilot, agent console, merchant view | Hair colour, before / after | Lips on the new dress (makeup + clothes) |
+| The workspace, "Try it" tab: a return playing in the phone | Hair colour, before / after | Lips on the new dress (makeup + clothes) |
 |---|---|---|
 | ![Workspace](docs/screenshots/10-workspace.png) | ![Hair colour before and after](docs/screenshots/11-hair-colour.png) | ![Lipstick rendered over the dress try-on](docs/screenshots/12-lips-on-dress.png) |
 
@@ -77,8 +77,9 @@ We don't quote industry return-rate statistics here. The dashboard shows only wh
 - **Agent suggestions**, drafted by deterministic code. *Fill the gap* proposes a new shade for an under-served tone profile, with the target colour (hex + CIELAB) from the matcher's own target logic, and can render that exact colour on YouCam's sample model (makeup-vto, 1 unit, then cached; "Visual preview, not a guarantee"). *Product-page fit notes* draft copy such as "Runs light and warm on deep, cool skin". Notes from synthetic data say so. **Approve** or **Dismiss** only logs an event; nothing external happens. The optional LLM may reword the text; templates otherwise.
 
 **For judges and demos: the workspace (`/workspace.html`)**
-- One desktop screen: the shopper app in a phone frame (`/?embed=1`), a live **agent console** that follows the session in the phone (each tool call, decision, timing and unit), a compact **merchant strip** (KPIs, latest events, suggestions) and an **environment panel** (YouCam transport, units and cap, demo cache, optional LLM, returns-portal webhook, privacy guarantees).
-- **Run a return for me:** pick *Lipstick* or *Dress* and the app plays the whole return itself through the real UI: order, reason, offer, consent, YouCam's sample photo, analysis, previews, the before/after slider, then an exchange for the top match. Each step has a caption and a short pause. **Stop** (or pressing any control in the phone) hands control back at once, and the refund button stays visible throughout. Also available as `/?autoplay=lipstick` or `/?autoplay=dress`.
+- Four tabs, one thing on screen at a time: **Try it** (pick a return; the shopper app plays it in a phone frame, `/?embed=1`, with a progress bar and the latest agent steps in plain words), **Agent steps** (every tool call, decision, timing and unit for the session in the phone), **Store view** (KPIs, latest events, the agent's suggestions) and **Setup** (YouCam transport, units and cap, demo cache, optional LLM, returns-portal webhook, privacy guarantees). Tabs deep-link (`#agent`, `#store`, `#setup`), move with the arrow keys, and show a count of what is new while you look elsewhere.
+- **Design:** built on one design-token set (the Open Design retail package, Apache-2.0): one system font, a white canvas, near-black text and a single coral colour kept for the main action. The merchant dashboard is five tabs too (Overview, Shade fit, Suggestions, Demo history, Agent log), with the synthetic history on its own tab.
+- **Run a return for me:** pick *Lipstick*, *Dress*, *Hair colour* or *Foundation* and the app plays the whole return itself through the real UI: order, reason, offer, consent, YouCam's sample photo, analysis, previews, the before/after slider, then an exchange for the top match. Each step has a caption and a short pause. **Stop** (or pressing any control in the phone) hands control back at once, and the refund button stays visible throughout. Also available as `/?autoplay=lipstick`, `dress`, `hair` or `foundation`.
 - **Use YouCam's sample model:** the photo step also offers YouCam's official sample photo (face for makeup, waist-up for the dress), sent byte for byte so the demo cache (keyed by the photo hash) makes repeat runs free. Put the files in `samples-local/face.jpg` and `samples-local/body.jpg` (gitignored, see `ASSETS.md`); if they are missing the server fetches the official images once and keeps them in memory.
 
 **For a real store's stack**
@@ -323,7 +324,7 @@ server/            Express app, agent, tools, colour + policy engines, YouCam cl
   youcam/          mcp.js (MCP transport, default), client.js (REST V2 + fallback), mock.js, meter.js, errors.js
   store/           catalog, sessions, events, insights, fit (shade-fit matrix, gaps, passport), caches
 public/            shopper flow (index.html), story (story.html), merchant dashboard (merchant.html),
-                   workspace (workspace.html: phone frame, agent console, autopilot), assets
+                   workspace (workspace.html: tabs, phone frame, autopilot), assets
 docs/              screenshots, INTEGRATION.md (returns-portal webhook)
 data/              catalog.json, synthetic-history.json (labelled synthetic)
 scripts/           catalogue/asset generators, API verification, MCP check, screenshots, secret scan

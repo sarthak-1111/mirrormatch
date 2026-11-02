@@ -4,7 +4,7 @@
 
 **Track:** eCommerce VTO (makeup try-on + clothes try-on in one flow)
 
-**Live demo:** https://sarthak-1111.github.io/mirrormatch/ (press "Run a return for me")
+**Live demo:** https://sarthak-1111.github.io/mirrormatch/ (pick a return under "Try it")
 
 ---
 
@@ -38,7 +38,7 @@ MirrorMatch is a returns desk for a demo store, "Hue & Hem" (fictional, no real 
 - **The agent drafts the fix.** For a gap, it proposes a new shade (target hex and CIELAB from the matcher's own logic) and can preview that exact colour on YouCam's sample model; it drafts product-page fit notes. A person approves or dismisses: approving only logs an event.
 - Synthetic illustration data is always labelled and kept apart from live events. A **returns-portal webhook** lets an existing portal hand colour returns to MirrorMatch.
 
-**For judges: the connected workspace.** One screen with the shopper's phone, a live agent console (every tool, timing and unit), the merchant strip and an environment panel (YouCam over MCP, units and caps, cache, optional LLM, webhook, privacy). **"Run a return for me"** plays a whole lipstick, hair-colour, foundation or dress return by itself through the real UI. Stop hands control back at any moment.
+**For judges: the connected workspace.** Four calm tabs, one thing at a time: **Try it** (pick a lipstick, hair-colour, foundation or dress return and watch it play by itself in the phone, through the real UI, with a progress bar and the latest agent steps in plain words), **Agent steps** (every tool call, timing and unit), **Store view** (KPIs, live events, the agent's suggestions) and **Setup** (YouCam over MCP, units and caps, cache, optional LLM, webhook, privacy). Stop hands control back at any moment. The merchant dashboard is tabbed the same way, so nobody meets a wall of numbers.
 
 ## Why not just do this before purchase?
 

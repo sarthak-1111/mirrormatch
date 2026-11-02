@@ -2,6 +2,8 @@
 
 **The final cut is 2:55**, 1920×1080, with captions burned in. Everything shown is a real run of this repo in **live** mode against the YouCam API, called through YouCam's hosted MCP servers. The video file is not in the repo. It is uploaded to YouTube, and the link is in the Devpost submission.
 
+> **Note:** the video was filmed just before the interface moved to tabs and the current design tokens. The returns, the YouCam calls, the agent and the numbers are the same; the live demo and the screenshots show the newer, calmer layout (the workspace's "Try it" tab is the phone and the picker; the agent console, store view and setup now sit in their own tabs).
+
 ## How it was made (and what is not literal)
 
 - **Footage.** The story page, the workspace and the dashboard were recorded on desktop (1440×900). In the workspace, the shopper app runs in a phone frame and **autopilot** plays each return through the real UI (the same buttons a shopper presses). Recordings are scripted with Playwright and captured frame by frame over the Chrome DevTools screencast. Every autopilot step is time-stamped from the app's own messages, so the edit follows the real run.

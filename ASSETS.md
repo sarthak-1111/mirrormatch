@@ -12,7 +12,8 @@ Everything in this repository is original work released under the MIT licence (s
 | Product catalogue and mock orders | `data/catalog.json` | Self-made (`scripts/build-catalog.mjs`). Foundation shades are authored in CIE LCh | MIT (this repo) |
 | Synthetic return history | `data/synthetic-history.json` | Simulated with a fixed seed by `scripts/build-synthetic.mjs`. **Synthetic demo data, not real customers or results** | MIT (this repo) |
 | Synthetic test image (a flat cartoon face, not a person) | `test/fixtures/synthetic-face.jpg` | Self-made with PIL | MIT (this repo) |
-| Fonts: Fraunces, Inter | loaded from Google Fonts at runtime (not redistributed) | Google Fonts | SIL Open Font License 1.1 |
+| Fonts | none shipped or loaded: the system UI font | n/a | n/a |
+| Design tokens (`public/css/tokens.css`) | colour, type, spacing, radius and shadow values copied from an Open Design style package; no names, logos or imagery of any company are used | [Open Design](https://github.com/nexu-io/open-design) | Apache License 2.0 |
 | Screenshots | `docs/screenshots/*.png` | Captured from this app. The people shown are **YouCam official sample images** from the YouCam API documentation (see below), processed by the YouCam API | Screenshots: MIT (this repo). Sample photos: © Perfect Corp., used as documented samples for this YouCam hackathon |
 
 ## Photos of people
