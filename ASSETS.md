@@ -15,13 +15,11 @@ Everything in this repository is original work released under the MIT licence (s
 
 ## Photos of people
 
-The repository contains **no photos of people**.
-
-For development and screenshots we used only the **YouCam API official sample images** published in the docs:
+The only people shown anywhere in this project (repository, screenshots, story page, demo video) are the two **YouCam API official sample images** published in the docs, and YouCam's try-on renders of them:
 - `https://plugins-media.makeupar.com/strapi/assets/sample_Image_7_fa28b2618a.jpg` (selfie, makeup VTO docs)
 - `https://plugins-media.makeupar.com/strapi/assets/clothes_03_cccd5d4803.jpeg` (full-length photo, clothes VTO docs; cropped to waist-up for the dress flow)
 
-The demo video uses the entrant's own face.
+The source photos themselves are not committed. They appear only inside app screenshots: `docs/screenshots/*.png` and the four story-page images in `public/assets/story/` (screenshots of the app's try-on, before/after, dress and dashboard views). "Alex" on the story page is a fictional character, shown only as text and these app screenshots.
 
 ## Third-party code
 

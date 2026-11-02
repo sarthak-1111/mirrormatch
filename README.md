@@ -30,7 +30,7 @@ Demo store: **Hue & Hem**, a fictional shop. No real brands. Start with the one-
 
 *The people in the screenshots are YouCam's official API sample images (see `ASSETS.md`). Every preview is labelled "Visual preview, not a guarantee".*
 
-**Demo video (2:33):** live runs of a lipstick return and a dress return, followed by the merchant dashboard and agent trace. The video is linked from the Devpost submission. [`VIDEO.md`](VIDEO.md) has the timeline, the narration, and what was shortened in the edit.
+**Demo video (2:52):** Alex's story, then live runs of a lipstick return (with the before/after and the colour passport) and a dress return, followed by the merchant dashboard, the shade-fit grid and the agent trace. The video is linked from the Devpost submission. [`VIDEO.md`](VIDEO.md) has the timeline, the narration, and what was shortened in the edit.
 
 ---
 

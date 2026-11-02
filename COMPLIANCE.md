@@ -18,8 +18,8 @@ Legend: ✅ done in the repo · 🟡 partly done or needs a manual step · ⬜ t
 | 2 | A code repository URL with **all** source, assets and instructions needed to run it. Public with a relevant licence, or private and shared with the sponsor | Public repo `sarthak-1111/secondtry`, `LICENSE` (MIT), `README.md` setup, `ASSETS.md` | ✅ |
 | 3 | A text description of the features and functionality that shows **clear consumer or retail value** | `DESCRIPTION.md` (paste into the Devpost form) | ✅ |
 | 4 | Screenshots of the project | `docs/screenshots/*.png` (9 images: offer, lipstick and dress try-on, before/after, colour passport, agent trace, dashboard, shade-fit matrix, story page), embedded in the README | ✅ |
-| 5 | A 1–3 minute demo video showing the experience end-to-end | Produced: 2:33, live runs of the lipstick and dress returns plus the merchant dashboard. `VIDEO.md` has the timeline, narration and how it was made | ✅ |
-| 5a | The video explains which YouCam APIs are used | Named in the narration (0:29, 0:52, 1:11, 1:58) and listed with feature names and units on the end card | ✅ |
+| 5 | A 1–3 minute demo video showing the experience end-to-end | Produced: 2:52, the story opening, live runs of the lipstick and dress returns, then the merchant dashboard. `VIDEO.md` has the timeline, narration and how it was made | ✅ |
+| 5a | The video explains which YouCam APIs are used | Named in the narration (0:39, 1:02, 1:36, 2:28) and listed with feature names and units on the end card | ✅ |
 | 5b | The video shows the project working on its target device | Shopper flow on a phone-sized browser with touch, dashboard on desktop | ✅ |
 | 5c | Uploaded publicly to YouTube (preferred) or Vimeo, with the link in the form | Manual | ⬜ manual |
 | 5d | No third-party trademarks and no copyrighted music | Fictional store "Hue & Hem" and fictional product names; YouCam named only as the API provider; an original CC0 music score; YouCam's official sample photos | ✅ |
@@ -27,7 +27,7 @@ Legend: ✅ done in the repo · 🟡 partly done or needs a manual step · ⬜ t
 | 7 | All materials in English | ✅ | ✅ |
 | 8 | New project, or significantly updated during the submission period | Built from scratch on 2026-11-02 (see git history) | ✅ |
 | 9 | Third-party SDKs, APIs and data used within their licences | YouCam API under its ToS. No other paid API. Optional LLM via any OpenAI-compatible endpoint, configured by the user | ✅ |
-| 10 | Original work that doesn't infringe IP or **privacy** rights | Self-made SVG product art. Garment references from the YouCam template catalogue or self-made recolours (`ASSETS.md`). People photos are only the entrant's own or YouCam official samples | ✅ |
+| 10 | Original work that doesn't infringe IP or **privacy** rights | Self-made SVG product art. Garment references from the YouCam template catalogue or self-made recolours (`ASSETS.md`). The only people shown are YouCam's official sample images (in screenshots, the story page and the video); no source photos are committed | ✅ |
 
 ## Winner obligations (Overview "What to Submit" and Rules §7)
 
