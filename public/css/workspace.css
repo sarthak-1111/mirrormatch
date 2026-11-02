@@ -18,10 +18,10 @@ body.workspace { background: #f7f3ee; }
 @media (min-width: 1040px) and (min-height: 760px) {
   body.workspace { height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
   body.workspace .topbar { position: static; flex: none; }
-  .ws { flex: 1 1 auto; min-height: 0; width: 100%; grid-template-rows: minmax(0, 1fr); align-items: stretch; padding-bottom: 16px; }
-  .ws-left { position: static; display: flex; flex-direction: column; align-items: center; min-height: 0; overflow: hidden; }
-  .ws-left .phone { flex: 1 1 auto; height: auto; min-height: 0; max-height: 860px; }
-  .ws-right { min-height: 0; overflow: auto; padding: 0 4px 4px 0; align-content: start; }
+  body.workspace .ws { flex: 1 1 auto; min-height: 0; width: 100%; grid-template-rows: minmax(0, 1fr); align-items: stretch; padding-bottom: 16px; }
+  body.workspace .ws-left { position: static; display: flex; flex-direction: column; align-items: center; min-height: 0; overflow: hidden; }
+  body.workspace .ws-left .phone { flex: 1 1 auto; height: auto; min-height: 0; max-height: 860px; }
+  body.workspace .ws-right { min-height: 0; overflow: auto; padding: 0 4px 4px 0; align-content: start; }
 }
 
 /* ---------- left: autopilot + phone ---------- */

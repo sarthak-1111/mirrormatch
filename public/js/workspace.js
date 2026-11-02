@@ -92,7 +92,9 @@ function traceItem(t, i, t0, isNew) {
   if (t.kind === 'decision') return `<li class="decision${cls}"><span class="n" aria-hidden="true">→</span><span class="s"><span class="sr-only">Decision: </span>${esc(t.summary)}</span><span class="meta">${rel}</span></li>`;
   if (t.kind === 'cleanup') return `<li class="decision cleanup${cls}"><span class="n" aria-hidden="true">✓</span><span class="s"><span class="sr-only">Clean-up: </span>${esc(t.summary)}</span><span class="meta">${rel}</span></li>`;
   const over = /over MCP/.test(t.summary || '') ? ' · MCP' : '';
-  return `<li class="${t.ok ? '' : 'fail'}${cls}"><span class="n">${i + 1}</span><span><span class="tool">${esc(t.tool)}</span> <span class="s">${esc(t.summary)}</span></span><span class="meta">${rel} · ${esc(t.ms)} ms${t.units ? ` · ${esc(t.units)}u` : ''}${t.cached ? ' · cache' : ''}${over}</span></li>`;
+  // A kept template (LLM off or slow) is normal, not a failure.
+  const failed = !t.ok && t.kind !== 'llm';
+  return `<li class="${failed ? 'fail' : ''}${t.kind === 'llm' ? ' llm' : ''}${cls}"><span class="n">${i + 1}</span><span><span class="tool">${esc(t.tool)}</span> <span class="s">${esc(t.summary)}</span></span><span class="meta">${rel} · ${esc(t.ms)} ms${t.units ? ` · ${esc(t.units)}u` : ''}${t.cached ? ' · cache' : ''}${over}</span></li>`;
 }
 
 function renderConsole(t) {

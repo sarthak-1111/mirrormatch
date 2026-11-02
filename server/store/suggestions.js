@@ -365,7 +365,9 @@ export function previewBody(category, hex, fileId) {
  * in the opt-in demo cache, so each colour is paid for once. The YouCam task is deleted after
  * download. Same unit floor and daily cap as the shopper flow.
  */
-export function createPreviewRenderer({ youcam, meter, config, demoCache, samples, log = () => {} }) {
+export function createPreviewRenderer({ youcam, meter, config, demoCache: diskCache, samples, log = () => {} }) {
+  // Mock output must never land in the on-disk demo cache, where a live run would reuse it.
+  const demoCache = youcam.mode === 'live' ? diskCache : { getBinary: async () => null, setBinary: async () => {} };
   const mem = new Map(); // key -> { buffer, contentType }
   const inflight = new Map();
   const keyFor = (sha, category, hex) => createHash('sha256').update(`suggest-preview:${sha}:${category}:${hex}`).digest('hex').slice(0, 24);
