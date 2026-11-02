@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160" role="img" aria-label="Hem Slip Dress in Navy">
+  <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#323F60"/><stop offset=".55" stop-color="#1F2D4D"/><stop offset="1" stop-color="#011532"/></linearGradient></defs>
+  <rect width="120" height="160" rx="14" fill="#f6f1ea"/>
+  <g transform="translate(0 6)"><path d="M47 44 L50 22 M73 44 L70 22" stroke="#1F2D4D" stroke-width="2"/><path d="M44 44 L52 40 L60 43 L68 40 L76 44 L74 72 L82 128 L60 134 L38 128 L46 72 Z" fill="url(#g)"/></g>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160" role="img" aria-label="Velvet Lip Matte lipstick in Terracotta">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#CE6A51"/><stop offset=".55" stop-color="#B0503A"/><stop offset="1" stop-color="#872D1B"/></linearGradient>
+    <linearGradient id="m" x1="0" x2="1"><stop offset="0" stop-color="#e9e4dc"/><stop offset=".5" stop-color="#fbf9f5"/><stop offset="1" stop-color="#cfc8bd"/></linearGradient>
+  </defs>
+  <rect width="120" height="160" rx="14" fill="#f6f1ea"/>
+  <path d="M46 40 L74 30 L74 80 L46 80 Z" fill="url(#g)"/>
+  <rect x="42" y="78" width="36" height="16" rx="2" fill="url(#m)"/>
+  <rect x="38" y="92" width="44" height="52" rx="4" fill="#2b2522"/>
+  <rect x="41" y="96" width="4" height="44" rx="2" fill="#4a423d"/>
+</svg>

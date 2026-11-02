@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160" role="img" aria-label="Hem Wrap Dress in Marigold">
+  <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#F9BB3E"/><stop offset=".55" stop-color="#E0A526"/><stop offset="1" stop-color="#BC8600"/></linearGradient></defs>
+  <rect width="120" height="160" rx="14" fill="#f6f1ea"/>
+  <g transform="translate(0 6)"><path d="M50 22 L42 24 L30 40 L36 47 L44 43 L47 58 L48 72 L36 128 L60 134 L84 128 L72 72 L73 58 L76 43 L84 47 L90 40 L78 24 L70 22 L60 52 Z" fill="url(#g)"/><path d="M73 72 L46 130" stroke="#B07C00" stroke-width="1.2" opacity=".6"/><rect x="47" y="70" width="26" height="4" fill="#C28B00"/></g>
+</svg>

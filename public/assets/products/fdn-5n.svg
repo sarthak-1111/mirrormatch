@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160" role="img" aria-label="Skin Veil Serum Foundation in shade 5N Amber">
+  <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#B98C73"/><stop offset=".6" stop-color="#A87D64"/><stop offset="1" stop-color="#8D644C"/></linearGradient></defs>
+  <rect width="120" height="160" rx="14" fill="#f6f1ea"/>
+  <rect x="50" y="18" width="20" height="22" rx="3" fill="#2b2522"/>
+  <rect x="44" y="38" width="32" height="10" rx="2" fill="#3b3430"/>
+  <rect x="32" y="48" width="56" height="96" rx="10" fill="url(#g)"/>
+  <rect x="32" y="48" width="56" height="96" rx="10" fill="none" stroke="#ffffff" stroke-opacity=".35"/>
+  <text x="60" y="104" font-family="Georgia, serif" font-size="13" text-anchor="middle" fill="#3b2f2a">5N</text>
+</svg>

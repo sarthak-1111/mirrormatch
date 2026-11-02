@@ -59,7 +59,9 @@ const MAP = {
 export function guidanceFor(code) {
   const hit = MAP[code];
   if (hit) return { message: hit[0], retake: hit[1] };
-  return { message: 'Something went wrong on our side. Please try that photo again.', retake: true };
+  // Unknown / server-side errors are not the shopper's fault: retrying is allowed, but they
+  // count toward the analysis-failure limit that triggers a human hand-off.
+  return { message: 'Something went wrong on our side. Please try that photo again.', retake: false };
 }
 
 /** Checks the `face_quality` block that skin-tone-analysis returns with its colours. */
