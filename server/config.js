@@ -39,6 +39,9 @@ export const config = {
     apiKey,
     baseUrl: (process.env.YOUCAM_BASE_URL || 'https://yce-api-01.makeupar.com').replace(/\/$/, ''),
     mode: forceMock || !apiKey ? 'mock' : 'live',
+    // 'mcp' (default): the agent's YouCam tasks run through YouCam's hosted MCP servers, with
+    // automatic REST fallback on transport errors. 'rest': call the REST task endpoints directly.
+    transport: (process.env.YOUCAM_TRANSPORT || 'mcp').toLowerCase() === 'rest' ? 'rest' : 'mcp',
     clothFeature: process.env.YOUCAM_CLOTH_FEATURE || 'cloth-v4',
     garmentCategory: process.env.YOUCAM_GARMENT_CATEGORY || 'full_body',
     faceAngleStrictness: process.env.YOUCAM_FACE_STRICTNESS || 'medium',

@@ -250,7 +250,7 @@ function viewRefundReview(s) {
       </div>
       <div class="btn-col">
         <button class="btn block" data-action="refund">Confirm refund</button>
-        ${s.reason && state.reasons[s.reason]?.secondTry && !s.profile ? '<button class="btn block secondary" data-action="back-offer">Back</button>' : ''}
+        ${state.returnTo ? `<button class="btn block secondary" data-action="back">${state.returnTo === 'tryon' || state.returnTo === 'matches' ? 'Back to my matches' : 'Back'}</button>` : ''}
       </div>
     </section>`;
   focusTitle();
@@ -595,13 +595,20 @@ const actions = {
     location.hash = `#/return/${v.id}`;
   },
   accept: () => sendEvent('accept_secondtry'),
-  'back-offer': () => {
-    state.session.step = 'offer';
+  async back() {
+    state.returnTo = null;
+    // Re-read the server state: it is the source of truth (renders may have finished meanwhile).
+    state.session = await api('GET', `/api/session/${state.session.id}`);
     renderSession();
   },
   'refund-review': () => {
     stopCamera();
-    if (state.session.step === 'offer') return sendEvent('decline_secondtry');
+    stopPolling();
+    if (state.session.step === 'offer') {
+      state.returnTo = null;
+      return sendEvent('decline_secondtry');
+    }
+    state.returnTo = ['consent', 'capture', 'matches', 'tryon', 'escalated'].includes(state.session.step) ? state.session.step : null;
     state.session = { ...state.session, step: 'refund_review' };
     renderSession();
   },

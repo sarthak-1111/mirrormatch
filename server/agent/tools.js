@@ -100,8 +100,9 @@ export function createTools({ youcam, meter, catalog, events, config, demoCache,
             { sessionId: session.id, hint },
           );
           taskId = r.taskId;
-          session.taskIds.push(r.taskId);
+          if (r.taskId) session.taskIds.push(r.taskId);
           units = r.units;
+          if (r.via === 'mcp') session.toneVia = 'mcp';
           color = r.data.results?.color;
           faceQuality = r.data.results?.face_quality;
         } catch (e) {
@@ -126,7 +127,7 @@ export function createTools({ youcam, meter, catalog, events, config, demoCache,
         data: { profile, faceQuality, cached: cachedHit, taskId },
         units,
         cached: cachedHit,
-        summary: `${profile.profileLabel} (ITA ${profile.ita}°, hue ${profile.hueAngle}°, contrast ${profile.contrast})${cachedHit ? ' [cache]' : ''}`,
+        summary: `${profile.profileLabel} (ITA ${profile.ita}°, hue ${profile.hueAngle}°, contrast ${profile.contrast})${cachedHit ? ' [cache]' : session.toneVia === 'mcp' ? ' over MCP' : ''}`,
       };
     },
 
@@ -205,7 +206,7 @@ export function createTools({ youcam, meter, catalog, events, config, demoCache,
         const g = guidanceFor(e.code);
         throw new ToolError(`${feature} failed: ${e.code}`, { code: e.code, guidance: g.message, retake: false });
       }
-      session.taskIds.push(r.taskId);
+      if (r.taskId) session.taskIds.push(r.taskId);
       const url = resultUrl(r.data);
       if (!url) throw new ToolError('Render returned no image', { code: 'no_result' });
       const dl = await youcam.download(url);
@@ -214,7 +215,7 @@ export function createTools({ youcam, meter, catalog, events, config, demoCache,
       return {
         data: { renderId, buffer: dl.buffer, contentType: dl.contentType, cached: false, feature, ms: r.ms },
         units: r.units,
-        summary: `${role}: ${product.shadeName} via ${feature} (${r.units} unit${r.units === 1 ? '' : 's'})`,
+        summary: `${role}: ${product.shadeName} via ${feature}${r.via === 'mcp' ? ' over MCP' : ''} (${r.units} unit${r.units === 1 ? '' : 's'})`,
       };
     },
 

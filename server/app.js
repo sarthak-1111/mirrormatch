@@ -5,6 +5,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { ROOT, llmEnabled } from './config.js';
 import { YouCamClient } from './youcam/client.js';
 import { MockYouCamClient } from './youcam/mock.js';
+import { McpYouCamClient } from './youcam/mcp.js';
 import { UnitMeter } from './youcam/meter.js';
 import { Catalog, publicProduct } from './store/catalog.js';
 import { SessionStore } from './store/sessions.js';
@@ -18,17 +19,21 @@ import { REASONS, POLICY } from './policy/policy.js';
 
 export function createApp(config, { log = console.log, persistEvents = true } = {}) {
   const meter = new UnitMeter();
+  const liveOpts = {
+    apiKey: config.youcam.apiKey,
+    baseUrl: config.youcam.baseUrl,
+    meter,
+    pollIntervalMs: config.youcam.pollIntervalMs,
+    pollTimeoutMs: config.youcam.pollTimeoutMs,
+    log,
+  };
   const youcam =
-    config.youcam.mode === 'live'
-      ? new YouCamClient({
-          apiKey: config.youcam.apiKey,
-          baseUrl: config.youcam.baseUrl,
-          meter,
-          pollIntervalMs: config.youcam.pollIntervalMs,
-          pollTimeoutMs: config.youcam.pollTimeoutMs,
-          log,
-        })
-      : new MockYouCamClient({ meter, latencyMs: config.mockLatencyMs ?? 250 });
+    config.youcam.mode !== 'live'
+      ? new MockYouCamClient({ meter, latencyMs: config.mockLatencyMs ?? 250 })
+      : config.youcam.transport === 'mcp'
+        ? new McpYouCamClient(liveOpts)
+        : new YouCamClient(liveOpts);
+  youcam.transport ??= config.youcam.mode === 'live' ? 'rest' : 'mock';
   const catalog = new Catalog();
   const events = new EventLog({ path: resolve(config.dataDir, 'events.jsonl'), persist: persistEvents });
   const demoCache = createDemoCache(config.demoCache);
@@ -77,6 +82,7 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
     res.json({
       ok: true,
       mode: youcam.mode,
+      transport: youcam.transport,
       llm: { enabled: llmEnabled(), model: llmEnabled() ? config.llm.model : null },
       units: meter.snapshot(),
       limits: { maxRendersPerReturn: config.budget.maxRendersPerReturn, unitFloor: config.budget.unitFloor, dailyUnitCap: config.budget.dailyUnitCap },
