@@ -4,54 +4,53 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MirrorMatch · live demo</title>
-  <meta name="description" content="MirrorMatch: the returns desk with a mirror. Live demo of the YouCam API hackathon project." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <meta name="description" content="MirrorMatch: see the right shade on your own photo before you send a return back. Live demo of the YouCam API hackathon project." />
+  <meta name="theme-color" content="#ffffff" />
   <style>
-    :root { --bg:#fbf8f4; --surface:#fff; --ink:#231e1b; --ink-2:#4a413c; --muted:#74695f; --line:#e7ded3; --accent:#b4533f; --accent-soft:#f6e3dc; --focus:#1f5fbf; }
+    /* The app's own tokens: white canvas, near-black ink, one pink accent, the system sans. */
+    :root { --bg:#ffffff; --ink:#222222; --ink-2:#3f3f3f; --muted:#6a6a6a; --line:#dddddd; --wash:#f7f7f7; --accent:#e31c5f; --ok:#006c04; }
     * { box-sizing: border-box; }
     body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg); color:var(--ink);
-           font:16px/1.55 Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding:24px 16px; }
-    main { width:100%; max-width:520px; background:var(--surface); border:1px solid var(--line); border-radius:20px;
-           padding:36px 32px; box-shadow:0 1px 2px rgba(35,30,27,.05), 0 8px 24px rgba(35,30,27,.06); }
-    .brand { display:flex; align-items:center; gap:12px; margin-bottom:22px; }
-    .brand b { font:600 28px/1 Fraunces, Georgia, serif; letter-spacing:-.02em; }
-    h1 { font:600 24px/1.25 Fraunces, Georgia, serif; margin:0 0 8px; }
+           font:16px/1.5 -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; padding:24px 16px; }
+    main { width:100%; max-width:460px; }
+    .brand { display:flex; align-items:center; gap:10px; margin-bottom:28px; }
+    .brand b { font-size:20px; font-weight:700; letter-spacing:-.01em; }
+    h1 { font-size:26px; line-height:1.2; font-weight:700; margin:0 0 8px; letter-spacing:-.01em; }
     p { margin:0 0 14px; color:var(--ink-2); }
-    .status { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px; margin-top:18px; }
-    .dot { width:10px; height:10px; border-radius:50%; background:var(--line); }
-    .dot.live { background:#2f6b4f; } .dot.wait { background:var(--accent); animation:pulse 1.2s infinite; }
+    .status { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px; margin-top:20px; }
+    .dot { width:8px; height:8px; border-radius:50%; background:var(--line); flex:none; }
+    .dot.live { background:var(--ok); } .dot.wait { background:var(--accent); animation:pulse 1.2s infinite; }
     @keyframes pulse { 50% { opacity:.35; } }
     @media (prefers-reduced-motion: reduce) { .dot.wait { animation:none; } }
-    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
-    a.btn { display:inline-flex; align-items:center; min-height:44px; padding:0 18px; border-radius:999px; text-decoration:none;
-            font-weight:600; font-size:15px; border:1px solid var(--line); color:var(--ink); background:var(--surface); }
+    .actions { display:grid; gap:10px; margin-top:22px; }
+    a.btn { display:flex; align-items:center; justify-content:center; min-height:50px; padding:0 18px; border-radius:8px; text-decoration:none;
+            font-weight:600; font-size:16px; border:1px solid var(--line); color:var(--ink); background:var(--bg); touch-action:manipulation; }
     a.btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
-    a:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
-    code { background:var(--accent-soft); padding:1px 6px; border-radius:6px; font-size:14px; }
+    a:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+    code { background:var(--wash); padding:1px 6px; border-radius:4px; font-size:14px; }
     .hidden { display:none; }
-    small { color:var(--muted); display:block; margin-top:18px; font-size:13px; }
+    small { color:var(--muted); display:block; margin-top:28px; font-size:13px; }
   </style>
 </head>
 <body>
   <main>
     <div class="brand">
-      <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2b2522"/><circle cx="26" cy="32" r="12" fill="#d98f7e"/><circle cx="38" cy="32" r="12" fill="#e8c9a0" fill-opacity=".85"/></svg>
+      <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2b2522"/><circle cx="26" cy="32" r="12" fill="#d98f7e"/><circle cx="38" cy="32" r="12" fill="#e8c9a0" fill-opacity=".85"/></svg>
       <b>MirrorMatch</b>
     </div>
     <section id="checking">
       <h1>Opening the live demo…</h1>
-      <p>The returns desk with a mirror: it measures your skin tone, shows better shades on you with YouCam try-on, and offers an exchange instead of a refund.</p>
+      <p>Pick what you're returning, add a photo, and see the closest shades on your own face before you send anything back.</p>
       <div class="status" role="status"><span class="dot wait"></span><span id="msg">Checking that the demo server is awake.</span></div>
     </section>
     <section id="live" class="hidden">
       <h1>The live demo is up</h1>
-      <p>Taking you there now. If nothing happens, use the buttons.</p>
+      <p>Taking you there now. If nothing happens, tap a button.</p>
       <div class="actions">
-        <a class="btn primary" id="go-workspace" href="#">Open the workspace</a>
-        <a class="btn" id="go-story" href="#">Start with the story</a>
+        <a class="btn primary" id="go-try" href="#">Try it with your photo</a>
+        <a class="btn" id="go-watch" href="#">Watch the agent run a return</a>
       </div>
-      <div class="status"><span class="dot live"></span><span>Online. Sample-model runs replay real YouCam results and cost nothing.</span></div>
+      <div class="status"><span class="dot live"></span><span>Online.</span></div>
     </section>
     <section id="offline" class="hidden">
       <h1>The live demo is resting</h1>
@@ -83,13 +82,12 @@
         try {
           const h = await Promise.race([fetch(live.url + '/api/health', { cache: 'no-store' }).then((r) => r.json()), timeout(8000)]);
           if (h && h.ok) {
-            const wide = window.matchMedia('(min-width: 900px)').matches;
-            const ws = live.url + (live.path || '/workspace.html');
-            const story = live.url + (live.mobilePath || '/story.html');
-            document.getElementById('go-workspace').href = ws;
-            document.getElementById('go-story').href = story;
+            // Everyone lands on "Try it": one photo, then the matches. The agent demo is one tab away.
+            const tryIt = live.url + '/';
+            document.getElementById('go-try').href = tryIt;
+            document.getElementById('go-watch').href = live.url + '/workspace.html';
             show('live');
-            if (!new URLSearchParams(location.search).has('stay')) setTimeout(() => location.replace(wide ? ws : story), 900);
+            if (!new URLSearchParams(location.search).has('stay')) setTimeout(() => location.replace(tryIt), 700);
             return;
           }
         } catch {}
