@@ -261,9 +261,9 @@ details.how summary { cursor: pointer; color: var(--ink-2); }
 
 /* ---------- before / after ---------- */
 .compare { position: relative; aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden; background: var(--surface-2); touch-action: pan-y; cursor: ew-resize; user-select: none; -webkit-user-select: none; }
-.compare.face { aspect-ratio: 1 / 1; }
 .compare .layer { position: absolute; inset: 0; }
-.compare .layer img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; pointer-events: none; }
+/* 4:5 keeps a portrait render almost whole: eyes and lips both stay in frame, above the label */
+.compare .layer img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; pointer-events: none; }
 .compare .layer.b { clip-path: inset(0 0 0 var(--pos)); }
 .compare .handle { position: absolute; top: 0; bottom: 0; left: var(--pos); width: 3px; margin-left: -1.5px; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12); pointer-events: none; }
 .compare .handle::after { content: '‹ ›'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: var(--shadow); font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: 0.08em; }

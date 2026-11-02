@@ -562,17 +562,28 @@ function updateCompare(s) {
   box.addEventListener('pointermove', (e) => {
     if (box.hasPointerCapture(e.pointerId)) fromPointer(e);
   });
-  // A gentle one-time reveal, so the difference is noticed (skipped for reduced motion).
-  if (firstTime && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const t0 = performance.now();
-    const step = (t) => {
-      const k = Math.min(1, (t - t0) / 1400);
-      const ease = 1 - (1 - k) ** 3;
-      set(92 - 42 * ease);
-      if (k < 1) requestAnimationFrame(step);
-    };
+  // A gentle one-time reveal when the card comes into view, so the difference is noticed
+  // (skipped for reduced motion, or if the shopper already moved the slider).
+  if (firstTime && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+    let touched = false;
+    const mark = () => { touched = true; };
+    range.addEventListener('input', mark, { once: true });
+    box.addEventListener('pointerdown', mark, { once: true });
     set(92);
-    requestAnimationFrame(step);
+    const io = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.intersectionRatio >= 0.9)) return;
+      io.disconnect();
+      if (touched) return;
+      const t0 = performance.now();
+      const step = (t) => {
+        if (touched) return;
+        const k = Math.min(1, (t - t0) / 1600);
+        set(92 - 42 * (1 - (1 - k) ** 3));
+        if (k < 1) requestAnimationFrame(step);
+      };
+      setTimeout(() => requestAnimationFrame(step), 250);
+    }, { threshold: [0.9] });
+    io.observe(box);
   }
 }
 
