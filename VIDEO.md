@@ -16,7 +16,7 @@
 
 The YouCam APIs are named in **bold**.
 
-### 0:00–0:23: The problem, as a story
+### 0:00 to 0:23: The problem, as a story
 
 **On screen:** the story page in a desktop browser: Alex's order, "On the screen / In the mirror", the dead end of a normal returns form. Then the MirrorMatch wordmark.
 
@@ -24,7 +24,7 @@ The YouCam APIs are named in **bold**.
 > **0:07.3** In the mirror, it looked grey. So Alex starts a return, and the store is about to lose the sale.
 > **0:18.4** MirrorMatch turns that return into a match.
 
-### 0:23–1:16: The workspace, and the lipstick return on autopilot
+### 0:23 to 1:16: The workspace, and the lipstick return on autopilot
 
 **On screen:** the workspace's "Watch a return" tab (the four returns to pick, the progress bar, the latest agent steps, and the phone). Autopilot opens the order, picks "The shade didn't match", accepts the offer (the refund button stays visible), gives consent and uses YouCam's sample model. The tone card (Medium · Warm) and the agent's steps in plain words. Shell, Bare Honey and Coral Bay rendered on the same face, the before/after slider, then Bare Honey with a matching blush in one makeup call. The exchange, then the Store view tab with it counted live.
 
@@ -35,26 +35,26 @@ The YouCam APIs are named in **bold**.
 > **0:58.8** One more makeup call adds a matching blush, so the whole look is previewed, not just the lips.
 > **1:07.8** They take Bare Honey: a free exchange that ships today. The photo is deleted, here and at YouCam.
 
-### 1:16–1:28: Hair colour
+### 1:16 to 1:28: Hair colour
 
 **On screen:** the Gloss Hair Colour · Ash Blonde return. The tone result comes from the cache (0 units). Ash Blonde next to Golden Brown on the same face, then the exchange.
 
 > **1:16.3** Hair colour works the same way: YouCam's **AI Hair Color** tries the returned dye and two better matches, on the same selfie.
 
-### 1:28–1:41: Foundation and Skin AI
+### 1:28 to 1:41: Foundation and Skin AI
 
 **On screen:** the 3W Sand return. The "Your skin today" card (low shine, well hydrated, even tone → natural finish, light to medium coverage for 4W Honey), the agent's step for the skin analysis (9 units), then the shades on the same photo.
 
 > **1:28.5** For foundation, YouCam's **AI Skin Analysis** gently reads oiliness, moisture and redness, so the exchange gets the right finish, not just the right shade.
 
-### 1:41–2:01: The dress, then makeup on clothes
+### 1:41 to 2:01: The dress, then makeup on clothes
 
 **On screen:** the Hem Wrap Dress · Camel return with one waist-up photo; Camel, Marigold and Plum rendered on the model; the before/after slider. Then "Complete the look: lips for Marigold": Bare Honey rendered by makeup try-on onto the Marigold try-on image. The exchange (the lipstick add-on stays unticked).
 
 > **1:41.9** A dress works the same way, with YouCam's **AI Clothes Virtual Try-On** on one waist-up photo.
 > **1:52.4** Then makeup meets clothes: a matching lipstick is tried on, right on top of the new dress.
 
-### 2:01–2:36: The merchant, and the agent's suggestions
+### 2:01 to 2:36: The merchant, and the agent's suggestions
 
 **On screen:** `/merchant` after the four filmed returns (4 exchanges), one tab at a time: Overview, then Shade fit ("Who is each shade for?" and its gap cards), then Suggestions (a proposed new lipstick shade for an under-served profile, previewed live on the sample model and approved, which only logs it), then Demo history (labelled synthetic) and the Agent log with units per call.
 
@@ -63,7 +63,7 @@ The YouCam APIs are named in **bold**.
 > **2:20.1** And the agent drafts the fix: a proposed new shade for the gap, previewed on a model, waiting for a person to approve it.
 > **2:27.3** Under the hood, every decision is plain code, and the agent calls YouCam through its **MCP servers**, with every unit traced.
 
-### 2:36–2:55: Close
+### 2:36 to 2:55: Close
 
 **On screen:** the MirrorMatch wordmark; the five YouCam APIs with feature names and units; the live demo link (sarthak-1111.github.io/mirrormatch) and the code (github.com/sarthak-1111/mirrormatch); two phones: the "Try it" start page judges land on (what you're returning, then one photo) and the lips on the new dress. The tagline then changes to the last line.
 

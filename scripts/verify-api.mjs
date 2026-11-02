@@ -60,7 +60,7 @@ if (want('costs')) {
     const skus = await yc.getFeatureCosts();
     saveRaw('feature-cost', skus);
     const ours = skus.filter((s) => /skin-tone|makeup-vto|cloth|look-vto|skin-analysis|file/.test(s.run_task_url));
-    return ours.map((s) => `${s.amount} units / ${s.proc_unit} ${s.unit} — ${s.description} — ${s.run_task_url.replace(config.youcam.baseUrl, '')}`).join('\n');
+    return ours.map((s) => `${s.amount} units / ${s.proc_unit} ${s.unit} | ${s.description} | ${s.run_task_url.replace(config.youcam.baseUrl, '')}`).join('\n');
   });
 }
 if (want('templates')) {

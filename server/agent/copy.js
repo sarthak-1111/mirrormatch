@@ -46,7 +46,7 @@ export const copy = {
   exchanged: (exchange) =>
     `Done! ${exchange.toName} ships today on order ${exchange.id}. Send ${exchange.fromName} back with the prepaid label; there's no rush.`,
   refunded: (amount) =>
-    `Your refund of ${money(amount)} is on its way to your original payment method (3–5 business days).`,
+    `Your refund of ${money(amount)} is on its way to your original payment method (3 to 5 business days).`,
   escalated: (ticket, why, category) =>
     `${why} A ${category === 'skincare' ? 'skincare' : category === 'hair' ? 'colour' : 'shade'} specialist will follow up by email within one business day (ticket ${ticket}). Your refund is still available any time.`,
   lowConfidence: (returned) =>

@@ -24,7 +24,7 @@ export const NATURAL_HAIR_LEVEL = { Black: 2, Brown: 4, Auburn: 5, Red: 6, Blond
 
 const LEVEL_WORDS = { 1: 'black', 2: 'darkest brown', 3: 'dark brown', 4: 'medium brown', 5: 'light brown', 6: 'dark blonde', 7: 'medium blonde', 8: 'light blonde', 9: 'very light blonde', 10: 'lightest blonde' };
 
-/** Natural hair level (1–10) from YouCam's hair_color_name, or from lightness as a fallback. */
+/** Natural hair level (1 to 10) from YouCam's hair_color_name, or from lightness as a fallback. */
 export function naturalHairLevel(profile) {
   const byName = NATURAL_HAIR_LEVEL[profile?.hairName];
   if (byName) return byName;

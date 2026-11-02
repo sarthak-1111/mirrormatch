@@ -42,7 +42,7 @@ Implementation: `server/youcam/client.js` (`uploadImage`, `runTask`, `pollTask`,
 | Clothes templates | `GET /s2s/v2.0/task/template/cloth` | 0 | Garment template catalogue (checked; references are self-made, see ASSETS.md) | D |
 | Look templates | `GET /s2s/v2.0/task/template/look-vto` + `POST /s2s/v2.0/task/look-vto` | 2 | Not used: looks are preset makeup templates, and we need exact catalogue shades | D |
 | Task delete | `POST /s2s/v2.0/task/delete` | 0 | Deletes the selfie and renders on YouCam's side at session end | D |
-| **AI Skin Analysis** | `POST/GET /s2s/v2.0/task/skin-analysis` (v2.1 also exists) | **9** (SD, 1–4 concerns); 12 for 5–8; HD more | "Your skin today" on foundation returns (finish + coverage tip); texture choice on skincare returns | D, L |
+| **AI Skin Analysis** | `POST/GET /s2s/v2.0/task/skin-analysis` (v2.1 also exists) | **9** (SD, 1 to 4 concerns); 12 for 5 to 8; HD more | "Your skin today" on foundation returns (finish + coverage tip); texture choice on skincare returns | D, L |
 | **AI Hair Color** | `POST/GET /s2s/v2.0/task/hair-color` | **1** | Hair-colour returns: returned kit + top 2 shades on the shopper's hair | D, L |
 | AI Makeup VTO, multi-effect / on a render | `makeup-vto` with several `effects`, or on an uploaded cloth-v4 output | **1** per image | "Complete the look": lipstick on the new-dress render; lipstick + blush in one call | D, L |
 
@@ -65,7 +65,7 @@ color: {
 
 **No undertone or depth label is returned.** MirrorMatch derives them deterministically (`server/color/tone.js`):
 - **depth** from the Individual Typology Angle, `ITA° = atan2(L* − 50, b*)`, using Chardon's six bands, grouped into light, medium and deep for the heatmap.
-- **undertone** from the CIELAB hue angle `h_ab` of `skin_color`: below 52° is cool, 52–60° neutral, 60° and up warm. Thresholds shift down 3° when L* < 45.
+- **undertone** from the CIELAB hue angle `h_ab` of `skin_color`: below 52° is cool, 52 to 60° neutral, 60° and up warm. Thresholds shift down 3° when L* < 45.
 - **contrast** from |L*(hair) − L*(skin)|. It sets how bold a garment colour can be.
 
 Image rules: jpg/png, < 10 MB, long side ≤ 4096 (auto-resized above 1080), at least 320 px, single person. **The face should be wider than 60% of the image.**
@@ -75,7 +75,7 @@ Errors: `error_below_min_image_size`, `error_face_position_invalid`, `error_face
 ### makeup-vto: shade and intensity
 
 Request: `{ src_file_id, version: "1.0", effects: [ … ] }`. Each effect has a `category`:
-- `lip_color`: `shape.name` (from `lipshape.json`, e.g. `"original"`), `style.type` (`full|ombre|twoTone`), and `palettes[]` with `{ color: "#RRGGBB", texture: matte|gloss|holographic|metallic|satin|sheer|shimmer, colorIntensity: 0–100, … }`. `gloss`/`shimmer*`/`transparencyIntensity` are required for some textures.
+- `lip_color`: `shape.name` (from `lipshape.json`, e.g. `"original"`), `style.type` (`full|ombre|twoTone`), and `palettes[]` with `{ color: "#RRGGBB", texture: matte|gloss|holographic|metallic|satin|sheer|shimmer, colorIntensity: 0 to 100, … }`. `gloss`/`shimmer*`/`transparencyIntensity` are required for some textures.
 - `foundation`: `palettes[]` with `{ color, colorIntensity, glowIntensity, coverageIntensity }`. No pattern.
 - `blush`: `pattern.name` (from `blush.json`) and `palettes[]` with `{ color, texture: matte|satin|shimmer, colorIntensity, … }`.
 - `skin_smooth`: `{ skinSmoothStrength, skinSmoothColorIntensity }`. **The engine applies 50 by default if you omit it.** MirrorMatch sends 0/0 so previews show the shade without retouching the shopper.
@@ -100,7 +100,7 @@ Errors: `error_pose`, `error_invalid_ref`, `error_apply_region_mismatch`, `error
 ### skin-analysis (SD): request and response
 
 Request (MirrorMatch): `{ src_file_id, dst_actions: ["oiliness", "moisture", "redness", "skin_type"], format: "json", miniserver_args: { enable_mask_overlay: false } }`.
-- SD and HD concerns can't be mixed. 1–4 SD concerns = **9 units**, 5–8 = 12 (feature-cost lists several SKUs for this endpoint; the meter keeps the lowest). **D**
+- SD and HD concerns can't be mixed. 1 to 4 SD concerns = **9 units**, 5 to 8 = 12 (feature-cost lists several SKUs for this endpoint; the meter keeps the lowest). **D**
 - Input: jpg/png < 10 MB, **short side ≥ 480 px** (long side auto-resized above 2560), face wider than 60% of the image, frontal, even light. MirrorMatch fails photos with a short side under 480 before uploading (0 units). **D**
 - Never run YouCam lighting or enhance first: they change colour. MirrorMatch sends the shopper's photo as is. 
 
@@ -108,7 +108,7 @@ Response with `format: "json"` (verified live, `data.results`):
 
 ```text
 output: [
-  { type: "oiliness" | "moisture" | "redness", raw_score: 1–100, ui_score: 1–100, mask_urls: [..] }
+  { type: "oiliness" | "moisture" | "redness", raw_score: 1 to 100, ui_score: 1 to 100, mask_urls: [..] }
   { type: "skin_type", region: "whole" | "t_zone" | "u_zone", skin_type: "Normal", mask_urls: [..] }   × 3
   { type: "all", score }, { type: "skin_age", score }, { type: "resize_image", mask_urls }
 ]
@@ -147,21 +147,21 @@ Request (MirrorMatch): `{ src_file_id, pattern: { name: "full" }, palettes: [{ c
 | Call | Result | Latency | Units (measured by balance delta) |
 |---|---|---|---|
 | `GET /client/credit` | `results[0] = {type: ApiPaygToken, amount_dec: 1000}` | 0.6 s | 0 |
-| `GET /credit/feature-cost` | 22 SKUs. **skin-tone-analysis 20, makeup-vto 1, cloth-v4 2**, cloth/cloth-v3 2, look-vto 2, skin-analysis 9–22 | 1.9 s | 0 |
+| `GET /credit/feature-cost` | 22 SKUs. **skin-tone-analysis 20, makeup-vto 1, cloth-v4 2**, cloth/cloth-v3 2, look-vto 2, skin-analysis 9 to 22 | 1.9 s | 0 |
 | `GET /task/template/cloth` | 120 templates in 14 categories (e.g. Feminine 21, Sports 20). One plain dress (`flowy_black_dress_feminine`) | 0.8 s | 0 |
 | `GET /task/template/look-vto` | Themed looks (Animals, Horoscope, …). Not usable for exact catalogue shades | 0.8 s | 0 |
-| File register + PUT (770×1024 JPEG) | `file_id` returned; PUT 200 | 0.3–1.1 s | 0 |
+| File register + PUT (770×1024 JPEG) | `file_id` returned; PUT 200 | 0.3 to 1.1 s | 0 |
 | skin-tone-analysis, close-up selfie | `face_quality` all `good`; all 7 colour fields returned | **6.5 s** | **20** |
 | skin-tone-analysis, **waist-up** photo, strictness `high` | `error_face_angle_downward` | 9.8 s | 0 |
 | skin-tone-analysis, **waist-up** photo, strictness `low` | success, all colours | 6.7 s | 20 |
 | skin-tone-analysis, full-length photo (tiny face) | `error_no_face` | 9.7 s | 0 |
 | skin-tone-analysis, image with no face | `error_no_face`, "No face was detected in the source image." | 6.6 s | 0 |
-| makeup-vto `lip_color` (matte, intensity 75) | `results.url`; realistic | **6.8–17.8 s** (first call slower) | **1** |
+| makeup-vto `lip_color` (matte, intensity 75) | `results.url`; realistic | **6.8 to 17.8 s** (first call slower) | **1** |
 | makeup-vto `foundation` | `results.url`; natural, no retouch with `skin_smooth` 0/0 | 6.8 s | 1 |
 | cloth-v4, close-up selfie + dress | `error_pose`: "No body pose was detected in the user image" | 2.4 s | 0 |
 | cloth-v4, full-length photo + self-made dress PNG, `full_body` | success, very convincing | **13.4 s** | **2** |
 | cloth-v4, **waist-up** photo + dress PNG, `full_body` | success (renders the visible part of the dress) | 14.0 s | 2 |
-| `POST /task/delete` | `{status:200}` for each finished task | 0.3–0.7 s | 0 |
+| `POST /task/delete` | `{status:200}` for each finished task | 0.3 to 0.7 s | 0 |
 
 Total for this verification: 1000 → 954 units (46 spent, matching the meter).
 
@@ -169,7 +169,7 @@ Total for this verification: 1000 → 954 units (46 spent, matching the meter).
 - **Lipstick and foundation returns:** a close-up selfie, tone strictness `medium`. Same photo for makeup-vto.
 - **Dress returns:** **one waist-up photo** serves both skin-tone-analysis (strictness `low`) and cloth-v4. A close-up selfie fails cloth-v4 with `error_pose`.
 - **Error and failure cost:** errors cost 0 units, so a failed photo is free to retry. Only successes are metered.
-- **Expected wait:** one return takes about 7 s for analysis plus about 7–18 s for previews (3 run in parallel). That's within the "about 30 seconds" promise.
+- **Expected wait:** one return takes about 7 s for analysis plus about 7 to 18 s for previews (3 run in parallel). That's within the "about 30 seconds" promise.
 - **Garment references:** self-made product PNGs work well as `ref_file_id`. Verified live: `POST /s2s/v2.0/task/delete` also deletes a task's **input** files, including the garment reference. A garment `file_id` reused after its first session's cleanup fails with `error_download_image`. So garments are uploaded once per session (0 units, about 0.3 s).
 
 ## MCP servers (live check: `node scripts/check-mcp.mjs beauty`)
@@ -202,8 +202,8 @@ Verified live on 2026-11-02 (traces show "over MCP"):
 
 | Flow | Calls | Latency | Units |
 |---|---|---|---|
-| Lipstick return | tone + 3 × makeup-vto, all via MCP | tone 10.5 s, makeup 10–17 s each (parallel) | 23 |
-| Dress return | tone + 3 × cloth-v4, all via MCP | tone 8–11 s, cloth 12–22 s each (parallel) | 26 |
+| Lipstick return | tone + 3 × makeup-vto, all via MCP | tone 10.5 s, makeup 10 to 17 s each (parallel) | 23 |
+| Dress return | tone + 3 × cloth-v4, all via MCP | tone 8 to 11 s, cloth 12 to 22 s each (parallel) | 26 |
 | Cleanup | REST `task/delete` | | 0 (4/4 tasks deleted) |
 
 ### New features, verified live on 2026-11-02 (YouCam official sample photos, all over MCP)
@@ -213,10 +213,10 @@ Verified live on 2026-11-02 (traces show "over MCP"):
 | Call | Result | Latency | Units |
 |---|---|---|---|
 | `AI-Makeup-Virtual-Try-On-Pattern-Name` (`blush`, `eyeshadow`) | both include `1color1`; `eye_shadow` is rejected by the tool's enum | < 1 s | 0 |
-| skin-analysis SD, 4 concerns, close-up selfie (770×1024, face ≈ 58% of the width) | success: 3 scores + 3 skin-type items (+ `all`, `skin_age`, `resize_image`) | **4.5–5.9 s** | **9** |
+| skin-analysis SD, 4 concerns, close-up selfie (770×1024, face ≈ 58% of the width) | success: 3 scores + 3 skin-type items (+ `all`, `skin_age`, `resize_image`) | **4.5 to 5.9 s** | **9** |
 | skin-analysis, same photo, skincare return | demo-cache hit | 1 ms | 0 |
-| hair-color `full`, returned shade + 2 picks (parallel) | success, realistic recolour of the shopper's own hair | **11–21 s** each | **1** each |
-| makeup-vto `lip_color` on a cloth-v4 render (524×590) | success, lips applied on the dress look | **4.7–6.0 s** | **1** |
+| hair-color `full`, returned shade + 2 picks (parallel) | success, realistic recolour of the shopper's own hair | **11 to 21 s** each | **1** each |
+| makeup-vto `lip_color` on a cloth-v4 render (524×590) | success, lips applied on the dress look | **4.7 to 6.0 s** | **1** |
 | makeup-vto `lip_color` + `blush` (`1color1`) on the selfie | success, one task | **8.2 s** | **1** |
 | `task/delete` after each return | all new tasks deleted (e.g. 3/3 after the hair return) | | 0 |
 

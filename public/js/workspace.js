@@ -316,7 +316,7 @@ async function loadMerchant() {
   const s = await getJson('/api/merchant/summary');
   for (const p of [...s.live.products, ...s.synthetic.products]) productNames[p.id] = p;
   const k = s.live.kpis;
-  const rate = k.exchangeRate == null ? '–' : `${Math.round(k.exchangeRate * 100)}%`;
+  const rate = k.exchangeRate == null ? 'n/a' : `${Math.round(k.exchangeRate * 100)}%`;
   $('ws-kpis').innerHTML = [
     ['Returns', k.returnsStarted],
     ['Exchanges', k.exchanges],
@@ -392,11 +392,11 @@ async function loadEnv() {
   const u = h.units ?? {};
   const cap = h.limits?.dailyUnitCap ? `${u.spentToday ?? 0} of ${h.limits.dailyUnitCap} used today` : `${u.spentToday ?? 0} used today · no daily cap set`;
   const transport = !live ? 'no API calls, placeholder previews' : h.transport === 'mcp' ? "YouCam's MCP servers (REST fallback)" : 'REST task endpoints';
-  const cost = (f) => u.costs?.[f] ?? '–';
+  const cost = (f) => u.costs?.[f] ?? 'n/a';
   const rows = [
     ['YouCam', `${live ? 'Live' : 'Mock'} · ${transport}`, live ? 'ok' : 'warn'],
-    ['Units', `${u.balance ?? '–'} left · ${cap}`, ''],
-    ['Unit costs', `skin tone ${cost('skin-tone-analysis')} · makeup try-on ${cost('makeup-vto')} · clothes try-on ${cost('cloth-v4')} (floor ${h.limits?.unitFloor ?? '–'})`, ''],
+    ['Units', `${u.balance ?? 'n/a'} left · ${cap}`, ''],
+    ['Unit costs', `skin tone ${cost('skin-tone-analysis')} · makeup try-on ${cost('makeup-vto')} · clothes try-on ${cost('cloth-v4')} (floor ${h.limits?.unitFloor ?? 'n/a'})`, ''],
     ['Demo cache', h.demoCache ? 'On: repeat sample runs cost 0 units' : 'Off: nothing personal is written to disk', h.demoCache ? 'ok' : ''],
     ['LLM', env.llm?.enabled ? `On (${h.llm?.model ?? 'configured'}): wording only, optional` : 'Off: templated text (optional, never required)', ''],
     ['Returns portal', `<code>${esc(env.webhook.method)} ${esc(env.webhook.path)}</code>${env.webhook.secretRequired ? ' · shared secret required' : ' · no secret set'}`, ''],

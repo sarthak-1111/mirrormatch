@@ -36,7 +36,7 @@ const profileWords = (key) => {
   return `${d}, ${t}`;
 };
 
-/** Dress temperature from hue, as documented in the README (warm 25–110°, cool 150–330°, C* ≥ 15). */
+/** Dress temperature from hue, as documented in the README (warm 25 to 110°, cool 150 to 330°, C* ≥ 15). */
 export function temperatureOf(lch) {
   if (lch.C < 15) return 'neutral';
   if (lch.h >= 25 && lch.h <= 110) return 'warm';

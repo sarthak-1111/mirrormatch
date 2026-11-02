@@ -487,7 +487,7 @@ function viewRefundReview(s) {
         <p class="lede">${esc(s.copy.notEligible || 'We\'ll refund your original payment method as soon as you confirm.')}</p>
       </div>
       <div class="card flat stack">
-        <dl class="kv"><dt>Refund to</dt><dd>Original payment method</dd><dt>Amount</dt><dd>${money(s.order.price)}</dd><dt>Timing</dt><dd>3–5 business days</dd></dl>
+        <dl class="kv"><dt>Refund to</dt><dd>Original payment method</dd><dt>Amount</dt><dd>${money(s.order.price)}</dd><dt>Timing</dt><dd>3 to 5 business days</dd></dl>
       </div>
       <div class="btn-col">
         <button class="btn block" data-action="refund">Confirm refund</button>
@@ -1514,7 +1514,7 @@ const autopilot = (() => {
     if (!run || run.stopped) throw new Stopped();
   }
 
-  /** About 1.2–1.8 s per step, so a viewer can follow along. */
+  /** About 1.2 to 1.8 s per step, so a viewer can follow along. */
   async function pause(ms = 1200 + ((run?.n ?? 0) % 4) * 200) {
     const end = Date.now() + ms;
     while (Date.now() < end) {

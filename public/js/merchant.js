@@ -52,7 +52,7 @@ function renderChips(s) {
 }
 
 function renderKpis(k) {
-  const rate = k.exchangeRate == null ? '–' : `${Math.round(k.exchangeRate * 100)}%`;
+  const rate = k.exchangeRate == null ? 'n/a' : `${Math.round(k.exchangeRate * 100)}%`;
   $('kpis').innerHTML = [
     ['Returns started', k.returnsStarted, `${k.mirrorMatchOffered} colour-related`],
     ['Tried MirrorMatch', k.mirrorMatchAccepted, `of ${k.mirrorMatchOffered} offered`],
@@ -190,8 +190,8 @@ function renderUnits(u, mode) {
     .join('');
   $('units').innerHTML = `
     <div class="kpis" style="margin-bottom:12px">
-      <div class="kpi"><div class="label">Balance</div><div class="value">${u.balance ?? '–'}</div><div class="sub">${mode === 'live' ? 'from /s2s/v1.0/client/credit' : 'mock'}</div></div>
-      <div class="kpi"><div class="label">At server start</div><div class="value">${u.startupBalance ?? '–'}</div><div class="sub">checked at startup</div></div>
+      <div class="kpi"><div class="label">Balance</div><div class="value">${u.balance ?? 'n/a'}</div><div class="sub">${mode === 'live' ? 'from /s2s/v1.0/client/credit' : 'mock'}</div></div>
+      <div class="kpi"><div class="label">At server start</div><div class="value">${u.startupBalance ?? 'n/a'}</div><div class="sub">checked at startup</div></div>
       <div class="kpi"><div class="label">Spent this run</div><div class="value">${u.spentThisRun}</div><div class="sub">${u.calls} metered calls</div></div>
     </div>
     <table class="costs"><thead><tr><th>Feature</th><th>Units per call</th></tr></thead><tbody>${rows}</tbody></table>
@@ -204,7 +204,7 @@ const FIT_CATS = [
   ['foundation', 'Foundation'],
   ['dress', 'Dresses'],
 ];
-const FIT_TEXT = { great: 'Great', good: 'Good', poor: '—' };
+const FIT_TEXT = { great: 'Great', good: 'Good', poor: '' };
 const GAP_KIND = {
   range: ['!', 'Gap in your range'],
   thin: ['1', 'Thin coverage'],

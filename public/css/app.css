@@ -201,7 +201,7 @@ details.why { border-top: 1px solid var(--border); padding-top: var(--space-3); 
 details.why > summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; align-items: center; min-height: 40px; }
 details.why > summary::-webkit-details-marker { display: none; }
 details.why > summary::after { content: '+'; font-size: 22px; font-weight: 400; color: var(--muted); }
-details.why[open] > summary::after { content: '–'; }
+details.why[open] > summary::after { content: '-'; }
 details.why > .stack { margin-top: var(--space-2); }
 
 .sticky-cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--glass); backdrop-filter: blur(8px); border-top: 1px solid var(--border); }

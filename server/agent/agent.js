@@ -176,7 +176,7 @@ export class Agent {
     });
 
     if (!picks.length || alt.confidence === 'low' || alt.confidence === 'none') {
-      this.decide(session, `Match confidence ${alt.confidence} (best ${alt.ranked[0]?.score ?? '–'} vs returned ${alt.returnedScore}) → escalate instead of guessing.`);
+      this.decide(session, `Match confidence ${alt.confidence} (best ${alt.ranked[0]?.score ?? 'n/a'} vs returned ${alt.returnedScore}) → escalate instead of guessing.`);
       return this.escalate(session, 'low_confidence', copy.lowConfidence(returned), { keepPhoto: false });
     }
     this.decide(session, `Confidence ${alt.confidence}; ${picks.map((p) => p.product.shadeName).join(' + ')} pass stock & policy → show matches, then render returned + ${picks.length} picks (cap ${this.config.budget.maxRendersPerReturn}).`);

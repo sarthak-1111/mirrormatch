@@ -1,10 +1,10 @@
 // YouCam AI Skin Analysis (SD) → a kind "Your skin today" reading and deterministic advice.
-// YouCam scores every concern 1–100 where HIGHER means healthier (less shine, more moisture,
+// YouCam scores every concern 1 to 100 where HIGHER means healthier (less shine, more moisture,
 // less redness). We use raw_score (ui_score is deliberately inflated, per the docs) against fixed,
 // documented thresholds. These are heuristics for choosing a finish or a moisturiser variant,
 // not a diagnosis, and no numbers are shown to the shopper.
 
-// SD concerns only (SD and HD can't be mixed). 1–4 SD concerns cost 9 units.
+// SD concerns only (SD and HD can't be mixed). 1 to 4 SD concerns cost 9 units.
 export const SKIN_ACTIONS = ['oiliness', 'moisture', 'redness', 'skin_type'];
 
 export const SKIN_THRESHOLDS = {

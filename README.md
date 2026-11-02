@@ -186,7 +186,7 @@ All colours are converted to **CIELAB (D65)**. Distances are **CIEDE2000 (ΔE₀
 
 **Tone profile** (from YouCam's `skin_color`, `lip_color`, `hair_color`):
 - Depth from the **Individual Typology Angle**: `ITA° = atan2(L* − 50, b*) · 180/π`. We use Chardon's bands (>55 fair, >41 light, >28 medium, >10 tan, >−30 deep, else rich deep), grouped into light, medium and deep for the heatmap.
-- Undertone from the skin's **CIELAB hue angle** `h = atan2(b*, a*)`: below 52° cool, 52–60° neutral, 60° and up warm. Both thresholds shift down 3° when L* < 45.
+- Undertone from the skin's **CIELAB hue angle** `h = atan2(b*, a*)`: below 52° cool, 52 to 60° neutral, 60° and up warm. Both thresholds shift down 3° when L* < 45.
 - Contrast from `|L*hair − L*skin|`: high ≥ 40, medium ≥ 20, otherwise low.
 
 **Candidates.** Same category, price within ±25% of the returned item, in stock, and not the returned item. Every exclusion is logged in the trace.
@@ -197,7 +197,7 @@ score = ΔE00(shade, skin) + undertonePenalty      (match 0 · neutral-adjacent 
 confidence: high if best ΔE ≤ 4, medium ≤ 7, else low
 ```
 
-**Lipstick.** Target = your own lip colour, 6 L* deeper, ×1.35 chroma (clamped 25–60), hue nudged +6° (warm) or −8° (cool).
+**Lipstick.** Target = your own lip colour, 6 L* deeper, ×1.35 chroma (clamped 25 to 60), hue nudged +6° (warm) or −8° (cool).
 ```
 score = ΔE00(shade, target) + undertonePenalty (0 · 1.5 · 5)
       + familyPenalty (same family as returned 0 · adjacent 2 · other 4)
@@ -207,8 +207,8 @@ score = ΔE00(shade, target) + undertonePenalty (0 · 1.5 · 5)
 **Dress colourways**
 ```
 score = contrast    0.4·max(0, 22 − |L*garment − L*skin|) + 4·[ΔE00(garment, skin) < 12]
-      + temperature 0 same · 1 neutral · 6 opposite (warm hue 25–110°, cool 150–330°, C* ≥ 15)
-      + strength    chroma fit for personal contrast (high 40–80 · medium 28–60 · low 12–45)
+      + temperature 0 same · 1 neutral · 6 opposite (warm hue 25 to 110°, cool 150 to 330°, C* ≥ 15)
+      + strength    chroma fit for personal contrast (high 40 to 80 · medium 28 to 60 · low 12 to 45)
       − separation  up to 0.8 for clearer separation from skin
       − echo        1 if the colour echoes your eye or natural lip colour (ΔE00 < 18)
 ```
@@ -309,7 +309,7 @@ YouCam charges only for successful tasks, so a bad photo costs nothing.
 - The garment references are self-made procedural drawings, so try-on fidelity for real fabrics and fits will differ. Fit is out of scope; MirrorMatch is about colour.
 - The store, orders, stock and exchanges are mocks, and there is no payment or shipping integration.
 - The live dashboard is in-memory plus a local JSONL file, for a single server.
-- YouCam processing takes about 7–11 s for analysis and 7–22 s per render (the three previews run in parallel), so the "about 30 seconds" promise depends on network and queue time.
+- YouCam processing takes about 7 to 11 s for analysis and 7 to 22 s per render (the three previews run in parallel), so the "about 30 seconds" promise depends on network and queue time.
 
 ## Roadmap
 
