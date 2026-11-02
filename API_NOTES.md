@@ -42,7 +42,9 @@ Implementation: `server/youcam/client.js` (`uploadImage`, `runTask`, `pollTask`,
 | Clothes templates | `GET /s2s/v2.0/task/template/cloth` | 0 | Garment template catalogue (checked; references are self-made, see ASSETS.md) | D |
 | Look templates | `GET /s2s/v2.0/task/template/look-vto` + `POST /s2s/v2.0/task/look-vto` | 2 | Not used: looks are preset makeup templates, and we need exact catalogue shades | D |
 | Task delete | `POST /s2s/v2.0/task/delete` | 0 | Deletes the selfie and renders on YouCam's side at session end | D |
-| Skin analysis (optional) | `POST /s2s/v2.0/task/skin-analysis` (v2.1 also exists) | 9–22 | Not used: skin concerns aren't needed for shade matching, and it would cost units | D |
+| **AI Skin Analysis** | `POST/GET /s2s/v2.0/task/skin-analysis` (v2.1 also exists) | **9** (SD, 1–4 concerns); 12 for 5–8; HD more | "Your skin today" on foundation returns (finish + coverage tip); texture choice on skincare returns | D, L |
+| **AI Hair Color** | `POST/GET /s2s/v2.0/task/hair-color` | **1** | Hair-colour returns: returned kit + top 2 shades on the shopper's hair | D, L |
+| AI Makeup VTO, multi-effect / on a render | `makeup-vto` with several `effects`, or on an uploaded cloth-v4 output | **1** per image | "Complete the look": lipstick on the new-dress render; lipstick + blush in one call | D, L |
 
 ### skin-tone-analysis: request and response
 
@@ -94,6 +96,39 @@ Source image: 1024×768 recommended (512×384 minimum, max side 4096). One perso
 Reference image: a front-facing product shot of one garment, or a one-person photo whose clothing covers the try-on area.
 
 Errors: `error_pose`, `error_invalid_ref`, `error_apply_region_mismatch`, `error_invalid_src`, `error_multi_person`, `error_editing_failed`, `error_nsfw_content_detected`, plus general codes.
+
+### skin-analysis (SD): request and response
+
+Request (MirrorMatch): `{ src_file_id, dst_actions: ["oiliness", "moisture", "redness", "skin_type"], format: "json", miniserver_args: { enable_mask_overlay: false } }`.
+- SD and HD concerns can't be mixed. 1–4 SD concerns = **9 units**, 5–8 = 12 (feature-cost lists several SKUs for this endpoint; the meter keeps the lowest). **D**
+- Input: jpg/png < 10 MB, **short side ≥ 480 px** (long side auto-resized above 2560), face wider than 60% of the image, frontal, even light. MirrorMatch fails photos with a short side under 480 before uploading (0 units). **D**
+- Never run YouCam lighting or enhance first: they change colour. MirrorMatch sends the shopper's photo as is. 
+
+Response with `format: "json"` (verified live, `data.results`):
+
+```text
+output: [
+  { type: "oiliness" | "moisture" | "redness", raw_score: 1–100, ui_score: 1–100, mask_urls: [..] }
+  { type: "skin_type", region: "whole" | "t_zone" | "u_zone", skin_type: "Normal", mask_urls: [..] }   × 3
+  { type: "all", score }, { type: "skin_age", score }, { type: "resize_image", mask_urls }
+]
+```
+
+- **Higher scores mean healthier** (less shine, more moisture, less redness). `ui_score` is deliberately inflated ("a psychological motivator"), so MirrorMatch uses `raw_score` against fixed thresholds (`server/color/skin.js`: shine < 50, low moisture < 50, well hydrated ≥ 72, redness < 60). **D**
+- `skin_type` labels: Normal, Oily, Dry, Combination, and "… & Redness" variants. An oily T-zone with normal or dry cheeks is read as combination. **D, L**
+- Only scores and skin-type labels are kept (no mask URLs); nothing numeric is shown to the shopper.
+- Errors: `error_no_face`, `error_face_parsing`, `error_pose`, `error_inference`, `invalid_parameter`, size/decode errors. Mapped to retake guidance like tone analysis.
+
+### hair-color: request and response
+
+Request (MirrorMatch): `{ src_file_id, pattern: { name: "full" }, palettes: [{ color: "#RRGGBB", color_intensity: 70, shine_intensity: 40 }] }`. One palette for `full`, two for `ombre`; a `preset` (e.g. "Honey Blonde") overrides pattern + palettes, so we never send one. Input ≥ 320×320, long side < 1920, face ≥ 100 px, hair visible. Response `data.results.url` (2 h). **D, L**
+
+### makeup-vto: several effects, and on a clothes render
+
+- One call can apply several effects for **1 unit per image**: MirrorMatch sends `skin_smooth` 0/0 + `lip_color` + `blush` with `pattern: { name: "1color1" }` and `{ color, texture: "matte", colorIntensity: 45 }`. **D, L**
+- Pattern names must be labels from YouCam's pattern catalogues. The beauty MCP tool `AI-Makeup-Virtual-Try-On-Pattern-Name` lists them; its category enum is `blush, bronzer, contour, eyebrows, eyeliner, eyeshadow, eyelashes, lipshape, lipliner, highlighter` (note `eyeshadow`, not `eye_shadow`). `1color1` exists for blush and eyeshadow. **L**
+- **Lips on the new dress:** the cloth-v4 output (JPEG, same size as the input photo) is uploaded as a new file (0 units) and makeup-vto `lip_color` runs on it. Verified on the 524×590 waist-up sample, whose face is only about 70 px wide (below the documented 100 px): it still succeeded and the lips were applied cleanly. **L**
+- Every look task is added to the session's task list and deleted with the rest when the return ends.
 
 ### Error codes we handle
 
@@ -152,6 +187,9 @@ The brief said: "If they work, use them for the agentic layer. Otherwise call RE
 | `analyze_skin_tone` | `/mcp/beauty` | `AI-Facial-Color-Tones-Analyzer` | `{ request: { src_file_id, face_angle_strictness_level }, polling: true }` |
 | `render_tryon` (lipstick, foundation) | `/mcp/beauty` | `AI-Makeup-Virtual-Try-On` | `{ request: { src_file_id, version, effects }, polling: true }` |
 | `render_tryon` (dress) | `/mcp/fashion` | `AI-Clothes-Virtual-Try-On` | `{ request: { src_file_id, ref_file_id, garment_category }, polling: true }` |
+| `render_tryon` (hair) | `/mcp/beauty` | `AI-Hair-Color-Virtual-Try-On` | `{ request: { src_file_id, pattern, palettes }, polling: true }` |
+| `analyze_skin` | `/mcp/beauty` | `AI-Skin-Analysis` | `{ request: { src_file_id, dst_actions, format: "json", miniserver_args }, polling: true }` |
+| `render_look` | `/mcp/beauty` | `AI-Makeup-Virtual-Try-On` | `{ request: { src_file_id, version, effects: [skin_smooth, lip_color, blush?] }, polling: true }` |
 
 How it works:
 - **Session.** `initialize` → `notifications/initialized` once per server, then `tools/call`. The `Mcp-Session-Id` header is reused, and replies can be JSON or SSE.
@@ -167,5 +205,21 @@ Verified live on 2026-11-02 (traces show "over MCP"):
 | Lipstick return | tone + 3 × makeup-vto, all via MCP | tone 10.5 s, makeup 10–17 s each (parallel) | 23 |
 | Dress return | tone + 3 × cloth-v4, all via MCP | tone 8–11 s, cloth 12–22 s each (parallel) | 26 |
 | Cleanup | REST `task/delete` | | 0 (4/4 tasks deleted) |
+
+### New features, verified live on 2026-11-02 (YouCam official sample photos, all over MCP)
+
+`scripts/verify-new-apis.mjs` for the raw calls, then the app itself with `DEMO_CACHE=1` (tone results and core renders were already cached, so only the new calls spent units).
+
+| Call | Result | Latency | Units |
+|---|---|---|---|
+| `AI-Makeup-Virtual-Try-On-Pattern-Name` (`blush`, `eyeshadow`) | both include `1color1`; `eye_shadow` is rejected by the tool's enum | < 1 s | 0 |
+| skin-analysis SD, 4 concerns, close-up selfie (770×1024, face ≈ 58% of the width) | success: 3 scores + 3 skin-type items (+ `all`, `skin_age`, `resize_image`) | **4.5–5.9 s** | **9** |
+| skin-analysis, same photo, skincare return | demo-cache hit | 1 ms | 0 |
+| hair-color `full`, returned shade + 2 picks (parallel) | success, realistic recolour of the shopper's own hair | **11–21 s** each | **1** each |
+| makeup-vto `lip_color` on a cloth-v4 render (524×590) | success, lips applied on the dress look | **4.7–6.0 s** | **1** |
+| makeup-vto `lip_color` + `blush` (`1color1`) on the selfie | success, one task | **8.2 s** | **1** |
+| `task/delete` after each return | all new tasks deleted (e.g. 3/3 after the hair return) | | 0 |
+
+Total for the new features: 24 units (10 in the raw checks, 14 through the app).
 
 The planner stays deterministic code, not an LLM choosing tools. That keeps matching, policy and exchange auditable and testable. MCP gives a standard tool interface to YouCam's features, so a future LLM-driven planner could use the same tools unchanged.
