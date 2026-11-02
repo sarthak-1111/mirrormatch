@@ -184,24 +184,30 @@ export function scoreProduct(product, profile, returned) {
   return { ...r, score: round1(r.score) };
 }
 
+/** How well one scored product fits a profile, on the same thresholds the agent uses for
+ *  match confidence: 'high' | 'medium' | 'low'. Used by the merchant fit matrix too. */
+export function fitConfidence(category, result) {
+  if (category === 'foundation') {
+    if (result.deltaE <= 4) return 'high';
+    if (result.deltaE <= 7) return 'medium';
+    return 'low';
+  }
+  if (category === 'lipstick') {
+    if (result.score <= 10) return 'high';
+    if (result.score <= 16) return 'medium';
+    return 'low';
+  }
+  // dress
+  if (result.score <= 1.5) return 'high';
+  if (result.score <= 4) return 'medium';
+  return 'low';
+}
+
 function confidenceFor(category, best, returnedScore) {
   if (!best) return 'none';
   const improvement = returnedScore == null ? Infinity : returnedScore - best.score;
   if (improvement < 1) return 'low';
-  if (category === 'foundation') {
-    if (best.deltaE <= 4) return 'high';
-    if (best.deltaE <= 7) return 'medium';
-    return 'low';
-  }
-  if (category === 'lipstick') {
-    if (best.score <= 10) return 'high';
-    if (best.score <= 16) return 'medium';
-    return 'low';
-  }
-  // dress
-  if (best.score <= 1.5) return 'high';
-  if (best.score <= 4) return 'medium';
-  return 'low';
+  return fitConfidence(category, best);
 }
 
 /**

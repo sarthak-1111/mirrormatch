@@ -11,11 +11,13 @@ import { Catalog, publicProduct } from './store/catalog.js';
 import { SessionStore } from './store/sessions.js';
 import { EventLog, aggregate, recordsFromEvents } from './store/events.js';
 import { buildInsights, PROFILE_KEYS, profileLabel } from './store/insights.js';
+import { fitMatrix, gapCounts, lowConfidenceEscalations, passportMatches, FIT_CATEGORIES } from './store/fit.js';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { createDemoCache } from './store/demoCache.js';
 import { createGarmentFiles } from './store/garmentFiles.js';
 import { createTools, ToolError } from './agent/tools.js';
 import { Agent } from './agent/agent.js';
-import { REASONS, POLICY } from './policy/policy.js';
+import { REASONS, POLICY, secondTryEligibility } from './policy/policy.js';
 
 export function createApp(config, { log = console.log, persistEvents = true } = {}) {
   const meter = new UnitMeter();
@@ -128,6 +130,43 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
     res.json(await agent.handle(req.params.id, 'delete_photo'));
   }));
 
+  // ---------- colour passport ----------
+  // A tone profile the shopper chose to keep on their own device (hex colours, never a photo)
+  // → top in-stock picks per category. Stateless: nothing is stored or logged here.
+  app.post('/api/profile/matches', (req, res) => {
+    const { skinHex, lipHex, hairHex } = req.body ?? {};
+    try {
+      res.json(passportMatches({ catalog, skinHex, lipHex, hairHex }));
+    } catch (e) {
+      if (e.code === 'bad_colour') return res.status(400).json({ error: e.message, code: e.code });
+      log('error: passport matching failed');
+      res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    }
+  });
+
+  // ---------- returns-portal integration ----------
+  // A real store's returns portal calls this when a shopper starts a return. For colour reasons
+  // it opens a SecondTry session and returns the link to send the shopper to; otherwise the
+  // portal carries on with its normal refund flow.
+  const secretDigest = (v) => createHash('sha256').update(String(v ?? '')).digest();
+  app.post('/api/integrations/return-started', asyncRoute(async (req, res) => {
+    if (config.webhookSecret) {
+      const ok = timingSafeEqual(secretDigest(req.get('X-SecondTry-Secret')), secretDigest(config.webhookSecret));
+      if (!ok) return res.status(401).json({ error: 'Invalid or missing X-SecondTry-Secret' });
+    }
+    const { orderId, lineId, reason } = req.body ?? {};
+    const order = typeof orderId === 'string' ? catalog.order(orderId) : null;
+    if (!order) return res.json({ eligible: false, why: 'order_not_found' });
+    const line = lineId == null ? order.lines[0] : order.lines.find((l) => l.lineId === lineId);
+    if (!line) return res.json({ eligible: false, why: 'order_line_not_found' });
+    const elig = secondTryEligibility({ reason, order });
+    if (!elig.eligible) return res.json({ eligible: false, why: elig.why });
+    const started = await agent.start({ orderId: order.id, lineId: line.lineId });
+    // The portal already asked for the reason, so the shopper lands straight on the offer.
+    const v = await agent.handle(started.id, 'reason', { reason });
+    res.json({ eligible: true, sessionId: v.id, step: v.step, url: `${req.protocol}://${req.get('host')}/#/return/${v.id}` });
+  }));
+
   // ---------- merchant ----------
   function merchantSummary() {
     const liveRecords = recordsFromEvents(events.events);
@@ -162,6 +201,14 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
   }
 
   app.get('/api/merchant/summary', (req, res) => res.json(merchantSummary()));
+
+  // "Who is each shade for?": catalogue × reference tone profiles, scored by the shopper matcher.
+  app.get('/api/merchant/fit', (req, res) => {
+    const category = String(req.query.category || 'lipstick');
+    if (!FIT_CATEGORIES.includes(category)) return res.status(400).json({ error: `category must be one of ${FIT_CATEGORIES.join(', ')}` });
+    const liveEscalations = lowConfidenceEscalations(events.events); // live events only, never synthetic
+    res.json({ ...fitMatrix({ catalog, category, liveEscalations }), gapCounts: gapCounts({ catalog, liveEscalations }) });
+  });
 
   app.get('/api/merchant/traces', (req, res) => {
     res.json(

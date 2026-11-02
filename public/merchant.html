@@ -48,6 +48,29 @@
       </div>
     </section>
 
+    <section aria-labelledby="fit-h" class="dash-section catalogue">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow"><span class="cat-dot" aria-hidden="true"></span> Catalogue · <span id="fit-source">From your catalogue and the matcher, no customer data</span></p>
+          <h2 id="fit-h">Who is each shade for?</h2>
+          <p class="muted small" style="margin:4px 0 0;max-width:720px">Every product scored against nine reference tone profiles by the same matcher shoppers see. Spot thin coverage and gaps in your range before returns do. Reference profiles are approximations: each shopper's own measured colours, including eyes and hair, decide their actual picks.</p>
+        </div>
+        <div class="tabs" role="group" aria-label="Product category" id="fit-tabs"></div>
+      </div>
+      <div class="grid-fit">
+        <div class="card">
+          <div id="fit-table" aria-live="polite"></div>
+          <div class="legend fit-legend" aria-hidden="true">
+            <span class="fit-key great">Great</span><span class="fit-key good">Good</span><span class="fit-key poor">—</span><span>fit, by the shopper matcher's own confidence thresholds</span>
+          </div>
+        </div>
+        <div class="stack">
+          <h3 style="margin:0">Gaps and notes</h3>
+          <div id="fit-gaps" class="gap-list"></div>
+        </div>
+      </div>
+    </section>
+
     <section aria-labelledby="synth-h" class="dash-section synthetic">
       <div class="synthetic-banner" role="note">
         <b>Synthetic demo data</b>

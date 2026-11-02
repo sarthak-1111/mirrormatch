@@ -38,6 +38,7 @@ async function load() {
   $('synth-insights').innerHTML = s.synthetic.insights.map(insightCard).join('');
   renderTraces(traces);
   renderUnits(s.units, s.mode);
+  loadFit().catch(() => {}); // live escalations and stock can change the gap cards
 }
 
 function renderChips(s) {
@@ -190,6 +191,95 @@ function renderUnits(u, mode) {
     </div>
     <table class="costs"><thead><tr><th>Feature</th><th>Units per call</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="muted small">Costs source: ${esc(u.costSource === 'api' ? 'GET /s2s/v2.0/credit/feature-cost' : 'YouCam documentation')}. Units are charged only when a task succeeds. Max 3 try-on renders per return; renders and tone results are cached per session.</p>`;
+}
+
+// ---------- "Who is each shade for?" (catalogue × reference profiles; no customer data) ----------
+const FIT_CATS = [
+  ['lipstick', 'Lipstick'],
+  ['foundation', 'Foundation'],
+  ['dress', 'Dresses'],
+];
+const FIT_TEXT = { great: 'Great', good: 'Good', poor: '—' };
+const GAP_KIND = {
+  range: ['!', 'Gap in your range'],
+  thin: ['1', 'Thin coverage'],
+  live: ['L', 'Live escalations'],
+  nofit: ['i', 'Note'],
+};
+let fitCategory = 'lipstick';
+
+function renderFitTabs(counts = {}) {
+  const host = $('fit-tabs');
+  if (!host.childElementCount) {
+    host.innerHTML = FIT_CATS.map(([key]) => `<button type="button" class="tab" data-cat="${key}"></button>`).join('');
+    host.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-cat]');
+      if (!b || b.dataset.cat === fitCategory) return;
+      fitCategory = b.dataset.cat;
+      loadFit();
+    });
+  }
+  for (const b of host.querySelectorAll('button[data-cat]')) {
+    const [, label] = FIT_CATS.find(([k]) => k === b.dataset.cat);
+    const n = counts[b.dataset.cat] ?? 0;
+    b.setAttribute('aria-pressed', String(b.dataset.cat === fitCategory));
+    b.innerHTML = `${esc(label)}${n ? ` <span class="tab-badge" aria-label="${n} ${n === 1 ? 'gap' : 'gaps'}">${n}</span>` : ''}`;
+  }
+}
+
+function fitTable(m) {
+  const flagged = new Set(m.gaps.filter((g) => g.kind !== 'live').map((g) => g.profileKey));
+  const groups = ['light', 'medium', 'deep'];
+  return `
+    <div class="heat-wrap">
+      <table class="heat fit">
+        <caption class="sr-only">Who each ${esc(m.category)} suits: fit per product and reference tone profile. ${esc(m.source)}.</caption>
+        <thead>
+          <tr><th></th>${groups.map((g) => `<th colspan="3" scope="colgroup">${g[0].toUpperCase() + g.slice(1)} depth</th>`).join('')}</tr>
+          <tr><th scope="col" style="text-align:left">Product</th>${m.profiles
+            .map((p) => `<th scope="col" class="${flagged.has(p.key) ? 'flag' : ''}"${flagged.has(p.key) ? ` title="${esc(p.label)}: see gaps and notes"` : ''}>${esc(p.key.split('-')[1])}${flagged.has(p.key) ? '<span class="flag-dot" aria-label=" (flagged)"></span>' : ''}</th>`)
+            .join('')}</tr>
+        </thead>
+        <tbody>
+          ${m.products
+            .map(
+              (p, i) => `
+            <tr class="${p.inStock ? '' : 'soldout'}">
+              <th scope="row" class="prod"><span class="swatch" style="background:${esc(p.hex)}"></span>${esc(p.shadeName)}${p.inStock ? '' : ' <span class="tag">Sold out</span>'}</th>
+              ${m.cells[i]
+                .map((c, j) => `<td class="fit-cell ${c.level}${flagged.has(m.profiles[j].key) ? ' flagcol' : ''}" aria-label="${esc(p.shadeName)}, ${esc(m.profiles[j].label)}: ${c.level === 'poor' ? 'not a strong fit' : `${c.level} fit`}">${FIT_TEXT[c.level]}</td>`)
+                .join('')}
+            </tr>`,
+            )
+            .join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function gapCard(g) {
+  const [ico, label] = GAP_KIND[g.kind] ?? GAP_KIND.nofit;
+  return `
+    <div class="insight gap ${esc(g.kind)}">
+      <div class="ico" aria-hidden="true">${esc(ico)}</div>
+      <div>
+        <div class="gap-kind">${esc(label)}${g.profileLabel ? ` · ${esc(g.profileLabel)}` : ''}${g.kind === 'live' || g.liveEscalations ? ' · <span class="live-tag">live</span>' : ''}</div>
+        <div>${esc(g.text)}</div>
+      </div>
+    </div>`;
+}
+
+async function loadFit() {
+  const cat = fitCategory;
+  const m = await fetch(`/api/merchant/fit?category=${encodeURIComponent(cat)}`).then((r) => r.json());
+  if (cat !== fitCategory) return; // a newer tab click won
+  renderFitTabs(m.gapCounts);
+  $('fit-source').textContent = m.source;
+  $('fit-table').innerHTML = fitTable(m);
+  const cards = [...m.gaps, ...m.notes];
+  $('fit-gaps').innerHTML = cards.length
+    ? cards.map(gapCard).join('')
+    : `<div class="empty">Every reference profile has at least two good in-stock options in this category.</div>`;
 }
 
 let reloadTimer = null;
