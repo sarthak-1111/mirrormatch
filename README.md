@@ -3,7 +3,7 @@
 **The returns desk with a mirror: see the right match on you before you send it back.**
 
 ### ▶ Live demo: **https://sarthak-1111.github.io/mirrormatch/**
-*Opens the workspace on its first tab, **Try it**: pick Lipstick, Dress, Hair colour or Foundation and the app plays a whole return by itself with YouCam's sample model: replays of real YouCam results, 0 units. Or upload your own selfie in the phone (live YouCam calls, capped per day). The demo runs on the author's workstation through a Cloudflare tunnel; if it's resting, `npm run mock` runs everything locally with no key.*
+*Opens on **Try it**, two steps: pick what you're returning (lipstick, foundation, hair colour or a dress), then upload a selfie, or tap **Use YouCam's sample model** (replays of real YouCam results, 0 units). Your own photo runs live YouCam calls, capped per day; if a photo can't be read, the app says why and lets you upload another. Tabs switch to **Alex's story**, **Watch the agent** (a return playing by itself, with every agent step) and **For stores** (the merchant dashboard). The demo runs on the author's workstation through a Cloudflare tunnel; if it's resting, `npm run mock` runs everything locally with no key.*
 
 When a shopper starts a return because *"the shade didn't match"*, *"the colour didn't suit me"* or *"it didn't suit my skin"*, MirrorMatch:
 1. asks for one photo and measures their skin tone (and, for foundation and skincare, reads their skin),
@@ -15,13 +15,17 @@ Merchants get a live dashboard: refunds turned into exchanges, which products ge
 
 Built for the **YouCam API Skin AI & eCommerce VTO Hackathon**, **eCommerce VTO** track, with **five YouCam AI APIs**: Facial Color Tones Analyzer, Skin Analysis, Makeup Virtual Try-On, Hair Color and Clothes Virtual Try-On. Makeup try-on and clothes try-on work together in one returns flow, down to one image of the shopper wearing the new dress *and* the matching lipstick.
 
-Demo store: **Hue & Hem**, a fictional shop. No real brands. Start with the one-minute story at **`/story.html`**, or the workspace at **`/workspace.html`**.
+Demo store: **Hue & Hem**, a fictional shop. No real brands. Start at **`/`** (Try it), read the one-minute story at **`/story.html`**, or watch the agent at **`/workspace.html`**.
 
 **Why it's different.** Shade finders guess *before* a purchase. A return is the only time a store learns what actually failed: *this shade, on this tone profile, didn't work*. MirrorMatch turns each of those moments into a saved sale for the shopper and a fix for the store's catalogue.
 
-| The workspace, "Try it" tab: a return playing in the phone | Hair colour, before / after | Lips on the new dress (makeup + clothes) |
+| Try it: what you're returning, then one photo | A photo that didn't work: why, and what to do | Hair colour, before / after |
 |---|---|---|
-| ![Workspace](docs/screenshots/10-workspace.png) | ![Hair colour before and after](docs/screenshots/11-hair-colour.png) | ![Lipstick rendered over the dress try-on](docs/screenshots/12-lips-on-dress.png) |
+| ![Try it: pick what you're returning, then upload a selfie or use the sample model](docs/screenshots/00-try-it.png) | ![The retry screen: the photo tried, why it didn't work, what to do, Upload another photo](docs/screenshots/15-photo-retry.png) | ![Hair colour before and after](docs/screenshots/11-hair-colour.png) |
+
+| Watch the agent: a return playing in the phone | Lips on the new dress (makeup + clothes) |
+|---|---|
+| ![Workspace](docs/screenshots/10-workspace.png) | ![Lipstick rendered over the dress try-on](docs/screenshots/12-lips-on-dress.png) |
 
 | Return offer | Lipstick try-on | Before / after on you |
 |---|---|---|
@@ -61,13 +65,15 @@ We don't quote industry return-rate statistics here. The dashboard shows only wh
 ## What's in it
 
 **For the shopper** (mobile-first)
+- **Try it in two steps.** Pick what you're returning, add one photo (any format the browser opens: JPG, PNG, WebP, HEIC on iPhone), and the app goes straight to your matches. The return, reason, offer and consent run behind it with the same agent and policy; the demo store's orders are one link away (`#/orders`).
+- **Says why a photo didn't work.** Face too small, too dark, head turned, cut off, more than one person: the retry screen shows the photo you tried, the reason in plain words, what to do, and **Upload another photo** first. A tone reading that comes back with only soft quality flags (light, size, angle) is kept with a short note instead of a paid retake. If the hosted demo's daily YouCam budget is used up, it says your photo is fine and offers the sample model; it never blames the photo.
 - **Only for colour returns.** "The shade didn't match" or "The colour didn't suit me" opens the offer; damaged items go straight to a refund.
 - **One selfie, then their match.** Skin-tone analysis is turned into a kind summary (depth and undertone), and in-stock alternatives are ranked by colour science, each with a one-line reason.
 - **Try-on, makeup and clothes.** The returned item and the top two picks are rendered on the shopper's own photo: lipstick and foundation with makeup try-on, dresses with clothes try-on.
 - **Before / after slider.** The returned shade and the chosen pick are shown on the same photo, so only the colour changes. It can be dragged or used from the keyboard.
 - **Read my results aloud.** The browser's speech synthesis reads the summary, picks and reasons, for shoppers who'd rather listen.
 - **A four-step progress bar**, kind copy ("that's on us, not you"), and the refund one tap away on every screen.
-- **Colour passport (opt-in).** After an exchange, the shopper can save their tone numbers (never the photo) on their own device. The orders page then shows "Picked for you" from the same matcher, including the shade they chose. One tap forgets it.
+- **Colour passport (opt-in).** After an exchange, the shopper can save their tone numbers (never the photo) on their own device. The start page then shows "Picked for you" from the same matcher, including the shade they chose. One tap forgets it.
 
 **For the merchant** (desktop)
 - **Live:** returns started, exchanges accepted, refund value kept, an event feed and a product × tone-profile return heatmap.
@@ -77,7 +83,7 @@ We don't quote industry return-rate statistics here. The dashboard shows only wh
 - **Agent suggestions**, drafted by deterministic code. *Fill the gap* proposes a new shade for an under-served tone profile, with the target colour (hex + CIELAB) from the matcher's own target logic, and can render that exact colour on YouCam's sample model (makeup-vto, 1 unit, then cached; "Visual preview, not a guarantee"). *Product-page fit notes* draft copy such as "Runs light and warm on deep, cool skin". Notes from synthetic data say so. **Approve** or **Dismiss** only logs an event; nothing external happens. The optional LLM may reword the text; templates otherwise.
 
 **For judges and demos: the workspace (`/workspace.html`)**
-- Four tabs, one thing on screen at a time: **Try it** (pick a return; the shopper app plays it in a phone frame, `/?embed=1`, with a progress bar and the latest agent steps in plain words), **Agent steps** (every tool call, decision, timing and unit for the session in the phone), **Store view** (KPIs, latest events, the agent's suggestions) and **Setup** (YouCam transport, units and cap, demo cache, optional LLM, returns-portal webhook, privacy guarantees). Tabs deep-link (`#agent`, `#store`, `#setup`), move with the arrow keys, and show a count of what is new while you look elsewhere.
+- Four tabs, one thing on screen at a time: **Watch a return** (pick a return; the shopper app plays it in a phone frame, `/?embed=1`, with a progress bar and the latest agent steps in plain words), **Agent steps** (every tool call, decision, timing and unit for the session in the phone), **Store view** (KPIs, latest events, the agent's suggestions) and **Setup** (YouCam transport, units and cap, demo cache, optional LLM, returns-portal webhook, privacy guarantees). Tabs deep-link (`#agent`, `#store`, `#setup`), move with the arrow keys, and show a count of what is new while you look elsewhere.
 - **Design:** built on one design-token set (the Open Design retail package, Apache-2.0): one system font, a white canvas, near-black text and a single coral colour kept for the main action. The merchant dashboard is five tabs too (Overview, Shade fit, Suggestions, Demo history, Agent log), with the synthetic history on its own tab.
 - **Run a return for me:** pick *Lipstick*, *Dress*, *Hair colour* or *Foundation* and the app plays the whole return itself through the real UI: order, reason, offer, consent, YouCam's sample photo, analysis, previews, the before/after slider, then an exchange for the top match. Each step has a caption and a short pause. **Stop** (or pressing any control in the phone) hands control back at once, and the refund button stays visible throughout. Also available as `/?autoplay=lipstick`, `dress`, `hair` or `foundation`.
 - **Use YouCam's sample model:** the photo step also offers YouCam's official sample photo (face for makeup, waist-up for the dress), sent byte for byte so the demo cache (keyed by the photo hash) makes repeat runs free. Put the files in `samples-local/face.jpg` and `samples-local/body.jpg` (gitignored, see `ASSETS.md`); if they are missing the server fetches the official images once and keeps them in memory.

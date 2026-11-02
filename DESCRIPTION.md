@@ -4,7 +4,7 @@
 
 **Track:** eCommerce VTO (makeup try-on + clothes try-on in one flow)
 
-**Live demo:** https://sarthak-1111.github.io/mirrormatch/ (pick a return under "Try it")
+**Live demo:** https://sarthak-1111.github.io/mirrormatch/ (pick what you're returning, then upload a selfie or use YouCam's sample model)
 
 ---
 
@@ -38,7 +38,9 @@ MirrorMatch is a returns desk for a demo store, "Hue & Hem" (fictional, no real 
 - **The agent drafts the fix.** For a gap, it proposes a new shade (target hex and CIELAB from the matcher's own logic) and can preview that exact colour on YouCam's sample model; it drafts product-page fit notes. A person approves or dismisses: approving only logs an event.
 - Synthetic illustration data is always labelled and kept apart from live events. A **returns-portal webhook** lets an existing portal hand colour returns to MirrorMatch.
 
-**For judges: the connected workspace.** Four calm tabs, one thing at a time: **Try it** (pick a lipstick, hair-colour, foundation or dress return and watch it play by itself in the phone, through the real UI, with a progress bar and the latest agent steps in plain words), **Agent steps** (every tool call, timing and unit), **Store view** (KPIs, live events, the agent's suggestions) and **Setup** (YouCam over MCP, units and caps, cache, optional LLM, webhook, privacy). Stop hands control back at any moment. The merchant dashboard is tabbed the same way, so nobody meets a wall of numbers.
+**For shoppers: two steps.** The live demo opens on **Try it**: pick what you're returning and add one photo, and the matches appear on your own face. If a photo can't be read, the app says why in plain words (face too small, too dark, head turned), shows what to do, and puts **Upload another photo** first. A reading with only soft quality flags is kept with a note instead of a paid retake, and when the demo's daily YouCam budget is used up it says your photo is fine and offers the sample model.
+
+**For judges: the connected workspace.** Four calm tabs, one thing at a time: **Watch a return** (pick a lipstick, hair-colour, foundation or dress return and watch it play by itself in the phone, through the real UI, with a progress bar and the latest agent steps in plain words), **Agent steps** (every tool call, timing and unit), **Store view** (KPIs, live events, the agent's suggestions) and **Setup** (YouCam over MCP, units and caps, cache, optional LLM, webhook, privacy). Stop hands control back at any moment. The merchant dashboard is tabbed the same way, so nobody meets a wall of numbers.
 
 ## Why not just do this before purchase?
 
@@ -109,4 +111,4 @@ Most try-on lives on the product page. MirrorMatch puts skin-tone analysis, skin
 
 YouCam AI Facial Color Tones Analyzer · YouCam AI Skin Analysis · YouCam AI Makeup Virtual Try-On · YouCam AI Hair Color · YouCam AI Clothes Virtual Try-On (cloth-v4) · YouCam MCP servers (beauty, fashion) · YouCam File / Credit / Task APIs · Node.js · Express · vanilla JS · CIELAB / CIEDE2000 · Web Speech API · Playwright · Cloudflare Tunnel · GitHub Pages · optional OpenAI-compatible LLM (local gpt-oss:120b)
 
-**Try it:** the live demo above, or `npm install && npm start` with a `YOUCAM_API_KEY` in `.env`, or `npm run mock` with no key. Start at `/workspace.html` or `/story.html`. Repo: https://github.com/sarthak-1111/mirrormatch
+**Try it:** the live demo above, or `npm install && npm start` with a `YOUCAM_API_KEY` in `.env`, or `npm run mock` with no key. Start at `/` (Try it), `/workspace.html` (watch the agent) or `/story.html`. Repo: https://github.com/sarthak-1111/mirrormatch
