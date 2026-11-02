@@ -59,7 +59,13 @@ test('lipstick return becomes an exchange, and the dashboard shows it live', asy
   // At least this exchange (other spec files share the server and may add more in parallel).
   await expect(dash.locator('#kpis .kpi').nth(2).locator('.value')).toHaveText(/^[1-9]\d*$/);
   await expect(dash.locator('#feed')).toContainText('Exchange created');
-  await expect(dash.getByText('Synthetic demo data').first()).toBeVisible();
+  // Synthetic history and the catalogue view live in their own tabs, apart from live numbers.
+  const banner = dash.locator('#history .synthetic-banner');
+  await expect(banner).toBeHidden();
+  await dash.getByRole('tab', { name: 'Demo history' }).click();
+  await expect(banner).toContainText('Synthetic demo data');
+  await expect(banner).toBeVisible();
+  await dash.getByRole('tab', { name: 'Shade fit' }).click();
   await expect(dash.getByRole('heading', { name: 'Who is each shade for?' })).toBeVisible();
 });
 

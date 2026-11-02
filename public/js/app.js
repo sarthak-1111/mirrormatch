@@ -487,7 +487,7 @@ function skinCard(s) {
         <div class="advice">
           <div class="small muted">How to wear ${esc(pick?.product.shadeName ?? 'your match')}</div>
           <div class="advice-row"><span><b>${esc(cap(k.advice.finish))}</b> finish</span><span><b>${esc(cap(k.advice.coverage))}</b> coverage</span></div>
-          <p class="small" style="margin:0;color:var(--ink-2)">${esc(k.advice.reason)}</p>
+          <p class="small" style="margin:0;color:var(--fg-2)">${esc(k.advice.reason)}</p>
         </div>` : ''}
       <p class="small muted" style="margin:0">${esc(k.note)}</p>
       <details class="how">
@@ -653,6 +653,8 @@ function viewMatches(s) {
       </div>
       <section class="card compare-card stack" id="compare-card" aria-label="Before and after" hidden></section>
       ${lookCard(s)}
+      <details class="why">
+        <summary>Why these ${esc(variantNoun(s.returned.category))}s suit you</summary>
       <div class="stack" id="reasons">
         ${s.matches?.returnedCaution
           ? `<div class="card tint match"><div class="match-head"><span class="swatch" style="background:${esc(s.returned.hex)}"></span><div class="grow"><div style="font-weight:600">Why ${esc(s.returned.shadeName)} may not have worked</div></div></div><p class="reason">${esc(s.matches.returnedCaution)} That's about the colour, not about you.</p></div>`
@@ -673,6 +675,7 @@ function viewMatches(s) {
           )
           .join('')}
       </div>
+      </details>
       <div class="banner info small"><span aria-hidden="true">🔒</span><div>Your photo is deleted as soon as you choose. <button class="btn ghost" style="min-height:0;padding:0" data-action="delete-photo">Delete it now</button></div></div>
     </section>`;
   renderSticky(s);
@@ -871,7 +874,7 @@ function passportOffer(p) {
         <div class="swatch-pair" aria-hidden="true"><span style="background:${esc(p.skinHex)}"></span>${p.lipHex ? `<span style="background:${esc(p.lipHex)}"></span>` : ''}</div>
         <div class="grow">
           <h2 id="passport-title">Next time, skip the guesswork</h2>
-          <p class="small" style="margin:6px 0 0;color:var(--ink-2)">Save your colour profile on this device and we'll mark the shades that suit you before you buy. It keeps two colour values plus "${esc(cap(p.depthLabel))} · ${esc(p.undertone)}". Never your photo, and never on our server.</p>
+          <p class="small" style="margin:6px 0 0;color:var(--fg-2)">Save your colour profile on this device and we'll mark the shades that suit you before you buy. It keeps two colour values plus "${esc(cap(p.depthLabel))} · ${esc(p.undertone)}". Never your photo, and never on our server.</p>
         </div>
       </div>
       <div class="btn-col">
@@ -931,7 +934,7 @@ function renderTrace() {
   }
   $trace.innerHTML = `
     <div class="trace-panel">
-      <div class="row" style="justify-content:space-between"><h2>Agent trace</h2><button class="icon-btn" style="background:#2d2724;color:#efe8e1;border-color:#3a332f" data-action="toggle-trace">Hide</button></div>
+      <div class="row" style="justify-content:space-between"><h2>Agent trace</h2><button class="icon-btn" data-action="toggle-trace">Hide</button></div>
       <div class="sum"><span>${tools.length} tool calls</span><span title="Wall-clock time spent in tool calls (parallel previews overlap)">${(totalMs / 1000).toFixed(1)} s in tools</span><span>${s.unitsUsed} units</span><span>renders ${s.rendersUsed}/${s.maxRenders}</span><span>${s.mode === 'live' ? 'live API' : 'mock'}</span></div>
       <ol class="trace-list">
         ${s.trace
@@ -942,7 +945,7 @@ function renderTrace() {
           })
           .join('')}
       </ol>
-      <p style="color:#8f857c;margin:10px 0 0">No photos, colours or raw API output are logged.</p>
+      <p class="muted small" style="margin:10px 0 0">No photos, colours or raw API output are logged.</p>
     </div>`;
 }
 
@@ -1110,7 +1113,7 @@ const actions = {
       const img = document.querySelector('#capture-box img.preview');
       if (img) {
         img.alt = "YouCam's sample model photo";
-        img.insertAdjacentHTML('afterend', '<span class="sample-tag" style="position:absolute;left:12px;bottom:12px;font-size:12px;font-weight:600;color:#fff;background:rgba(20,16,14,.62);padding:4px 9px;border-radius:8px">YouCam official sample image</span>');
+        img.insertAdjacentHTML('afterend', '<span class="sample-tag">YouCam official sample image</span>');
       }
     } finally {
       el.disabled = false;

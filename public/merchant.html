@@ -5,27 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Returns intelligence · Hue &amp; Hem</title>
   <meta name="description" content="MirrorMatch merchant dashboard: refunds converted to exchanges, and which products get returned by which tone profiles." />
+  <meta name="theme-color" content="#ffffff" />
   <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/tokens.css" />
   <link rel="stylesheet" href="/css/app.css" />
   <link rel="stylesheet" href="/css/merchant.css" />
 </head>
 <body class="merchant">
   <a class="sr-only" href="#dash">Skip to content</a>
-  <header class="topbar">
+  <header class="m-top">
     <a class="brand" href="/" aria-label="Hue and Hem shopper view">
       <img src="/assets/logo.svg" alt="" />
-      <b>Hue &amp; Hem</b><span>Returns intelligence · MirrorMatch</span>
+      <b>Hue &amp; Hem</b><span>Returns · MirrorMatch</span>
     </a>
-    <div class="spacer"></div>
-    <a class="ws-link" href="/workspace.html">Workspace</a>
-    <span id="units-chip" class="chip" title="YouCam unit balance (from the credit endpoint)"></span>
-    <span id="mode-chip" class="chip"></span>
+    <div class="m-tabs" role="tablist" aria-label="Dashboard">
+      <button type="button" role="tab" id="mtab-overview" aria-controls="overview" aria-selected="true">Overview</button>
+      <button type="button" role="tab" id="mtab-fit" aria-controls="fit" aria-selected="false" tabindex="-1">Shade fit</button>
+      <button type="button" role="tab" id="mtab-suggestions" aria-controls="suggestions" aria-selected="false" tabindex="-1">Suggestions<span class="tab-count" id="sugg-count" hidden></span></button>
+      <button type="button" role="tab" id="mtab-history" aria-controls="history" aria-selected="false" tabindex="-1">Demo history</button>
+      <button type="button" role="tab" id="mtab-log" aria-controls="log" aria-selected="false" tabindex="-1">Agent log</button>
+    </div>
+    <div class="m-end">
+      <a class="ws-link" href="/workspace.html">Workspace</a>
+      <span id="units-chip" class="chip" title="YouCam unit balance (from the credit endpoint)"></span>
+      <span id="mode-chip" class="chip"></span>
+    </div>
   </header>
   <main id="dash" class="dash" tabindex="-1">
-    <section aria-labelledby="live-h" class="dash-section">
+    <!-- Overview: live numbers only -->
+    <section class="dash-section" id="overview" role="tabpanel" aria-labelledby="mtab-overview">
       <div class="section-head">
         <div>
           <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Live · demo sessions on this server</p>
@@ -49,12 +57,13 @@
       </div>
     </section>
 
-    <section aria-labelledby="fit-h" class="dash-section catalogue">
+    <!-- Shade fit: catalogue + matcher only -->
+    <section class="dash-section catalogue" id="fit" role="tabpanel" aria-labelledby="mtab-fit" hidden>
       <div class="section-head">
         <div>
-          <p class="eyebrow"><span class="cat-dot" aria-hidden="true"></span> Catalogue · <span id="fit-source">From your catalogue and the matcher, no customer data</span></p>
-          <h2 id="fit-h">Who is each shade for?</h2>
-          <p class="muted small" style="margin:4px 0 0;max-width:720px">Every product scored against nine reference tone profiles by the same matcher shoppers see. Spot thin coverage and gaps in your range before returns do. Reference profiles are approximations: each shopper's own measured colours, including eyes and hair, decide their actual picks.</p>
+          <p class="eyebrow"><span class="cat-dot" aria-hidden="true"></span> <span id="fit-source">From your catalogue and the matcher, no customer data</span></p>
+          <h1 id="fit-h">Who is each shade for?</h1>
+          <p class="muted small intro">Every product scored against nine reference tone profiles by the same matcher shoppers see, so you can spot gaps in the range before returns do. Reference profiles are approximations: each shopper's own measured colours decide their actual picks.</p>
         </div>
         <div class="tabs" role="group" aria-label="Product category" id="fit-tabs"></div>
       </div>
@@ -66,44 +75,52 @@
           </div>
         </div>
         <div class="stack">
-          <h3 style="margin:0">Gaps and notes</h3>
+          <h2 class="side-h">Gaps and notes</h2>
           <div id="fit-gaps" class="gap-list"></div>
         </div>
       </div>
     </section>
 
-    <section aria-labelledby="sugg-h" class="dash-section" id="suggestions" tabindex="-1">
+    <!-- Suggestions: drafted by code, decided by a person -->
+    <section class="dash-section" id="suggestions" role="tabpanel" aria-labelledby="mtab-suggestions" tabindex="-1" hidden>
       <div class="section-head">
         <div>
-          <p class="eyebrow"><span class="agent-dot" aria-hidden="true"></span> Agent suggestions · drafted by deterministic code<span id="sugg-llm"></span></p>
-          <h2 id="sugg-h">What the agent suggests</h2>
-          <p class="muted small" style="margin:4px 0 0;max-width:760px">Drafted from the gaps above and the return heatmaps, using the same matcher shoppers see. <b>Approve</b> or <b>Dismiss</b> only records your decision in the event log: nothing is published, ordered or sent anywhere.</p>
+          <p class="eyebrow"><span class="agent-dot" aria-hidden="true"></span> Drafted by deterministic code<span id="sugg-llm"></span></p>
+          <h1 id="sugg-h">What the agent suggests</h1>
+          <p class="muted small intro">Drafted from the gaps in Shade fit and the return heatmaps, using the same matcher shoppers see. <b>Approve</b> or <b>Dismiss</b> only records your decision in the event log: nothing is published, ordered or sent anywhere.</p>
         </div>
       </div>
       <div id="sugg-list" class="sugg-grid" aria-live="polite"></div>
     </section>
 
-    <section aria-labelledby="synth-h" class="dash-section synthetic">
+    <!-- Demo history: synthetic, kept apart from live numbers -->
+    <section class="dash-section synthetic" id="history" role="tabpanel" aria-labelledby="mtab-history" hidden>
       <div class="synthetic-banner" role="note">
         <b>Synthetic demo data</b>
         <span id="synth-disclaimer"></span>
       </div>
-      <h2 id="synth-h">Which products get returned by which tone profiles</h2>
+      <h1 id="synth-h">Which products get returned by which tone profiles</h1>
       <p class="muted small" id="synth-sub"></p>
-      <div id="synth-heat"></div>
-      <h3 style="margin-top:18px">Insights (computed by the same matcher the shopper flow uses)</h3>
+      <div class="card"><div id="synth-heat"></div></div>
+      <h2 class="side-h">Insights (computed by the same matcher the shopper flow uses)</h2>
       <div id="synth-insights" class="insights"></div>
     </section>
 
-    <section aria-labelledby="trace-h" class="dash-section">
-      <h2 id="trace-h">Agent traces</h2>
-      <p class="muted small">Each return session: tools called, timing and YouCam units. No selfies, colours or raw API output.</p>
-      <div id="traces" class="traces"></div>
-    </section>
-
-    <section aria-labelledby="units-h" class="dash-section">
-      <h2 id="units-h">YouCam unit budget</h2>
-      <div id="units" class="card flat"></div>
+    <!-- Agent log: traces + unit budget -->
+    <section class="dash-section" id="log" role="tabpanel" aria-labelledby="mtab-log" hidden>
+      <div class="section-head">
+        <div>
+          <h1 id="trace-h">Agent log</h1>
+          <p class="muted small intro">Each return session: tools called, timing and YouCam units. No selfies, colours or raw API output.</p>
+        </div>
+      </div>
+      <div class="log-grid">
+        <div id="traces" class="traces"></div>
+        <section class="card" aria-labelledby="units-h">
+          <h2 id="units-h">YouCam unit budget</h2>
+          <div id="units"></div>
+        </section>
+      </div>
     </section>
   </main>
   <script type="module" src="/js/merchant.js"></script>

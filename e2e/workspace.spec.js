@@ -31,6 +31,9 @@ test('Stop hands control back to the person', async ({ page }) => {
 
 test('merchant suggestions: drafted proposals, synthetic notes labelled, approve only logs', async ({ page }) => {
   await page.goto('/merchant#suggestions');
+  // The hash opens the Suggestions tab; the other tabs stay out of the way.
+  await expect(page.getByRole('tab', { name: /Suggestions/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#overview')).toBeHidden();
   const sec = page.locator('#suggestions');
   await expect(sec.getByRole('heading', { name: 'What the agent suggests' })).toBeVisible();
   const shade = sec.locator('article.sugg.shade').first();
@@ -48,7 +51,11 @@ test('merchant suggestions: drafted proposals, synthetic notes labelled, approve
 test('autopilot (lipstick) reaches the exchange while the agent console follows it', async ({ page }) => {
   test.setTimeout(120000);
   await page.goto('/workspace.html');
-  await expect(page.getByRole('heading', { name: 'Run a return for me' })).toBeVisible();
+  // One thing at a time: the first tab is only the picker and the phone.
+  await expect(page.getByRole('heading', { name: 'Watch a return become an exchange' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Try it' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#panel-agent')).toBeHidden();
+  await expect(page.locator('#panel-store')).toBeHidden();
   await expect(page.locator('#ws-env')).toContainText('Mock');
   await expect(page.locator('#ws-env')).toContainText('/api/integrations/return-started');
   const app = page.frameLocator('#app-frame');
@@ -56,7 +63,8 @@ test('autopilot (lipstick) reaches the exchange while the agent console follows 
 
   await page.getByRole('button', { name: 'Lipstick' }).click();
   await expect(app.locator('.ap-badge')).toContainText('Autopilot demo: choosing the top match');
-  await expect(page.locator('#ap-caption')).toContainText('Step');
+  await expect(page.locator('#run-step')).toContainText('Step');
+  await expect(page.locator('#meter')).not.toHaveAttribute('aria-valuenow', '0');
   // The refund stays one tap away while the autopilot runs.
   await expect(app.getByRole('heading', { name: /better match on you/ })).toBeVisible({ timeout: 20000 });
   await expect(app.getByRole('button', { name: /continue to refund/i }).first()).toBeVisible();
@@ -70,12 +78,25 @@ test('autopilot (lipstick) reaches the exchange while the agent console follows 
   await expect(page.locator('#ap-caption')).toContainText('Done: exchanged for');
   await expect(page.getByRole('button', { name: 'Lipstick' })).toBeEnabled();
 
-  // The console followed the session: tools, decisions and the exchange.
+  // The latest steps show beside the phone in plain words.
+  await expect(page.locator('#recent')).toContainText('Created the exchange');
+
+  // The Agent steps tab followed the session (and counted what was new while it was hidden).
+  await expect(page.locator('#count-agent')).toBeVisible();
+  await page.getByRole('tab', { name: /Agent steps/ }).click();
+  await expect(page.locator('#panel-agent')).toBeVisible();
+  await expect(page.locator('#panel-try')).toBeHidden();
+  await expect(page.locator('#count-agent')).toBeHidden();
   const consoleList = page.locator('#console-list');
   await expect(consoleList).toContainText('analyze_skin_tone');
+  await expect(consoleList).toContainText('Measured skin tone with YouCam');
   await expect(consoleList).toContainText('render_tryon');
   await expect(consoleList).toContainText('create_exchange');
   await expect(page.locator('#ws-session')).toContainText('exchanged');
-  // The merchant strip saw it live.
+  // Arrow keys move between tabs; the Store view saw the exchange live.
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('tab', { name: /Store view/ })).toBeFocused();
+  await expect(page.locator('#panel-store')).toBeVisible();
   await expect(page.locator('#ws-feed')).toContainText('Exchange created', { timeout: 10000 });
+  await expect(page).toHaveURL(/#store$/);
 });

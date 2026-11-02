@@ -65,13 +65,14 @@ function renderKpis(k) {
 }
 
 function ramp(t) {
-  // sequential ramp: #f3ece5 → #e7a68f → #b4533f → #6e2618
-  const stops = [[243, 236, 229], [231, 166, 143], [180, 83, 63], [110, 38, 24]];
+  // Sequential neutral ramp from the design tokens (surface-warm → border → muted → fg), so the
+  // coral accent stays for actions. Text flips to white once the cell is dark enough.
+  const stops = [[247, 247, 247], [221, 221, 221], [106, 106, 106], [34, 34, 34]];
   const x = Math.max(0, Math.min(1, t)) * (stops.length - 1);
   const i = Math.min(stops.length - 2, Math.floor(x));
   const f = x - i;
   const c = stops[i].map((v, j) => Math.round(v + (stops[i + 1][j] - v) * f));
-  return { bg: `rgb(${c.join(',')})`, fg: t > 0.55 ? '#fff' : '#231e1b' };
+  return { bg: `rgb(${c.join(',')})`, fg: t > 0.5 ? 'var(--on-dark)' : 'var(--fg)' };
 }
 
 function heatTable(heat, keys, prods, caption, maxRows = 12) {
@@ -99,7 +100,7 @@ function heatTable(heat, keys, prods, caption, maxRows = 12) {
                 .map((k) => {
                   const n = heat[p.id]?.[k.key] ?? 0;
                   const c = ramp(n / max);
-                  return `<td class="${n ? '' : 'zero'}" style="background:${n ? c.bg : '#f8f4ef'};color:${n ? c.fg : ''}" aria-label="${esc(p.shadeName)}, ${esc(k.label)}: ${n} returns">${n}</td>`;
+                  return `<td class="${n ? '' : 'zero'}" style="${n ? `background:${c.bg};color:${c.fg}` : ''}" aria-label="${esc(p.shadeName)}, ${esc(k.label)}: ${n} returns">${n}</td>`;
                 })
                 .join('')}
               <td><b>${total}</b></td>
@@ -122,7 +123,7 @@ function insightCard(i) {
         <div>${esc(i.text)}</div>
         <div class="swatches">
           ${from ? `<span class="swatch" style="background:${esc(from.hex)}" title="${esc(from.shadeName)}"></span>${esc(from.shadeName)}` : ''}
-          ${i.recommendName ? ` → <span class="swatch" style="background:${esc(to?.hex ?? '#ccc')}"></span>${esc(i.recommendName)}` : ''}
+          ${i.recommendName ? ` → <span class="swatch" style="background:${esc(to?.hex ?? 'var(--border)')}"></span>${esc(i.recommendName)}` : ''}
           <span>· ${esc(i.share)}% of this product's returns</span>
         </div>
       </div>
@@ -385,6 +386,11 @@ async function loadSuggestions(force = false) {
   suggSig = sig;
   suggestions = j.suggestions;
   renderSuggestions(suggestions);
+  const open = suggestions.filter((x) => !x.decision).length;
+  const count = $('sugg-count');
+  count.hidden = !open;
+  count.textContent = String(open);
+  $('mtab-suggestions').setAttribute('aria-label', open ? `Suggestions, ${open} open` : 'Suggestions');
 }
 
 function rerenderKeepingFocus(selector) {
@@ -443,6 +449,34 @@ function connect() {
     reloadTimer = setTimeout(load, 500);
   };
 }
+
+// ---------- tabs (hash-addressable: #overview, #fit, #suggestions, #history, #log) ----------
+const tabs = [...document.querySelectorAll('.m-tabs [role="tab"]')];
+const PANELS = tabs.map((t) => t.getAttribute('aria-controls'));
+function select(name, { focus = false, updateHash = true } = {}) {
+  if (!PANELS.includes(name)) name = 'overview';
+  tabs.forEach((t, i) => {
+    const on = PANELS[i] === name;
+    t.setAttribute('aria-selected', String(on));
+    t.tabIndex = on ? 0 : -1;
+    $(PANELS[i]).hidden = !on;
+    if (on && focus) t.focus();
+  });
+  if (updateHash) history.replaceState(null, '', name === 'overview' ? location.pathname : `#${name}`);
+  window.scrollTo({ top: 0 });
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => select(PANELS[i]));
+  t.addEventListener('keydown', (e) => {
+    const k = { ArrowRight: 1, ArrowLeft: -1, Home: -Infinity, End: Infinity }[e.key];
+    if (k === undefined) return;
+    e.preventDefault();
+    const n = k === -Infinity ? 0 : k === Infinity ? tabs.length - 1 : (i + k + tabs.length) % tabs.length;
+    select(PANELS[n], { focus: true });
+  });
+});
+window.addEventListener('hashchange', () => select(location.hash.slice(1), { updateHash: false }));
+select(location.hash.slice(1), { updateHash: false });
 
 load().then(connect);
 setInterval(load, 15000);

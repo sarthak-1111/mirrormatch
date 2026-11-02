@@ -4,94 +4,141 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Workspace · MirrorMatch</title>
-  <meta name="description" content="MirrorMatch workspace: the shopper app, the agent's live trace, the merchant view and what is connected, on one screen." />
+  <meta name="description" content="MirrorMatch workspace: watch a return become an exchange, see every step the agent took, and what the store learns." />
+  <meta name="theme-color" content="#ffffff" />
   <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/tokens.css" />
   <link rel="stylesheet" href="/css/app.css" />
   <link rel="stylesheet" href="/css/merchant.css" />
   <link rel="stylesheet" href="/css/workspace.css" />
 </head>
-<body class="merchant workspace">
+<body class="workspace">
   <a class="sr-only" href="#ws">Skip to the workspace</a>
-  <header class="topbar">
-    <a class="brand" href="/story.html" aria-label="MirrorMatch story">
+  <header class="ws-top">
+    <a class="brand" href="/story.html" aria-label="MirrorMatch: read the story">
       <img src="/assets/logo.svg" alt="" />
-      <b>MirrorMatch</b><span>Workspace · Hue &amp; Hem</span>
+      <b>MirrorMatch</b>
     </a>
-    <div class="spacer"></div>
-    <nav class="ws-nav" aria-label="Pages">
-      <a href="/story.html">Story</a>
-      <a href="/" target="_blank" rel="noopener">Shopper app ↗</a>
-      <a href="/merchant" target="_blank" rel="noopener">Merchant dashboard ↗</a>
-    </nav>
-    <span id="mode-chip" class="chip" hidden></span>
+    <div class="ws-tabs" role="tablist" aria-label="Workspace">
+      <button type="button" role="tab" id="tab-try" aria-controls="panel-try" aria-selected="true">Try it</button>
+      <button type="button" role="tab" id="tab-agent" aria-controls="panel-agent" aria-selected="false" tabindex="-1">Agent steps<span class="tab-count" id="count-agent" hidden></span></button>
+      <button type="button" role="tab" id="tab-store" aria-controls="panel-store" aria-selected="false" tabindex="-1">Store view<span class="tab-count" id="count-store" hidden></span></button>
+      <button type="button" role="tab" id="tab-setup" aria-controls="panel-setup" aria-selected="false" tabindex="-1">Setup</button>
+    </div>
+    <div class="ws-end">
+      <span id="mode-chip" class="chip" hidden></span>
+      <a class="ws-story" href="/story.html">Story</a>
+    </div>
   </header>
 
   <main id="ws" class="ws" tabindex="-1">
-    <section class="ws-left" aria-labelledby="phone-h">
-      <h1 id="phone-h" class="sr-only">Shopper app</h1>
-      <div class="ws-autopilot card flat" aria-labelledby="ap-h">
-        <div class="ws-ap-head">
-          <h2 id="ap-h">Run a return for me</h2>
-          <p class="muted small">The app plays a whole return by itself, pressing the same buttons a shopper would. Stop any time.</p>
+    <!-- 1 · Try it: pick a return, watch it in the phone -->
+    <section class="ws-panel try" id="panel-try" role="tabpanel" aria-labelledby="tab-try">
+      <div class="try-side">
+        <div>
+          <h1 id="try-h">Watch a return become an exchange</h1>
+          <p class="lede">Pick something a shopper wants to send back. The app plays the whole return on YouCam's sample model, pressing the same buttons a person would. Stop it any time and take over.</p>
         </div>
-        <div class="ws-ap-buttons" role="group" aria-label="Autopilot">
-          <button type="button" class="btn accent" data-flow="lipstick">Lipstick</button>
-          <button type="button" class="btn secondary" data-flow="dress">Dress</button>
-          <button type="button" class="btn secondary" data-flow="hair">Hair colour</button>
-          <button type="button" class="btn secondary" data-flow="foundation">Foundation</button>
-          <button type="button" class="btn ghost" id="ap-stop" disabled>Stop</button>
+        <div class="picks" role="group" aria-labelledby="picks-h">
+          <h2 id="picks-h" class="sr-only">Run a return for me</h2>
+          <button type="button" class="pick" data-flow="lipstick" data-order="HH-10421">
+            <img src="/assets/products/l01.svg" alt="" width="40" height="52" />
+            <span class="pick-text"><span class="pick-name">Lipstick</span><span class="pick-sub">“The shade didn’t match”</span></span>
+          </button>
+          <button type="button" class="pick" data-flow="dress" data-order="HH-10307">
+            <img src="/assets/products/dress-wrap-camel.svg" alt="" width="40" height="52" />
+            <span class="pick-text"><span class="pick-name">Dress</span><span class="pick-sub">“The colour didn’t suit me”</span></span>
+          </button>
+          <button type="button" class="pick" data-flow="hair" data-order="HH-10455">
+            <img src="/assets/products/h01.svg" alt="" width="40" height="52" />
+            <span class="pick-text"><span class="pick-name">Hair colour</span><span class="pick-sub">“The shade didn’t match”</span></span>
+          </button>
+          <button type="button" class="pick" data-flow="foundation" data-order="HH-10388">
+            <img src="/assets/products/fdn-3n.svg" alt="" width="40" height="52" />
+            <span class="pick-text"><span class="pick-name">Foundation</span><span class="pick-sub">“The shade didn’t match”</span></span>
+          </button>
         </div>
-        <p class="ws-ap-caption" id="ap-caption" role="status" aria-live="polite">Uses YouCam's official sample model. With the demo cache on, repeat runs cost 0 units.</p>
+        <div class="run" id="run" data-state="idle">
+          <div class="run-head">
+            <p class="run-step" id="run-step">Ready when you are</p>
+            <button type="button" class="btn secondary run-stop" id="ap-stop" disabled>Stop</button>
+          </div>
+          <div class="meter" id="meter" role="progressbar" aria-label="Return progress" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0"><span id="meter-fill"></span></div>
+          <p class="ws-ap-caption" id="ap-caption" role="status" aria-live="polite">Runs on YouCam's official sample model. Repeat runs replay saved results, so they cost 0 units.</p>
+        </div>
+        <div class="recent-wrap" id="recent-wrap" hidden>
+          <h2 class="recent-h">Latest from the agent</h2>
+          <ol class="recent" id="recent"></ol>
+          <button type="button" class="link-btn" data-goto="agent">See every step →</button>
+        </div>
       </div>
-      <div class="phone" id="phone">
-        <iframe id="app-frame" src="/?embed=1" title="MirrorMatch shopper app, phone view"></iframe>
+      <div class="phone-col">
+        <div class="phone" id="phone">
+          <iframe id="app-frame" src="/?embed=1" title="MirrorMatch shopper app, phone view"></iframe>
+        </div>
+        <p class="phone-note">The shopper's phone · tap around yourself any time</p>
       </div>
     </section>
 
-    <div class="ws-right">
-      <section class="ws-console" aria-labelledby="console-h">
-        <div class="ws-console-head">
-          <div>
-            <p class="eyebrow">Agent console · live</p>
-            <h2 id="console-h">What the agent is doing</h2>
-          </div>
-          <p class="ws-session" id="ws-session" aria-live="polite">No return yet.</p>
+    <!-- 2 · Agent steps -->
+    <section class="ws-panel agent" id="panel-agent" role="tabpanel" aria-labelledby="tab-agent" hidden>
+      <div class="panel-head">
+        <div>
+          <h1 id="console-h">What the agent did</h1>
+          <p class="lede">Every tool call, decision, timing and YouCam unit for the return in the phone, as it happens.</p>
         </div>
-        <div class="trace-panel ws-trace" id="console">
-          <div class="sum" id="console-sum"></div>
-          <ol class="trace-list" id="console-list"></ol>
-          <p class="ws-empty" id="console-empty">Start a return in the phone (or press <b>Lipstick</b> above). Each tool call, decision, timing and YouCam unit appears here as it happens.</p>
-          <p class="ws-note">No photos, colour values or raw API output are logged.</p>
+        <p class="ws-session" id="ws-session" aria-live="polite">No return yet.</p>
+      </div>
+      <div class="ws-trace" id="console">
+        <div class="sum" id="console-sum"></div>
+        <ol class="trace-list" id="console-list"></ol>
+        <div class="ws-empty" id="console-empty">
+          <p>Nothing here yet. Start a return in <button type="button" class="link-btn" data-goto="try">Try it</button> and each step appears here live.</p>
         </div>
-      </section>
+      </div>
+      <p class="ws-note">No photos, colour values or raw API output are logged.</p>
+    </section>
 
-      <div class="ws-grid">
-        <section class="card ws-merchant" aria-labelledby="merchant-h">
-          <div class="ws-card-head">
-            <h2 id="merchant-h">Merchant · live</h2>
-            <a href="/merchant" target="_blank" rel="noopener">Dashboard ↗</a>
-          </div>
-          <div class="ws-kpis" id="ws-kpis" aria-live="polite"></div>
-          <h3>Latest events</h3>
+    <!-- 3 · Store view -->
+    <section class="ws-panel store" id="panel-store" role="tabpanel" aria-labelledby="tab-store" hidden>
+      <div class="panel-head">
+        <div>
+          <h1 id="merchant-h">What the store sees</h1>
+          <p class="lede">Live numbers from returns on this server, and what the agent suggests fixing in the range.</p>
+        </div>
+        <a class="btn secondary" href="/merchant" target="_blank" rel="noopener">Open the full dashboard ↗</a>
+      </div>
+      <div class="ws-kpis" id="ws-kpis" aria-live="polite"></div>
+      <div class="store-grid">
+        <section class="card" aria-labelledby="feed-h">
+          <h2 id="feed-h">Latest events</h2>
           <ol class="feed ws-feed" id="ws-feed"></ol>
-          <h3>Agent suggestions</h3>
+        </section>
+        <section class="card" aria-labelledby="sugg-h">
+          <h2 id="sugg-h">Agent suggestions</h2>
           <div id="ws-suggestions" class="ws-suggestions"></div>
         </section>
+      </div>
+    </section>
 
-        <section class="card ws-env" aria-labelledby="env-h">
-          <div class="ws-card-head">
-            <h2 id="env-h">Environment</h2>
-            <span class="muted small">from <code>/api/health</code></span>
-          </div>
+    <!-- 4 · Setup -->
+    <section class="ws-panel setup" id="panel-setup" role="tabpanel" aria-labelledby="tab-setup" hidden>
+      <div class="panel-head">
+        <div>
+          <h1 id="env-h">How it's connected</h1>
+          <p class="lede">Read live from <code>/api/health</code> on this server.</p>
+        </div>
+      </div>
+      <div class="setup-grid">
+        <section class="card" aria-label="Connections">
           <dl class="ws-dl" id="ws-env"></dl>
-          <h3>Privacy</h3>
+        </section>
+        <section class="card" aria-labelledby="privacy-h">
+          <h2 id="privacy-h">Privacy</h2>
           <ul class="ws-privacy" id="ws-privacy"></ul>
         </section>
       </div>
-    </div>
+    </section>
   </main>
   <script type="module" src="/js/workspace.js"></script>
 </body>
