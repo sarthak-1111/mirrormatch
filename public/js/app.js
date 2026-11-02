@@ -1317,9 +1317,12 @@ if (inFrame) {
 const autopilot = (() => {
   const FLOWS = {
     lipstick: { order: 'HH-10421', reason: 'wrong_shade', reasonText: "The shade didn't match", label: 'Lipstick' },
-    dress: { order: 'HH-10307', reason: 'colour_didnt_suit', reasonText: "The colour didn't suit me", label: 'Dress' },
+    dress: { order: 'HH-10307', reason: 'colour_didnt_suit', reasonText: "The colour didn't suit me", label: 'Dress', extra: 'look-lips' },
+    hair: { order: 'HH-10455', reason: 'wrong_shade', reasonText: "The shade didn't match", label: 'Hair colour' },
+    foundation: { order: 'HH-10388', reason: 'wrong_shade', reasonText: "The shade didn't match", label: 'Foundation', skin: true },
   };
-  const TOTAL = 12;
+  FLOWS.lipstick.extra = 'look-blush';
+  let TOTAL = 12;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let run = null; // { flow, stopped, n }
 
@@ -1442,6 +1445,7 @@ const autopilot = (() => {
     if (!flow) return;
     if (run && !run.stopped) stop('restart', { quiet: true });
     run = { flow: flowKey, stopped: false, n: 0 };
+    TOTAL = 12 + (flow.extra ? 1 : 0) + (flow.skin ? 1 : 0);
     const mine = run;
     loadExtraCss();
     document.documentElement.classList.add('autopilot');
@@ -1486,6 +1490,13 @@ const autopilot = (() => {
       reveal($q('.tone-card'));
       await pause();
 
+      if (flow.skin) {
+        step("Reading YouCam's skin analysis: the right finish, not just the right shade");
+        await waitFor(() => { screen(); return state.session?.skin?.status && state.session.skin.status !== 'running' && $q('#skin-card'); }, 'the skin analysis', 90000);
+        reveal($q('#skin-card'));
+        await pause(1800);
+      }
+
       step('Rendering try-on previews on the same photo');
       reveal(document.getElementById('tryon-grid'));
       await waitFor(() => {
@@ -1508,6 +1519,24 @@ const autopilot = (() => {
 
       const top = state.session.picks[0]?.product;
       if (!top) throw new Error('there was no pick to exchange for');
+
+      // Optional "complete the look" preview (one extra makeup call). Never adds anything to the order.
+      if (flow.extra) {
+        const btn = await waitFor(() => { const b = $q(`[data-action="${flow.extra}"]`); return b && !b.disabled && b; }, 'the look button', 30000).catch(() => null);
+        if (btn) {
+          step(flow.extra === 'look-lips'
+            ? `Completing the look: a matching lipstick tried on over the ${top.shadeName} dress`
+            : `Completing the look: ${top.shadeName} with a matching blush, in one makeup call`);
+          await press(btn);
+          await waitFor(() => {
+            screen();
+            const looks = state.session?.looks || [];
+            return looks.length && looks.every((l) => l.status !== 'rendering') && $q('#look-card .look-result img');
+          }, 'the look preview', 120000);
+          reveal($q('#look-card'));
+          await pause(2200);
+        }
+      }
       step(`Choosing the top match: ${top.shadeName}`);
       const sel = $q(`.tryon button.select[data-pid="${CSS.escape(top.id)}"]`);
       if (sel) await press(sel);

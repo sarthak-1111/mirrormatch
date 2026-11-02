@@ -41,7 +41,9 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
   youcam.transport ??= config.youcam.mode === 'live' ? 'rest' : 'mock';
   const catalog = new Catalog();
   const events = new EventLog({ path: resolve(config.dataDir, 'events.jsonl'), persist: persistEvents });
-  const demoCache = createDemoCache(config.demoCache);
+  // The demo cache holds real YouCam results only: in mock mode it is off, so placeholder outputs
+  // can never be written under a photo's hash and replayed later by a live server.
+  const demoCache = createDemoCache({ ...config.demoCache, enabled: config.demoCache.enabled && config.youcam.mode === 'live' });
   const garmentFiles = createGarmentFiles({ youcam, publicDir: resolve(ROOT, 'public') });
   const sessions = new SessionStore({
     ttlMin: config.sessionTtlMin,
@@ -96,7 +98,7 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
       llm: { enabled: llmEnabled(), model: llmEnabled() ? config.llm.model : null },
       units: meter.snapshot(),
       limits: { maxRendersPerReturn: config.budget.maxRendersPerReturn, unitFloor: config.budget.unitFloor, dailyUnitCap: config.budget.dailyUnitCap },
-      demoCache: config.demoCache.enabled,
+      demoCache: demoCache.enabled,
     });
   });
 
@@ -306,7 +308,7 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
       mode: youcam.mode,
       transport: youcam.transport,
       llm: { enabled: llmOn(), optional: true },
-      demoCache: config.demoCache.enabled,
+      demoCache: demoCache.enabled,
       units: meter.snapshot(),
       limits: { maxRendersPerReturn: config.budget.maxRendersPerReturn, unitFloor: config.budget.unitFloor, dailyUnitCap: config.budget.dailyUnitCap },
       webhook: { method: 'POST', path: '/api/integrations/return-started', secretRequired: Boolean(config.webhookSecret), docs: 'docs/INTEGRATION.md' },
