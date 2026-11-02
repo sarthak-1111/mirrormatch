@@ -24,6 +24,8 @@ Demo store: **Hue & Hem**, a fictional shop. No real brands.
 
 *The people in the screenshots are YouCam's official API sample images (see `ASSETS.md`). Every preview is labelled "Visual preview, not a guarantee".*
 
+**Demo video (2:33):** live runs of a lipstick return and a dress return, followed by the merchant dashboard and agent trace. The video is linked from the Devpost submission. [`VIDEO.md`](VIDEO.md) has the timeline, the narration, and what was shortened in the edit.
+
 ---
 
 ## The problem
@@ -252,7 +254,7 @@ scripts/           catalogue/asset generators, API verification, MCP check, scre
 test/, e2e/        unit tests (node:test) and Playwright end-to-end tests
 ```
 
-Also see `COMPLIANCE.md` (hackathon checklist), `API_NOTES.md` (verified API details), `ASSETS.md` (licences), `DESCRIPTION.md` (submission text) and `VIDEO.md` (demo script).
+Also see `COMPLIANCE.md` (hackathon checklist), `API_NOTES.md` (verified API details), `ASSETS.md` (licences), `DESCRIPTION.md` (submission text) and `VIDEO.md` (the demo video: timeline, narration and how it was made).
 
 ## Licence
 
