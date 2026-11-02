@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Returns · Hue &amp; Hem</title>
+  <meta name="description" content="SecondTry demo: a returns desk that measures your skin tone and shows better shades on you before you refund." />
+  <meta name="theme-color" content="#fbf8f4" />
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <a class="sr-only" href="#app">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="#/" aria-label="Hue and Hem, your orders">
+      <img src="/assets/logo.svg" alt="" />
+      <b>Hue &amp; Hem</b><span>Returns</span>
+    </a>
+    <div class="spacer"></div>
+    <span id="mode-chip" class="chip" hidden></span>
+    <button id="trace-toggle" class="icon-btn" aria-pressed="false" aria-controls="trace" hidden>Agent trace</button>
+  </header>
+  <div id="layout" class="layout">
+    <main id="app" tabindex="-1" aria-live="polite"></main>
+    <aside id="trace" class="trace" aria-label="Agent trace" hidden></aside>
+  </div>
+  <div id="sticky" class="sticky-cta" hidden></div>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
