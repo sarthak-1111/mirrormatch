@@ -1,6 +1,6 @@
 # MirrorMatch: Devpost submission text
 
-**Tagline (≤ 200 chars):** The returns desk with a mirror. MirrorMatch reads your skin tone, finds the right shade, colour or texture, shows it on you, and offers an exchange instead of a refund.
+**Tagline (under 200 characters):** The returns desk with a mirror. MirrorMatch reads your skin tone, finds the right shade, colour or texture, shows it on you, and offers an exchange instead of a refund.
 
 **Track:** eCommerce VTO (makeup try-on + clothes try-on in one flow)
 
@@ -59,7 +59,7 @@ Pre-purchase shade finders make a guess. A return is the only time a store finds
   - Credit and feature-cost endpoints check the balance at startup and meter every call.
 - **Chaining two try-ons.** The cloth-v4 result is uploaded as a new file and makeup-vto renders the lipstick on it, so makeup and clothes try-on genuinely work together in one image.
 - **A tool-using agent with a deterministic planner:** `get_order`, `check_photo_quality`, `analyze_skin_tone`, `analyze_skin`, `find_alternatives`, `check_stock_and_policy`, `render_tryon`, `render_look`, `pair_lip_with_dress`, `pair_blush_with_lip`, `create_exchange`, `escalate_to_human`. It escalates when confidence is low, and every step lands in a live trace with no photos or colour values logged.
-- **Colour science, not vibes:** sRGB → CIELAB (D65); CIEDE2000 tested against the Sharma et al. reference pairs; skin depth from the Individual Typology Angle; undertone from the hue angle (YouCam returns colours, not labels); separate, documented targets per category. Skin-analysis rules use `raw_score`, because the docs say `ui_score` is inflated.
+- **Colour science, not vibes:** sRGB to CIELAB (D65); CIEDE2000 tested against the Sharma et al. reference pairs; skin depth from the Individual Typology Angle; undertone from the hue angle (YouCam returns colours, not labels); separate, documented targets per category. Skin-analysis rules use `raw_score`, because the docs say `ui_score` is inflated.
 - **Autonomy with a human in the loop:** autopilot drives the real UI; the merchant agent drafts shades and copy but never acts without approval.
 - **Unit budgeting:** 3 core renders + 2 optional looks per return, per-session caching, a unit floor, a daily cap on the hosted demo, a free pre-check before the 20-unit analysis, and a demo cache so sample-model runs replay real results at 0 units.
 - **Hosting:** the live demo runs on the author's workstation behind a Cloudflare quick tunnel, with a watchdog and a stable GitHub Pages link that always points at the current tunnel.
@@ -111,6 +111,6 @@ Most try-on lives on the product page. MirrorMatch puts skin-tone analysis, skin
 
 ## Built with
 
-YouCam AI Facial Color Tones Analyzer · YouCam AI Skin Analysis · YouCam AI Makeup Virtual Try-On · YouCam AI Hair Color · YouCam AI Clothes Virtual Try-On (cloth-v4) · YouCam MCP servers (beauty, fashion) · YouCam File / Credit / Task APIs · Node.js · Express · vanilla JS · CIELAB / CIEDE2000 · Web Speech API · Playwright · Cloudflare Tunnel · GitHub Pages · optional OpenAI-compatible LLM (local gpt-oss:120b)
+YouCam AI Facial Color Tones Analyzer, YouCam AI Skin Analysis, YouCam AI Makeup Virtual Try-On, YouCam AI Hair Color, YouCam AI Clothes Virtual Try-On (cloth-v4), YouCam MCP servers (beauty, fashion), YouCam File / Credit / Task APIs, Node.js, Express, vanilla JS, CIELAB / CIEDE2000, Web Speech API, Playwright, Cloudflare Tunnel, GitHub Pages, optional OpenAI-compatible LLM (local gpt-oss:120b)
 
 **Try it:** the live demo above, or `npm install && npm start` with a `YOUCAM_API_KEY` in `.env`, or `npm run mock` with no key. Start at `/` (Try it), `/workspace.html` (watch the agent) or `/story.html`. Repo: https://github.com/sarthak-1111/mirrormatch
