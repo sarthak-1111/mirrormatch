@@ -1,0 +1,49 @@
+/* Embed mode (/?embed=1, used by the workspace's phone frame) and the autopilot overlay.
+   Loaded on demand by public/js/app.js. Reuses the tokens from app.css. */
+
+/* ---------- embed: no app chrome, the workspace shows the agent console instead ---------- */
+html.embed .topbar,
+html.embed #trace,
+html.embed #trace-toggle { display: none !important; }
+html.embed .layout { padding: 14px 14px 150px; }
+html.embed .layout.with-trace { grid-template-columns: 1fr; }
+/* Links that would leave the shopper app inside the phone frame. */
+html.embed .story-link,
+html.embed .footer-note a { display: none; }
+html.embed .toast { top: 14px; max-width: calc(100% - 28px); text-align: center; }
+
+/* ---------- autopilot ---------- */
+.ap-bar {
+  position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
+  width: min(520px, calc(100% - 16px)); z-index: 45;
+  display: grid; gap: 6px; pointer-events: none;
+}
+html.embed .ap-bar { top: 8px; }
+html.autopilot .layout { padding-top: 112px; }
+html.autopilot.embed .layout { padding-top: 104px; }
+.ap-badge {
+  pointer-events: auto;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--ink); color: #fff;
+  border-radius: 999px; padding: 5px 5px 5px 12px;
+  font-size: 13px; font-weight: 600; box-shadow: var(--shadow);
+}
+.ap-dot { width: 8px; height: 8px; border-radius: 50%; background: #f0a58f; flex: none; animation: ap-pulse 1.4s ease-in-out infinite; }
+@keyframes ap-pulse { 50% { opacity: 0.35; } }
+.ap-title { flex: 1; min-width: 0; }
+.ap-stop {
+  border: 0; background: #fff; color: var(--ink);
+  border-radius: 999px; padding: 4px 14px; min-height: 32px;
+  font: inherit; font-weight: 700; cursor: pointer;
+}
+.ap-stop:focus-visible { outline: 3px solid #9cc0ff; outline-offset: 2px; }
+.ap-caption {
+  margin: 0; background: rgba(255, 255, 255, 0.97); color: var(--ink-2);
+  border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px;
+  font-size: 13.5px; line-height: 1.35; box-shadow: var(--shadow);
+}
+.ap-caption:empty { display: none; }
+.ap-n { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 8px; font-weight: 600; }
+.ap-n:empty { display: none; }
+.ap-target { outline: 3px solid var(--accent) !important; outline-offset: 3px; box-shadow: 0 0 0 7px var(--accent-soft) !important; transition: outline-offset 0.2s ease; }
+@media (prefers-reduced-motion: reduce) { .ap-dot { animation: none; } }

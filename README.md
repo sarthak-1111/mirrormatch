@@ -63,6 +63,12 @@ We don't quote industry return-rate statistics here. The dashboard shows only wh
 - **Who is each shade for?** Every product is scored against nine reference tone profiles by the shopper matcher itself. Gap cards flag profiles with no good in-stock option ("a gap in your range"), profiles with just one ("one stock-out away"), and live returns that had to be escalated.
 - **Insights** from the same matcher ("Shell is returned most by … profiles: recommend … on the product page"). Synthetic illustration data is labelled and kept apart.
 - **Agent traces** for every session (tools, timings, units, "over MCP"), and the unit budget from the credit API.
+- **Agent suggestions**, drafted by deterministic code. *Fill the gap* proposes a new shade for an under-served tone profile, with the target colour (hex + CIELAB) from the matcher's own target logic, and can render that exact colour on YouCam's sample model (makeup-vto, 1 unit, then cached; "Visual preview, not a guarantee"). *Product-page fit notes* draft copy such as "Runs light and warm on deep, cool skin". Notes from synthetic data say so. **Approve** or **Dismiss** only logs an event; nothing external happens. The optional LLM may reword the text; templates otherwise.
+
+**For judges and demos: the workspace (`/workspace.html`)**
+- One desktop screen: the shopper app in a phone frame (`/?embed=1`), a live **agent console** that follows the session in the phone (each tool call, decision, timing and unit), a compact **merchant strip** (KPIs, latest events, suggestions) and an **environment panel** (YouCam transport, units and cap, demo cache, optional LLM, returns-portal webhook, privacy guarantees).
+- **Run a return for me:** pick *Lipstick* or *Dress* and the app plays the whole return itself through the real UI: order, reason, offer, consent, YouCam's sample photo, analysis, previews, the before/after slider, then an exchange for the top match. Each step has a caption and a short pause. **Stop** (or pressing any control in the phone) hands control back at once, and the refund button stays visible throughout. Also available as `/?autoplay=lipstick` or `/?autoplay=dress`.
+- **Use YouCam's sample model:** the photo step also offers YouCam's official sample photo (face for makeup, waist-up for the dress), sent byte for byte so the demo cache (keyed by the photo hash) makes repeat runs free. Put the files in `samples-local/face.jpg` and `samples-local/body.jpg` (gitignored, see `ASSETS.md`); if they are missing the server fetches the official images once and keeps them in memory.
 
 **For a real store's stack**
 - **Returns-portal webhook:** `POST /api/integrations/return-started` hands a colour-reason return to MirrorMatch and gets a link back for the shopper. See [`docs/INTEGRATION.md`](docs/INTEGRATION.md).
@@ -205,11 +211,12 @@ To run without a key, use `npm run mock` (or leave `YOUCAM_API_KEY` empty). The 
 
 Tests:
 ```bash
-npm test                      # 52 unit tests: colour science, matching, policy, agent decision paths, MCP parsing,
-                              #   shade-fit matrix and gaps, webhook, colour passport
+npm test                      # 66 unit tests: colour science, matching, policy, agent decision paths, MCP parsing,
+                              #   shade-fit matrix and gaps, webhook, colour passport, suggestions, sample route, workspace endpoints
 npx playwright install chromium   # once (or set PW_CHANNEL=chrome to use local Chrome)
-npm run test:e2e              # 3 end-to-end tests in a real browser (mock mode): the happy path with the
-                              #   before/after slider, passport and dashboard; the story page; a damaged-item refund
+npm run test:e2e              # 6 end-to-end tests in a real browser (mock mode): the happy path with the
+                              #   before/after slider, passport and dashboard; the story page; a damaged-item refund;
+                              #   the workspace autopilot to an exchange; Stop; approving a merchant suggestion
 npm run secret-scan           # checks every tracked file for keys
 ```
 
@@ -226,10 +233,11 @@ Live API verification (spends about 24 units): `node scripts/verify-api.mjs --fa
 | `UNIT_FLOOR` | 25 | Refuse paid calls below this balance (matches still shown) |
 | `DAILY_UNIT_CAP` | 0 (off) | Set on a hosted demo |
 | `RATE_LIMIT_PER_MIN` | 60 | Per-IP limit on API writes |
-| `DEMO_CACHE` | 0 | Opt-in on-disk cache of tone results and renders, keyed by the photo's SHA-256. **Use only with your own photo** |
+| `DEMO_CACHE` | 0 | Opt-in on-disk cache of tone results and renders, keyed by the photo's SHA-256. **Use only with your own photo** or YouCam's sample model. Don't combine it with `--mock`: mock results would be cached under the same photo hash |
 | `SESSION_TTL_MIN` | 20 | Idle sessions are wiped after this |
 | `PERSIST_EVENTS` | 1 | `0` keeps live dashboard events in memory only (used by the e2e tests; handy on a hosted demo) |
 | `WEBHOOK_SECRET` | empty | When set, the returns-portal webhook requires the `X-MirrorMatch-Secret` header |
+| `SAMPLES_DIR` | `samples-local` | Where YouCam's sample photos (`face.jpg`, `body.jpg`) are read from for "Use YouCam's sample model". Gitignored; never commit photos of people |
 | `PORT`, `HOST` | 3000, 127.0.0.1 | Server |
 | `YOUCAM_TRANSPORT` | `mcp` | `mcp`: AI tasks go through YouCam's MCP servers, with REST fallback. `rest`: call the REST task endpoints directly |
 | `YOUCAM_CLOTH_FEATURE`, `YOUCAM_GARMENT_CATEGORY`, `YOUCAM_FACE_STRICTNESS` | `cloth-v4`, `full_body`, `medium` | Verified defaults |
@@ -282,7 +290,8 @@ server/            Express app, agent, tools, colour + policy engines, YouCam cl
   policy/          policy.js (exchange rules)
   youcam/          mcp.js (MCP transport, default), client.js (REST V2 + fallback), mock.js, meter.js, errors.js
   store/           catalog, sessions, events, insights, fit (shade-fit matrix, gaps, passport), caches
-public/            shopper flow (index.html), story (story.html), merchant dashboard (merchant.html), assets
+public/            shopper flow (index.html), story (story.html), merchant dashboard (merchant.html),
+                   workspace (workspace.html: phone frame, agent console, autopilot), assets
 docs/              screenshots, INTEGRATION.md (returns-portal webhook)
 data/              catalog.json, synthetic-history.json (labelled synthetic)
 scripts/           catalogue/asset generators, API verification, MCP check, screenshots, secret scan

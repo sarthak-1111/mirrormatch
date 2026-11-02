@@ -403,6 +403,8 @@ function viewCapture(s) {
       <div class="btn-col" id="capture-actions">
         <label class="btn block secondary" for="file-input" style="cursor:pointer">Upload a photo</label>
         <input id="file-input" type="file" accept="image/jpeg,image/png" capture="user" class="sr-only" />
+        <button class="btn block secondary" data-action="use-sample" data-kind="${body ? 'body' : 'face'}" aria-describedby="sample-note">Use YouCam's sample model</button>
+        <p class="muted small" id="sample-note" style="margin:0;text-align:center">No photo handy? Try it with YouCam's official ${body ? 'waist-up' : 'selfie'} sample image.</p>
         ${s.canEscalate ? '<button class="btn block secondary" data-action="escalate">Talk to a shade specialist</button>' : ''}
         ${refundLink()}
       </div>
@@ -900,6 +902,24 @@ const actions = {
     await sendEvent('exchange', { productId: el.dataset.pid });
   },
   escalate: () => sendEvent('escalate'),
+  // YouCam's official sample photo (face for makeup, waist-up body for dresses). The original
+  // bytes are sent unchanged, so repeat demo runs hit the server's photo-hash cache.
+  async 'use-sample'(el) {
+    el.disabled = true;
+    try {
+      const res = await fetch(`/api/samples/${encodeURIComponent(el.dataset.kind)}`);
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'The sample photo is unavailable. Please upload a photo instead.');
+      state.captured = await sampleCapture(await res.blob(), el.dataset.kind);
+      showCaptured();
+      const img = document.querySelector('#capture-box img.preview');
+      if (img) {
+        img.alt = "YouCam's sample model photo";
+        img.insertAdjacentHTML('afterend', '<span class="sample-tag" style="position:absolute;left:12px;bottom:12px;font-size:12px;font-weight:600;color:#fff;background:rgba(20,16,14,.62);padding:4px 9px;border-radius:8px">YouCam official sample image</span>');
+      }
+    } finally {
+      el.disabled = false;
+    }
+  },
   async 'delete-photo'() {
     const v = await api('DELETE', `/api/session/${state.session.id}`);
     state.session = v;
@@ -1017,6 +1037,342 @@ function processImage(source, w, h) {
   return { dataUrl: canvas.toDataURL('image/jpeg', 0.9), width: cw, height: ch, stats, hint };
 }
 
+/** A sample photo: light stats and the mock hint are computed exactly as for uploads (on the
+ *  downscaled canvas), but the photo sent is the original file, byte for byte. */
+async function sampleCapture(blob, kind) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("We couldn't read the sample photo."));
+      i.src = url;
+    });
+    const processed = processImage(img, img.naturalWidth, img.naturalHeight);
+    const dataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(new Error("We couldn't read the sample photo."));
+      r.readAsDataURL(blob);
+    });
+    return { ...processed, dataUrl, width: img.naturalWidth, height: img.naturalHeight, sample: kind };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 boot().catch((e) => {
   $app.innerHTML = `<div class="card"><h1>Something went wrong</h1><p>${esc(e.message)}</p></div>`;
 });
+
+// =====================================================================================
+// Embed mode (?embed=1) and the autopilot demo (?autoplay=lipstick|dress, or postMessage)
+// Used by /workspace.html, which shows this app in a phone frame next to the agent console.
+// Embed mode hides the app chrome and tells the parent which session is running. The
+// autopilot plays a whole return by clicking the same buttons a person would, so it uses the
+// same code paths; a person can take over at any moment.
+// =====================================================================================
+const params = new URLSearchParams(location.search);
+const EMBED = params.has('embed');
+const inFrame = window.parent !== window;
+
+function loadExtraCss() {
+  if (document.getElementById('embed-css')) return;
+  const link = document.createElement('link');
+  link.id = 'embed-css';
+  link.rel = 'stylesheet';
+  link.href = '/css/embed.css';
+  document.head.appendChild(link);
+}
+
+function postToParent(msg) {
+  if (inFrame) window.parent.postMessage({ source: 'mirrormatch-app', ...msg }, location.origin);
+}
+
+if (EMBED) {
+  document.documentElement.classList.add('embed');
+  // Hide the chrome at once (before the stylesheet arrives) so it never flashes.
+  const hide = document.createElement('style');
+  hide.textContent = 'html.embed .topbar, html.embed #trace, html.embed #trace-toggle { display: none !important; }';
+  document.head.appendChild(hide);
+  loadExtraCss();
+  state.traceOpen = false; // the workspace shows the agent console instead
+}
+
+// Tell the workspace which session is on screen (id, step, status) whenever it changes.
+if (inFrame) {
+  let last = '';
+  setInterval(() => {
+    const s = state.session;
+    const key = s ? `${s.id}|${s.step}|${s.status}` : 'none';
+    if (key === last) return;
+    last = key;
+    postToParent({ type: 'session', id: s?.id ?? null, step: s?.step ?? 'orders', status: s?.status ?? null, category: s?.returned?.category ?? null });
+  }, 300);
+  postToParent({ type: 'ready' });
+}
+
+const autopilot = (() => {
+  const FLOWS = {
+    lipstick: { order: 'HH-10421', reason: 'wrong_shade', reasonText: "The shade didn't match", label: 'Lipstick' },
+    dress: { order: 'HH-10307', reason: 'colour_didnt_suit', reasonText: "The colour didn't suit me", label: 'Dress' },
+  };
+  const TOTAL = 12;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let run = null; // { flow, stopped, n }
+
+  class Stopped extends Error {}
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const $q = (sel) => document.querySelector(sel);
+  const visible = (el) => Boolean(el && el.isConnected && !el.closest('[hidden]') && el.getClientRects().length);
+
+  function check() {
+    if (!run || run.stopped) throw new Stopped();
+  }
+
+  /** About 1.2–1.8 s per step, so a viewer can follow along. */
+  async function pause(ms = 1200 + ((run?.n ?? 0) % 4) * 200) {
+    const end = Date.now() + ms;
+    while (Date.now() < end) {
+      check();
+      await sleep(Math.min(100, end - Date.now()));
+    }
+    check();
+  }
+
+  async function waitFor(fn, what, timeoutMs = 150000) {
+    const end = Date.now() + timeoutMs;
+    for (;;) {
+      check();
+      const v = fn();
+      if (v) return v;
+      if (Date.now() > end) throw new Error(`timed out waiting for ${what}`);
+      await sleep(150);
+    }
+  }
+
+  function bar() {
+    let el = document.getElementById('ap-bar');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'ap-bar';
+      el.className = 'ap-bar';
+      el.innerHTML = `
+        <div class="ap-badge" role="group" aria-label="Autopilot demo">
+          <span class="ap-dot" aria-hidden="true"></span>
+          <span class="ap-title">Autopilot demo: choosing the top match</span>
+          <button type="button" class="ap-stop" data-ap="stop">Stop</button>
+        </div>
+        <p class="ap-caption" ${inFrame ? 'aria-live="off"' : 'role="status" aria-live="polite"'}><span class="ap-n"></span><span class="ap-text"></span></p>`;
+      document.body.appendChild(el);
+      el.querySelector('[data-ap="stop"]').addEventListener('click', () => stop('user'));
+    }
+    return el;
+  }
+
+  function caption(text, { status = 'running', step = run?.n ?? 0 } = {}) {
+    const el = bar();
+    el.querySelector('.ap-n').textContent = status === 'running' && step ? `${step}/${TOTAL}` : '';
+    el.querySelector('.ap-text').textContent = text;
+    el.querySelector('.ap-stop').hidden = status !== 'running';
+    postToParent({ type: 'autopilot', status, caption: text, step, total: TOTAL, flow: run?.flow ?? null });
+  }
+
+  function step(text) {
+    run.n += 1;
+    caption(text);
+  }
+
+  /** Scroll this document only (scrollIntoView would also scroll the workspace around the frame). */
+  function reveal(el) {
+    if (!el || el.closest('#sticky')) return;
+    const r = el.getBoundingClientRect();
+    const top = window.scrollY + r.top - Math.max(0, (window.innerHeight - r.height) / 2);
+    window.scrollTo({ top: Math.max(0, top), behavior: reduced ? 'auto' : 'smooth' });
+  }
+
+  /** Point at a control for a moment, then press it the way a person would. */
+  async function press(el, { wait = true } = {}) {
+    check();
+    reveal(el);
+    el.classList.add('ap-target');
+    if (wait) await pause();
+    el.classList.remove('ap-target');
+    check();
+    el.click();
+  }
+
+  /** Stop politely if the agent took the return somewhere the autopilot shouldn't follow. */
+  function screen() {
+    const s = state.session;
+    if (s && ['escalated', 'refunded', 'refund_review'].includes(s.step)) {
+      throw new Error(s.step === 'escalated' ? 'the agent handed this return to a person' : 'the return went to refund');
+    }
+    if (s?.step === 'capture' && s.guidance) throw new Error('the photo needs a retake');
+  }
+
+  async function slide() {
+    const range = $q('#compare-range');
+    if (!range) return;
+    const set = (v) => {
+      range.value = String(Math.round(v));
+      range.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    const stops = reduced ? [25, 75, 50] : [50, 14, 86, 50];
+    let from = Number(range.value) || 50;
+    for (const to of stops) {
+      const t0 = performance.now();
+      const dur = reduced ? 0 : 650;
+      for (;;) {
+        check();
+        const k = dur ? Math.min(1, (performance.now() - t0) / dur) : 1;
+        set(from + (to - from) * (1 - (1 - k) ** 3));
+        if (k >= 1) break;
+        await sleep(16);
+      }
+      from = to;
+      await sleep(reduced ? 500 : 180);
+    }
+  }
+
+  async function play(flowKey) {
+    const flow = FLOWS[flowKey];
+    if (!flow) return;
+    if (run && !run.stopped) stop('restart', { quiet: true });
+    run = { flow: flowKey, stopped: false, n: 0 };
+    const mine = run;
+    loadExtraCss();
+    document.documentElement.classList.add('autopilot');
+    bar();
+    try {
+      step(`Opening the ${flow.label.toLowerCase()} order to return it`);
+      if (location.hash !== '#/' && location.hash !== '') location.hash = '#/';
+      const start = await waitFor(() => {
+        const b = $q(`[data-action="start-return"][data-order="${flow.order}"]`);
+        return visible(b) && b;
+      }, 'the orders page', 20000);
+      await press(start);
+
+      step(`Choosing the reason: “${flow.reasonText}”`);
+      const radio = await waitFor(() => $q(`#reason-form input[value="${flow.reason}"]`), 'the reason form', 20000);
+      const choice = radio.closest('.choice');
+      reveal(choice);
+      choice?.classList.add('ap-target');
+      await pause();
+      choice?.classList.remove('ap-target');
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+      await pause(500);
+      await press($q('#reason-form button[type="submit"]'), { wait: false });
+
+      step('Accepting the offer: see a better match first (the refund stays one tap away)');
+      await press(await waitFor(() => { screen(); return $q('[data-action="accept"]'); }, 'the offer', 20000));
+
+      step('Giving consent: the photo is used only for this return, then deleted');
+      await press(await waitFor(() => $q('[data-action="consent"]'), 'the consent step', 20000));
+
+      step("Using YouCam's sample model photo");
+      await press(await waitFor(() => $q('[data-action="use-sample"]'), 'the photo step', 20000));
+      const submit = await waitFor(() => $q('[data-action="submit-photo"]'), 'the sample photo', 30000);
+
+      step('Sending the photo: a free quality check, then skin-tone analysis');
+      await press(submit);
+
+      step("Waiting for YouCam's skin-tone analysis");
+      await waitFor(() => { screen(); return $q('.tone-card'); }, 'the analysis');
+      step('Reading the result: depth, undertone and the ranked matches');
+      reveal($q('.tone-card'));
+      await pause();
+
+      step('Rendering try-on previews on the same photo');
+      reveal(document.getElementById('tryon-grid'));
+      await waitFor(() => {
+        screen();
+        const s = state.session;
+        if (!s?.renders?.length) return false;
+        if (s.renders.some((r) => r.status === 'queued' || r.status === 'rendering')) return false;
+        return !$q('.tryon .skeleton');
+      }, 'the previews', 180000);
+      await pause(600);
+
+      step('Comparing before and after: only the colour changes');
+      const card = $q('#compare-card');
+      if (visible(card)) {
+        reveal(card);
+        await pause(700);
+        await slide();
+      }
+      await pause(500);
+
+      const top = state.session.picks[0]?.product;
+      if (!top) throw new Error('there was no pick to exchange for');
+      step(`Choosing the top match: ${top.shadeName}`);
+      const sel = $q(`.tryon button.select[data-pid="${CSS.escape(top.id)}"]`);
+      if (sel) await press(sel);
+
+      step(`Exchanging for ${top.shadeName}: free, ships today`);
+      const ex = await waitFor(() => {
+        const b = $q('#sticky [data-action="exchange"]');
+        return b && b.dataset.pid === top.id && b;
+      }, 'the exchange button', 10000);
+      await press(ex);
+      await waitFor(() => state.session?.step === 'exchanged', 'the exchange', 30000);
+      if (run !== mine) return;
+      run.stopped = true;
+      caption(`Done: exchanged for ${top.shadeName}. The photo and previews are deleted.`, { status: 'done' });
+      setTimeout(() => finish(mine), 6000);
+    } catch (e) {
+      if (e instanceof Stopped || run !== mine) return;
+      run.stopped = true;
+      caption(`Autopilot stopped: ${e.message}. You're in control.`, { status: 'error' });
+      setTimeout(() => finish(mine), 6000);
+    }
+  }
+
+  function finish(which) {
+    if (run !== which) return; // a newer run owns the bar
+    document.getElementById('ap-bar')?.remove();
+    document.documentElement.classList.remove('autopilot');
+    document.querySelectorAll('.ap-target').forEach((el) => el.classList.remove('ap-target'));
+  }
+
+  function stop(why = 'user', { quiet = false } = {}) {
+    if (!run || run.stopped) return;
+    run.stopped = true;
+    const was = run;
+    document.querySelectorAll('.ap-target').forEach((el) => el.classList.remove('ap-target'));
+    if (quiet) return;
+    caption("Stopped. You're in control: every button works as usual.", { status: 'stopped' });
+    setTimeout(() => finish(was), 2500);
+  }
+
+  // A person pressing any control in the app takes over from the autopilot.
+  const takeOver = (e) => {
+    if (!e.isTrusted || !run || run.stopped) return;
+    if (e.target.closest?.('#ap-bar')) return;
+    if (e.type === 'keydown' && !['Enter', ' '].includes(e.key)) return;
+    if (e.target.closest?.('[data-action], button, a, input, label, select, .compare')) stop('user');
+  };
+  document.addEventListener('pointerdown', takeOver, true);
+  document.addEventListener('keydown', takeOver, true);
+
+  return { play, stop, running: () => Boolean(run && !run.stopped) };
+})();
+
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin || e.source !== window.parent) return;
+  const m = e.data;
+  if (!m || m.source !== 'mirrormatch-workspace') return;
+  if (m.type === 'autopilot-start') autopilot.play(m.flow);
+  if (m.type === 'autopilot-stop') autopilot.stop('user');
+});
+
+if (params.get('autoplay')) {
+  // Start once the orders page has data.
+  const flow = params.get('autoplay');
+  const t = setInterval(() => {
+    if (!state.orders) return;
+    clearInterval(t);
+    autopilot.play(flow);
+  }, 150);
+}

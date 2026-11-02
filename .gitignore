@@ -12,3 +12,5 @@ playwright-report/
 .DS_Store
 raw/
 .claude/
+# YouCam sample model photos (people): kept local, never committed
+samples-local/

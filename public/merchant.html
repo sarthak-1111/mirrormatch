@@ -20,6 +20,7 @@
       <b>Hue &amp; Hem</b><span>Returns intelligence · MirrorMatch</span>
     </a>
     <div class="spacer"></div>
+    <a class="ws-link" href="/workspace.html">Workspace</a>
     <span id="units-chip" class="chip" title="YouCam unit balance (from the credit endpoint)"></span>
     <span id="mode-chip" class="chip"></span>
   </header>
@@ -69,6 +70,17 @@
           <div id="fit-gaps" class="gap-list"></div>
         </div>
       </div>
+    </section>
+
+    <section aria-labelledby="sugg-h" class="dash-section" id="suggestions" tabindex="-1">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow"><span class="agent-dot" aria-hidden="true"></span> Agent suggestions · drafted by deterministic code<span id="sugg-llm"></span></p>
+          <h2 id="sugg-h">What the agent suggests</h2>
+          <p class="muted small" style="margin:4px 0 0;max-width:760px">Drafted from the gaps above and the return heatmaps, using the same matcher shoppers see. <b>Approve</b> or <b>Dismiss</b> only records your decision in the event log: nothing is published, ordered or sent anywhere.</p>
+        </div>
+      </div>
+      <div id="sugg-list" class="sugg-grid" aria-live="polite"></div>
     </section>
 
     <section aria-labelledby="synth-h" class="dash-section synthetic">
