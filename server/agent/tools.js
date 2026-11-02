@@ -194,7 +194,7 @@ export function createTools({ youcam, meter, catalog, events, config, demoCache,
           ],
         };
       } else {
-        const refId = await garmentFiles.fileIdFor(product);
+        const refId = await garmentFiles.fileIdFor(product, session);
         body = { src_file_id: fileId, ref_file_id: refId, garment_category: config.youcam.garmentCategory };
       }
       session.rendersUsed += 1; // counts against the cap even if it fails, to bound spend

@@ -37,7 +37,7 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
   const catalog = new Catalog();
   const events = new EventLog({ path: resolve(config.dataDir, 'events.jsonl'), persist: persistEvents });
   const demoCache = createDemoCache(config.demoCache);
-  const garmentFiles = createGarmentFiles({ youcam, publicDir: resolve(ROOT, 'public'), cachePath: resolve(ROOT, '.cache/garment-files.json') });
+  const garmentFiles = createGarmentFiles({ youcam, publicDir: resolve(ROOT, 'public') });
   const sessions = new SessionStore({
     ttlMin: config.sessionTtlMin,
     onExpire: (s) => agent.deleteRemoteTasks(s),

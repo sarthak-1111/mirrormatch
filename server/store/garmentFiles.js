@@ -1,46 +1,30 @@
 // Uploads garment reference images (store catalogue assets, not personal data) to the YouCam
-// File API once and reuses the file_id. YouCam keeps uploaded files for 30 days, so ids are
-// cached on disk for 25 days.
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
+// File API for clothes try-on.
+//
+// Verified live: POST /s2s/v2.0/task/delete removes a task's input files too, including the
+// garment reference. Because SecondTry deletes every task when a return ends (privacy), a
+// garment file_id must not be reused across sessions. So we upload per session (uploads are
+// free: 0 units, ~0.3 s) and reuse the id only within the session.
 
-const MAX_AGE_MS = 25 * 86400000;
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
-export function createGarmentFiles({ youcam, publicDir, cachePath }) {
-  let cache = null;
-  const load = async () => {
-    if (cache) return cache;
-    try {
-      cache = JSON.parse(await readFile(cachePath, 'utf8'));
-    } catch {
-      cache = {};
-    }
-    return cache;
-  };
-  const inflight = new Map();
+export function createGarmentFiles({ youcam, publicDir }) {
   return {
-    async fileIdFor(product) {
+    async fileIdFor(product, session) {
       if (!product.garmentImage) throw new Error(`No garment image for ${product.id}`);
-      const c = await load();
-      const key = `${youcam.mode}:${product.garmentImage}`;
-      const hit = c[key];
-      if (hit && Date.now() - hit.at < MAX_AGE_MS) return hit.fileId;
-      if (inflight.has(key)) return inflight.get(key);
-      const p = (async () => {
-        const buf = await readFile(join(publicDir, product.garmentImage));
-        const fileId = await youcam.uploadImage(buf, { contentType: 'image/png', fileName: product.garmentImage.split('/').pop() });
-        c[key] = { fileId, at: Date.now() };
-        if (youcam.mode === 'live') {
-          await mkdir(dirname(cachePath), { recursive: true });
-          await writeFile(cachePath, JSON.stringify(c, null, 1));
-        }
-        return fileId;
-      })();
-      inflight.set(key, p);
+      session.garmentFiles ??= {};
+      if (!session.garmentFiles[product.id]) {
+        session.garmentFiles[product.id] = (async () => {
+          const buf = await readFile(join(publicDir, product.garmentImage));
+          return youcam.uploadImage(buf, { contentType: 'image/png', fileName: product.garmentImage.split('/').pop() });
+        })();
+      }
       try {
-        return await p;
-      } finally {
-        inflight.delete(key);
+        return await session.garmentFiles[product.id];
+      } catch (e) {
+        delete session.garmentFiles[product.id];
+        throw e;
       }
     },
   };
