@@ -30,6 +30,10 @@ test('lipstick return becomes an exchange, and the dashboard shows it live', asy
   await expect(page.locator('.label-vp').first()).toContainText('Visual preview, not a guarantee');
   // Refund is still one tap away next to the exchange.
   await expect(page.locator('#sticky').getByRole('button', { name: 'Continue to refund' })).toBeVisible();
+  // Before / after on the same photo, with a keyboard-operable slider.
+  await expect(page.locator('#compare-card')).toBeVisible();
+  await expect(page.getByLabel(/^Compare Shell and /)).toBeVisible();
+  await expect(page.locator('.progress [aria-current="step"]')).toContainText('Your match');
 
   // Choose the second pick, then exchange.
   const second = page.locator('.tryon button.select').nth(1);
@@ -41,12 +45,28 @@ test('lipstick return becomes an exchange, and the dashboard shows it live', asy
   await expect(page.getByRole('heading', { name: /ships today/ })).toBeVisible();
   await expect(page.getByText('Your photo has been deleted.')).toBeVisible();
 
+  // Opt-in colour passport: tone numbers only, on this device; the orders page then picks for you.
+  await page.getByRole('button', { name: 'Save my colour profile' }).click();
+  await expect(page.getByText('Saved on this device.')).toBeVisible();
+  await page.getByRole('link', { name: 'Back to orders' }).click();
+  await expect(page.locator('#passport-shelf')).toContainText('Picked for you');
+  await page.getByRole('button', { name: 'Forget my colours' }).click();
+  await expect(page.locator('#passport-shelf')).toHaveCount(0);
+
   const dash = await context.newPage();
   await dash.goto('/merchant');
   await expect(dash.locator('#kpis')).toContainText('Exchanges accepted');
   await expect(dash.locator('#kpis .kpi').nth(2).locator('.value')).toHaveText('1');
   await expect(dash.locator('#feed')).toContainText('Exchange created');
   await expect(dash.getByText('Synthetic demo data').first()).toBeVisible();
+  await expect(dash.getByRole('heading', { name: 'Who is each shade for?' })).toBeVisible();
+});
+
+test('the story page leads into the demo store', async ({ page }) => {
+  await page.goto('/story.html');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('small disappointment');
+  await page.getByRole('link', { name: "Walk through Alex's return" }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('need to return');
 });
 
 test('damaged items skip SecondTry and refund in one step', async ({ page }) => {

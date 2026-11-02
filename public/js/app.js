@@ -69,6 +69,53 @@ function refundLink(label = 'Continue to refund') {
   return `<button class="btn ghost" data-action="refund-review">${esc(label)}</button>`;
 }
 
+// ---------- progress, voice, passport helpers ----------
+const STEPS = ['Why', 'Photo', 'Your match', 'Done'];
+const STEP_OF = { reason: 0, offer: 0, consent: 1, capture: 1, matches: 2, tryon: 2, exchanged: 3 };
+
+/** A slim "where am I" bar for the SecondTry path (not shown on the plain refund path). */
+function progressBar(step) {
+  const at = STEP_OF[step];
+  if (at == null) return '';
+  const last = at === STEPS.length - 1;
+  return `
+    <ol class="progress" aria-label="Step ${at + 1} of ${STEPS.length}: ${esc(STEPS[at])}">
+      ${STEPS.map((label, i) => {
+        const done = i < at || (last && i === at);
+        return `<li class="${done ? 'done' : ''} ${i === at ? 'now' : ''}" ${i === at ? 'aria-current="step"' : ''}><span class="dot" aria-hidden="true">${done ? '✓' : i + 1}</span><span class="lbl">${esc(label)}</span></li>`;
+      }).join('')}
+    </ol>`;
+}
+
+const canSpeak = () => 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function';
+function stopSpeaking() {
+  if (canSpeak()) window.speechSynthesis.cancel();
+  document.querySelectorAll('[data-action="listen"][aria-pressed="true"]').forEach((b) => {
+    b.setAttribute('aria-pressed', 'false');
+    b.querySelector('.lbl').textContent = 'Read my results aloud';
+  });
+}
+
+/** The colour passport: tone numbers only (never the photo), on this device only, opt-in. */
+const PASSPORT_KEY = 'secondtry.passport';
+function readPassport() {
+  try {
+    const p = JSON.parse(localStorage.getItem(PASSPORT_KEY) || 'null');
+    return p && /^#[0-9A-F]{6}$/i.test(p.skinHex) ? p : null;
+  } catch {
+    return null;
+  }
+}
+function writePassport(p) {
+  try {
+    if (p) localStorage.setItem(PASSPORT_KEY, JSON.stringify(p));
+    else localStorage.removeItem(PASSPORT_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ---------- boot ----------
 async function boot() {
   try {
@@ -91,6 +138,7 @@ async function boot() {
 async function route() {
   stopCamera();
   stopPolling();
+  stopSpeaking();
   const hash = location.hash || '#/';
   if (hash.startsWith('#/return/')) {
     const id = hash.split('/')[2];
@@ -116,14 +164,21 @@ function renderOrders() {
   $trace.hidden = true;
   $layout.classList.remove('with-trace');
   const first = state.orders[0]?.customer?.firstName ?? 'there';
+  const passport = readPassport();
   $app.innerHTML = `
     <section class="stack-lg">
       <div>
         <p class="eyebrow">Your orders</p>
         <h1>Hi ${esc(first)}, need to return something?</h1>
-        <p class="lede">Returns are free within 30 days of delivery.</p>
+        <p class="lede">Returns are free within 30 days of delivery. If a colour wasn't right, we'll help you find one that is.</p>
       </div>
-      <ul class="stack" style="list-style:none;margin:0;padding:0">
+      ${passport ? '<section class="card passport-shelf stack" id="passport-shelf" aria-labelledby="shelf-title" hidden></section>' : ''}
+      <a class="story-link" href="/story.html">
+        <span class="story-dots" aria-hidden="true"><i style="background:#c98f8a"></i><i style="background:#b77a5f"></i></span>
+        <span class="grow"><b>New here? Start with Alex's story</b><span>Why a "wrong shade" return deserves a second try. 1-minute read.</span></span>
+        <span aria-hidden="true">→</span>
+      </a>
+      <ul class="stack" style="list-style:none;margin-bottom:0;padding:0">
         ${state.orders
           .map((o) =>
             o.lines
@@ -146,6 +201,44 @@ function renderOrders() {
       <p class="footer-note">Hue &amp; Hem is a fictional demo store. <a href="/merchant">Merchant dashboard →</a></p>
     </section>`;
   focusTitle();
+  if (passport) loadPassportShelf(passport);
+}
+
+/** "Picked for you": the same deterministic matcher, run on the saved tone numbers. */
+async function loadPassportShelf(passport) {
+  const el = document.getElementById('passport-shelf');
+  if (!el) return;
+  let data;
+  try {
+    data = await api('POST', '/api/profile/matches', { skinHex: passport.skinHex, lipHex: passport.lipHex, hairHex: passport.hairHex });
+  } catch {
+    return; // the shelf is a bonus; the orders page works without it
+  }
+  const picks = Object.entries(data.picks || {}).map(([cat, list]) => [cat, (list || [])[0]]).filter(([, p]) => p);
+  if (!picks.length) return;
+  const catName = { lipstick: 'Lipstick', foundation: 'Foundation', dress: 'Dress colour' };
+  el.innerHTML = `
+    <div class="row" style="justify-content:space-between;align-items:baseline">
+      <h2 id="shelf-title">Picked for you</h2>
+      <button class="btn ghost small" style="min-height:0;padding:0" data-action="forget-passport">Forget my colours</button>
+    </div>
+    <p class="muted small" style="margin-top:4px">From the colour profile you saved on this device (${esc(cap(data.profile?.depthLabel || passport.depthLabel || ''))} · ${esc(data.profile?.undertone || passport.undertone || '')}). No photo is kept.</p>
+    <ul class="shelf">
+      ${picks
+        .map(
+          ([cat, p]) => `
+        <li class="shelf-item">
+          <img src="${esc(p.image)}" alt="" width="56" height="72" />
+          <div class="grow">
+            <div class="muted small">${esc(catName[cat] || cat)}</div>
+            <div style="font-weight:600">${esc(p.shadeName)} <span class="badge best">Suits you</span></div>
+            <div class="small muted">${esc(p.reason || '')}</div>
+          </div>
+        </li>`,
+        )
+        .join('')}
+    </ul>`;
+  el.hidden = false;
 }
 
 function renderSession() {
@@ -165,6 +258,8 @@ function renderSession() {
     escalated: viewEscalated,
   };
   (views[s.step] ?? viewReason)(s);
+  if (s.profile) state.lastProfile = s.profile;
+  $app.insertAdjacentHTML('afterbegin', progressBar(s.step));
 }
 
 function returnedHeader(s) {
@@ -219,6 +314,7 @@ function viewOffer(s) {
   $app.innerHTML = `
     <section class="stack-lg">
       ${returnedHeader(s)}
+      <p class="empathy">Sorry ${esc(s.returned.shadeName)} wasn't right. Colour is hard to judge through a screen, and that's on us, not you.</p>
       <div class="hero-offer stack">
         <p class="timer">◷ About 30 seconds</p>
         <h1>See a better match on you before you decide?</h1>
@@ -362,6 +458,7 @@ function viewMatches(s) {
       <div class="stack">
         <p class="eyebrow">Step 2 of 3 · Your match</p>
         <h1>${s.returned.category === 'dress' ? 'Colours picked for you' : 'Shades picked for you'}</h1>
+        ${canSpeak() ? '<button class="btn ghost listen" data-action="listen" aria-pressed="false"><span aria-hidden="true">🔊</span><span class="lbl">Read my results aloud</span></button>' : ''}
       </div>
       ${toneCard(s)}
       <div class="stack">
@@ -372,6 +469,7 @@ function viewMatches(s) {
         </div>
         <p class="muted small" style="text-align:center;margin-top:2px">${esc(s.copy.tryonLabel)}. Colours on screens vary.</p>
       </div>
+      <section class="card compare-card stack" id="compare-card" aria-label="Before and after" hidden></section>
       <div class="stack" id="reasons">
         ${s.matches?.returnedCaution
           ? `<div class="card tint match"><div class="match-head"><span class="swatch" style="background:${esc(s.returned.hex)}"></span><div class="grow"><div style="font-weight:600">Why ${esc(s.returned.shadeName)} may not have worked</div></div></div><p class="reason">${esc(s.matches.returnedCaution)} That's about the colour, not about you.</p></div>`
@@ -395,9 +493,89 @@ function viewMatches(s) {
       <div class="banner info small"><span aria-hidden="true">🔒</span><div>Your photo is deleted as soon as you choose. <button class="btn ghost" style="min-height:0;padding:0" data-action="delete-photo">Delete it now</button></div></div>
     </section>`;
   renderSticky(s);
+  updateCompare(s);
   if (s.step === 'matches') sendEvent('render', {}, { quiet: true });
   else if (s.renders.some((r) => r.status === 'queued' || r.status === 'rendering')) startPolling();
   focusTitle();
+}
+
+/**
+ * Before / after on the shopper's own photo: the returned shade on the left, the chosen pick
+ * revealed on the right. Both are real renders of the same photo, so only the colour changes.
+ */
+function updateCompare(s) {
+  const el = document.getElementById('compare-card');
+  if (!el || !s.picks?.length) return;
+  const pick = s.picks.find((p) => p.product.id === state.selected) ?? s.picks[0];
+  const a = s.renders.find((r) => r.productId === s.returned.id);
+  const b = s.renders.find((r) => r.productId === pick.product.id);
+  if (!(a?.status === 'done' && a.url && b?.status === 'done' && b.url)) {
+    el.hidden = true;
+    return;
+  }
+  const key = `${a.url}|${b.url}`;
+  if (el.dataset.key === key) return;
+  const firstTime = !el.dataset.key;
+  el.dataset.key = key;
+  const tint = (hex) => (s.mode === 'mock' ? `<div class="mock-tint" style="background:${esc(hex)}"></div>` : '');
+  const from = s.returned.shadeName;
+  const to = pick.product.shadeName;
+  el.innerHTML = `
+    <div>
+      <h2>Side by side, on you</h2>
+      <p class="muted small" style="margin:4px 0 0">Same photo. Only the ${s.returned.category === 'dress' ? 'colour' : 'shade'} changes. Drag to compare.</p>
+    </div>
+    <div class="compare ${s.returned.category === 'dress' ? 'body' : 'face'}" style="--pos:50%">
+      <div class="layer"><img src="${esc(a.url)}" alt="Your photo with ${esc(from)}, the one you're returning" />${tint(s.returned.hex)}</div>
+      <div class="layer b"><img src="${esc(b.url)}" alt="Your photo with ${esc(to)}" />${tint(pick.product.hex)}</div>
+      <div class="handle" aria-hidden="true"></div>
+      <span class="tag l">${esc(from)} · returning</span>
+      <span class="tag r">${esc(to)}</span>
+      <span class="label-vp">${s.mode === 'mock' ? 'Mock preview · ' : ''}Visual preview, not a guarantee</span>
+    </div>
+    <label class="sr-only" for="compare-range">Compare ${esc(from)} and ${esc(to)}</label>
+    <input id="compare-range" class="compare-range" type="range" min="0" max="100" value="50" />`;
+  el.hidden = false;
+  const box = el.querySelector('.compare');
+  const range = el.querySelector('#compare-range');
+  const set = (v) => {
+    const pos = Math.max(0, Math.min(100, v));
+    box.style.setProperty('--pos', `${pos}%`);
+    range.value = String(Math.round(pos));
+  };
+  range.addEventListener('input', () => set(Number(range.value)));
+  const fromPointer = (e) => {
+    const r = box.getBoundingClientRect();
+    set(((e.clientX - r.left) / r.width) * 100);
+  };
+  box.addEventListener('pointerdown', (e) => {
+    box.setPointerCapture(e.pointerId);
+    fromPointer(e);
+  });
+  box.addEventListener('pointermove', (e) => {
+    if (box.hasPointerCapture(e.pointerId)) fromPointer(e);
+  });
+  // A gentle one-time reveal, so the difference is noticed (skipped for reduced motion).
+  if (firstTime && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const t0 = performance.now();
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / 1400);
+      const ease = 1 - (1 - k) ** 3;
+      set(92 - 42 * ease);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    set(92);
+    requestAnimationFrame(step);
+  }
+}
+
+function resultsSpeech(s) {
+  const parts = [];
+  if (s.profile?.summary) parts.push(s.profile.summary);
+  if (s.matches?.returnedCaution) parts.push(`Why ${s.returned.shadeName} may not have worked: ${s.matches.returnedCaution}`);
+  s.picks.forEach((p, i) => parts.push(`${i === 0 ? 'Best match' : 'Also great'}: ${p.product.shadeName}, ${money(p.product.price)}. ${p.reason}`));
+  parts.push('The previews are a visual guide, not a guarantee. Your refund stays one tap away.');
+  return parts.join(' ');
 }
 
 function tryonCard(s, o) {
@@ -438,6 +616,7 @@ function updateRenders(s) {
       el.innerHTML = renderImg(s, r, { product: p });
     }
   }
+  updateCompare(s);
 }
 
 function renderSticky(s) {
@@ -459,27 +638,43 @@ function renderSticky(s) {
 function viewExchanged(s) {
   $sticky.hidden = true;
   const x = s.exchange;
+  const profile = s.profile || state.lastProfile;
+  const offerPassport = profile?.skinHex && !readPassport();
   $app.innerHTML = `
     <section class="stack-lg">
       <div class="done-icon" aria-hidden="true">✓</div>
       <div class="stack">
         <h1>Your new ${s.returned.category === 'dress' ? 'colour' : 'shade'} ships today</h1>
-        <p class="lede">${esc(x.message)}</p>
+        <p class="lede">We think this one's you.</p>
       </div>
-      <div class="card flat">
-        <dl class="kv">
-          <dt>Exchange order</dt><dd>${esc(x.id)}</dd>
-          <dt>Sending</dt><dd>${esc(x.toName)}</dd>
-          <dt>Returning</dt><dd>${esc(x.fromName)}</dd>
-          <dt>Return label</dt><dd>${esc(x.returnLabel)} (prepaid)</dd>
-          ${x.price?.refundToCustomer ? `<dt>Refund</dt><dd>${money(x.price.refundToCustomer)} difference</dd>` : ''}
-        </dl>
-      </div>
+      <ol class="timeline card flat" aria-label="What happens next">
+        <li class="done"><span class="when">Today · exchange order ${esc(x.id)}</span><span><b>${esc(x.toName)}</b> ships, free.</span></li>
+        <li><span class="when">Within 30 days, no rush</span><span>Send ${esc(x.fromName)} back with the prepaid label ${esc(x.returnLabel)}.</span></li>
+        ${x.price?.refundToCustomer ? `<li class="done"><span class="when">Price difference</span><span>${money(x.price.refundToCustomer)} goes back to your card.</span></li>` : ''}
+      </ol>
       <div class="banner ok"><span aria-hidden="true">🔒</span><div><b>Your photo has been deleted.</b>So have the previews, here and on the processing service.</div></div>
+      ${offerPassport ? passportOffer(profile) : ''}
       <a class="btn block secondary" href="#/">Back to orders</a>
       <p class="footer-note">Demo store: no real order was placed.</p>
     </section>`;
   focusTitle();
+}
+
+function passportOffer(p) {
+  return `
+    <section class="card passport stack" id="passport-offer" aria-labelledby="passport-title">
+      <div class="row top">
+        <div class="swatch-pair" aria-hidden="true"><span style="background:${esc(p.skinHex)}"></span>${p.lipHex ? `<span style="background:${esc(p.lipHex)}"></span>` : ''}</div>
+        <div class="grow">
+          <h2 id="passport-title">Next time, skip the guesswork</h2>
+          <p class="small" style="margin:6px 0 0;color:var(--ink-2)">Save your colour profile on this device and we'll mark the shades that suit you before you buy. It keeps two colour values plus "${esc(cap(p.depthLabel))} · ${esc(p.undertone)}". Never your photo, and never on our server.</p>
+        </div>
+      </div>
+      <div class="btn-col">
+        <button class="btn block" data-action="save-passport">Save my colour profile</button>
+        <button class="btn ghost" data-action="skip-passport">No thanks</button>
+      </div>
+    </section>`;
 }
 
 function viewRefunded(s) {
@@ -649,6 +844,35 @@ const actions = {
       if (b) b.setAttribute('aria-pressed', String(on));
     });
     renderSticky(state.session);
+    updateCompare(state.session);
+  },
+  listen(el) {
+    if (!canSpeak()) return;
+    if (el.getAttribute('aria-pressed') === 'true') return stopSpeaking();
+    stopSpeaking();
+    const u = new SpeechSynthesisUtterance(resultsSpeech(state.session));
+    u.rate = 0.98;
+    u.onend = u.onerror = () => stopSpeaking();
+    el.setAttribute('aria-pressed', 'true');
+    el.querySelector('.lbl').textContent = 'Stop reading';
+    window.speechSynthesis.speak(u);
+  },
+  'save-passport'() {
+    const p = state.session?.profile || state.lastProfile;
+    const card = document.getElementById('passport-offer');
+    if (!p?.skinHex) return;
+    const ok = writePassport({ skinHex: p.skinHex, lipHex: p.lipHex || null, hairHex: p.hairHex || null, depthLabel: p.depthLabel, undertone: p.undertone, savedAt: new Date().toISOString().slice(0, 10) });
+    if (card) card.innerHTML = ok
+      ? '<p style="margin:0"><b>Saved on this device.</b> Your orders page will now show shades picked for you. You can forget them there any time.</p>'
+      : '<p style="margin:0">This browser blocks saving, so nothing was stored.</p>';
+  },
+  'skip-passport'() {
+    document.getElementById('passport-offer')?.remove();
+  },
+  'forget-passport'() {
+    writePassport(null);
+    document.getElementById('passport-shelf')?.remove();
+    toast('Your saved colours are gone from this device.');
   },
   async exchange(el) {
     stopPolling();
