@@ -21,7 +21,7 @@ const G = {
   light: 'Find soft, even light. Face a window and avoid strong light behind you.',
   file: "We couldn't read that photo. Try a JPG or PNG.",
   small: 'That photo is quite small. Try a larger or closer one.',
-  body: 'For the dress preview, use a photo from the chest up with your shoulders visible, facing forward.',
+  body: 'For the dress preview, use a photo from the waist up with your shoulders and arms visible, facing forward.',
 };
 
 const MAP = {

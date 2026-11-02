@@ -285,14 +285,14 @@ function viewCapture(s) {
     <section class="stack-lg">
       <div class="stack">
         <p class="eyebrow">Step 1 of 3 · ${body ? 'Photo' : 'Selfie'}</p>
-        <h1>${body ? 'A photo from the chest up' : 'Take a quick selfie'}</h1>
+        <h1>${body ? 'A photo from the waist up' : 'Take a quick selfie'}</h1>
         <p class="lede">${esc(s.copy.capture)}</p>
       </div>
       ${s.guidance ? `<div class="banner warn" role="alert"><span aria-hidden="true">↺</span><div><b>Let's try that again</b>${esc(s.guidance)}</div></div>` : ''}
       <div class="capture-box" id="capture-box">
         <div class="capture-empty" id="capture-empty">
           <div class="stack">
-            <p style="margin:0">${body ? 'Face the camera with your shoulders in frame.' : 'Face the camera in soft, even light.'}</p>
+            <p style="margin:0">${body ? 'Prop your phone up or use a mirror: face the camera, waist up, arms relaxed.' : 'Face the camera in soft, even light.'}</p>
             ${hasCamera ? '<button class="btn accent" data-action="camera">Use camera</button>' : ''}
           </div>
         </div>

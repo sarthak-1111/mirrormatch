@@ -89,10 +89,14 @@ export function createTools({ youcam, meter, catalog, events, config, demoCache,
       } else {
         budgetCheck('skin-tone-analysis');
         const { fileId } = await ensureUploaded(session);
+        // Verified live: a waist-up photo (needed by cloth-v4) passes analysis at "low"
+        // strictness but fails at "high" with error_face_angle_downward.
+        const isDress = catalog.product(session.returnedId)?.category === 'dress';
+        const strictness = isDress ? 'low' : config.youcam.faceAngleStrictness;
         try {
           const r = await youcam.runAndWait(
             'skin-tone-analysis',
-            { src_file_id: fileId, face_angle_strictness_level: config.youcam.faceAngleStrictness },
+            { src_file_id: fileId, face_angle_strictness_level: strictness },
             { sessionId: session.id, hint },
           );
           taskId = r.taskId;

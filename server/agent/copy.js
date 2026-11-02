@@ -18,7 +18,7 @@ export const copy = {
     'We use your photo only for this return. It is processed to measure your skin tone and show try-on previews, then deleted when this return ends.',
   capture: (category) =>
     category === 'dress'
-      ? 'Take a photo from the chest up: face the camera, shoulders visible, in soft even light.'
+      ? 'One photo from the waist up: face the camera, shoulders and arms visible, in soft even light. We use it for your skin tone and the dress preview.'
       : 'Take a selfie facing the camera, in soft even light, with your hair away from your face.',
   analyzing: () => 'Measuring your skin tone…',
   toneSummary: (profile) => toneSummaryText(profile),

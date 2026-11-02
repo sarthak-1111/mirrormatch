@@ -11,7 +11,7 @@ test('lipstick return becomes an exchange, and the dashboard shows it live', asy
   await expect(page.getByRole('heading', { level: 1 })).toContainText('need to return');
   await page.locator('[data-order="HH-10421"]').click();
 
-  await page.getByText("The shade didn't match").click();
+  await page.getByRole('radio', { name: "The shade didn't match" }).check();
   await page.getByRole('button', { name: 'Continue' }).click();
 
   await expect(page.getByRole('heading', { name: /better match on you/ })).toBeVisible();
@@ -52,7 +52,7 @@ test('lipstick return becomes an exchange, and the dashboard shows it live', asy
 test('damaged items skip SecondTry and refund in one step', async ({ page }) => {
   await page.goto('/');
   await page.locator('[data-order="HH-10388"]').click();
-  await page.getByText('It arrived damaged').click();
+  await page.getByRole('radio', { name: 'It arrived damaged' }).check();
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByRole('heading', { name: /Refund \$36/ })).toBeVisible();
   await page.getByRole('button', { name: 'Confirm refund' }).click();

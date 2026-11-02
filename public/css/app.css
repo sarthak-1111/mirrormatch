@@ -153,8 +153,8 @@ legend { padding: 0; }
 .capture-box video, .capture-box img.preview { width: 100%; height: 100%; object-fit: cover; }
 .capture-box video { transform: scaleX(-1); }
 .guide-oval { position: absolute; inset: 9% 20% 26% 20%; border: 2.5px dashed rgba(255, 255, 255, 0.85); border-radius: 50%; pointer-events: none; }
-.guide-oval.body { inset: 6% 26% 40% 26%; }
-.guide-shoulders { position: absolute; left: 8%; right: 8%; bottom: 6%; height: 30%; border: 2.5px dashed rgba(255, 255, 255, 0.6); border-bottom: 0; border-radius: 48% 48% 0 0; pointer-events: none; }
+.guide-oval.body { inset: 5% 37% 68% 37%; }
+.guide-shoulders { position: absolute; left: 12%; right: 12%; top: 33%; bottom: 0; border: 2.5px dashed rgba(255, 255, 255, 0.6); border-bottom: 0; border-radius: 40% 40% 0 0; pointer-events: none; }
 .live-hint { position: absolute; left: 12px; right: 12px; bottom: 12px; text-align: center; color: #fff; font-size: 14px; background: rgba(0, 0, 0, 0.45); padding: 8px 10px; border-radius: 999px; }
 .capture-empty { display: grid; place-items: center; height: 100%; color: #e9e0d6; text-align: center; padding: 24px; }
 .banner { border-radius: 14px; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; }
