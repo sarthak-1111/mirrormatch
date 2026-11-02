@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MirrorMatch · live demo</title>
+  <meta name="description" content="MirrorMatch: the returns desk with a mirror. Live demo of the YouCam API hackathon project." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#fbf8f4; --surface:#fff; --ink:#231e1b; --ink-2:#4a413c; --muted:#74695f; --line:#e7ded3; --accent:#b4533f; --accent-soft:#f6e3dc; --focus:#1f5fbf; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg); color:var(--ink);
+           font:16px/1.55 Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding:24px 16px; }
+    main { width:100%; max-width:520px; background:var(--surface); border:1px solid var(--line); border-radius:20px;
+           padding:36px 32px; box-shadow:0 1px 2px rgba(35,30,27,.05), 0 8px 24px rgba(35,30,27,.06); }
+    .brand { display:flex; align-items:center; gap:12px; margin-bottom:22px; }
+    .brand b { font:600 28px/1 Fraunces, Georgia, serif; letter-spacing:-.02em; }
+    h1 { font:600 24px/1.25 Fraunces, Georgia, serif; margin:0 0 8px; }
+    p { margin:0 0 14px; color:var(--ink-2); }
+    .status { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px; margin-top:18px; }
+    .dot { width:10px; height:10px; border-radius:50%; background:var(--line); }
+    .dot.live { background:#2f6b4f; } .dot.wait { background:var(--accent); animation:pulse 1.2s infinite; }
+    @keyframes pulse { 50% { opacity:.35; } }
+    @media (prefers-reduced-motion: reduce) { .dot.wait { animation:none; } }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
+    a.btn { display:inline-flex; align-items:center; min-height:44px; padding:0 18px; border-radius:999px; text-decoration:none;
+            font-weight:600; font-size:15px; border:1px solid var(--line); color:var(--ink); background:var(--surface); }
+    a.btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+    a:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+    code { background:var(--accent-soft); padding:1px 6px; border-radius:6px; font-size:14px; }
+    .hidden { display:none; }
+    small { color:var(--muted); display:block; margin-top:18px; font-size:13px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2b2522"/><circle cx="26" cy="32" r="12" fill="#d98f7e"/><circle cx="38" cy="32" r="12" fill="#e8c9a0" fill-opacity=".85"/></svg>
+      <b>MirrorMatch</b>
+    </div>
+    <section id="checking">
+      <h1>Opening the live demo…</h1>
+      <p>The returns desk with a mirror: it measures your skin tone, shows better shades on you with YouCam try-on, and offers an exchange instead of a refund.</p>
+      <div class="status" role="status"><span class="dot wait"></span><span id="msg">Checking that the demo server is awake.</span></div>
+    </section>
+    <section id="live" class="hidden">
+      <h1>The live demo is up</h1>
+      <p>Taking you there now. If nothing happens, use the buttons.</p>
+      <div class="actions">
+        <a class="btn primary" id="go-workspace" href="#">Open the workspace</a>
+        <a class="btn" id="go-story" href="#">Start with the story</a>
+      </div>
+      <div class="status"><span class="dot live"></span><span>Online. Sample-model runs replay real YouCam results and cost nothing.</span></div>
+    </section>
+    <section id="offline" class="hidden">
+      <h1>The live demo is resting</h1>
+      <p>It runs on the author's workstation through a Cloudflare tunnel, and it isn't reachable right now. You can still see everything:</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/sarthak-1111/mirrormatch#readme">Watch the demo video</a>
+        <a class="btn" href="https://github.com/sarthak-1111/mirrormatch">Run it yourself</a>
+      </div>
+      <p style="margin-top:16px">Without any key: <code>npm install &amp;&amp; npm run mock</code>, then open <code>localhost:3000</code>.</p>
+    </section>
+    <small>MirrorMatch is an entry to the YouCam API Skin AI &amp; eCommerce VTO Hackathon. Hue &amp; Hem is a fictional demo store.</small>
+  </main>
+  <script>
+    // The live server sits behind a Cloudflare quick tunnel whose address changes when it restarts.
+    // The host's watchdog publishes the current address to live.json on this branch; read it fresh.
+    const API = 'https://api.github.com/repos/sarthak-1111/mirrormatch/contents/live.json?ref=gh-pages';
+    const show = (id) => ['checking', 'live', 'offline'].forEach((s) => document.getElementById(s).classList.toggle('hidden', s !== id));
+    const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
+    async function readLive() {
+      try { return await Promise.race([fetch(API, { headers: { Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' }).then((r) => r.ok ? r.json() : Promise.reject(r.status)), timeout(6000)]); }
+      catch { return await fetch('live.json?t=' + Date.now(), { cache: 'no-store' }).then((r) => r.json()); }
+    }
+    (async () => {
+      let live;
+      try { live = await readLive(); } catch { return show('offline'); }
+      if (!live || !live.url) return show('offline');
+      document.getElementById('msg').textContent = 'Found it. Waking the server…';
+      for (let i = 0; i < 3; i++) {
+        try {
+          const h = await Promise.race([fetch(live.url + '/api/health', { cache: 'no-store' }).then((r) => r.json()), timeout(8000)]);
+          if (h && h.ok) {
+            const wide = window.matchMedia('(min-width: 900px)').matches;
+            const ws = live.url + (live.path || '/workspace.html');
+            const story = live.url + (live.mobilePath || '/story.html');
+            document.getElementById('go-workspace').href = ws;
+            document.getElementById('go-story').href = story;
+            show('live');
+            if (!new URLSearchParams(location.search).has('stay')) setTimeout(() => location.replace(wide ? ws : story), 900);
+            return;
+          }
+        } catch {}
+      }
+      show('offline');
+    })();
+  </script>
+</body>
+</html>
