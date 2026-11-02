@@ -1,8 +1,8 @@
-# SecondTry
+# MirrorMatch
 
 **The returns desk that gets it right the second time.**
 
-When a shopper starts a return because *"the shade didn't match"* or *"the colour didn't suit me"*, SecondTry:
+When a shopper starts a return because *"the shade didn't match"* or *"the colour didn't suit me"*, MirrorMatch:
 1. asks for a selfie and measures their skin tone,
 2. finds the right shade or colourway in the store's catalogue,
 3. shows the alternatives on the shopper's own face or body with virtual try-on, and
@@ -14,7 +14,7 @@ Built for the **YouCam API Skin AI & eCommerce VTO Hackathon**, **eCommerce VTO*
 
 Demo store: **Hue & Hem**, a fictional shop. No real brands. Start with the one-minute story at **`/story.html`**.
 
-**Why it's different.** Shade finders guess *before* a purchase. A return is the only time a store learns what actually failed: *this shade, on this tone profile, didn't work*. SecondTry turns each of those moments into a saved sale for the shopper and a fix for the store's catalogue.
+**Why it's different.** Shade finders guess *before* a purchase. A return is the only time a store learns what actually failed: *this shade, on this tone profile, didn't work*. MirrorMatch turns each of those moments into a saved sale for the shopper and a fix for the store's catalogue.
 
 | Return offer | Lipstick try-on | Before / after on you |
 |---|---|---|
@@ -43,7 +43,7 @@ The moment a shopper picks **"wrong shade"** on a returns form is the clearest s
 - They now know what *didn't* work.
 - They're about to receive a refund, and the merchant is about to lose the sale and pay for the round trip.
 
-Today's returns portals treat that moment as paperwork. SecondTry treats it as a second chance to get the colour right. It uses the same AI the shopper could have used before buying, but at the one point where both sides are already paying attention.
+Today's returns portals treat that moment as paperwork. MirrorMatch treats it as a second chance to get the colour right. It uses the same AI the shopper could have used before buying, but at the one point where both sides are already paying attention.
 
 We don't quote industry return-rate statistics here. The dashboard shows only what happens in live demo sessions, plus a clearly labelled synthetic history for illustration.
 
@@ -65,13 +65,13 @@ We don't quote industry return-rate statistics here. The dashboard shows only wh
 - **Agent traces** for every session (tools, timings, units, "over MCP"), and the unit budget from the credit API.
 
 **For a real store's stack**
-- **Returns-portal webhook:** `POST /api/integrations/return-started` hands a colour-reason return to SecondTry and gets a link back for the shopper. See [`docs/INTEGRATION.md`](docs/INTEGRATION.md).
+- **Returns-portal webhook:** `POST /api/integrations/return-started` hands a colour-reason return to MirrorMatch and gets a link back for the shopper. See [`docs/INTEGRATION.md`](docs/INTEGRATION.md).
 
 ## The flow
 
 ```
 Orders ─▶ Start a return ─▶ Reason?
-                              ├─ damaged / other ─▶ refund (no SecondTry)
+                              ├─ damaged / other ─▶ refund (no MirrorMatch)
                               └─ wrong shade / colour didn't suit
                                     ▼
                     "See a better match on you before you decide? (~30 s)"   [Continue to refund]
@@ -184,18 +184,18 @@ These are transparent heuristics from colour science and common shade-matching p
 
 ## Exchange policy (`server/policy/policy.js`)
 
-- **When SecondTry is offered:** only for colour-related reasons (`wrong_shade`, `colour_didnt_suit`) within 30 days of delivery. Damaged and other returns go straight to refund.
+- **When MirrorMatch is offered:** only for colour-related reasons (`wrong_shade`, `colour_didnt_suit`) within 30 days of delivery. Damaged and other returns go straight to refund.
 - **Opened cosmetics:** can be exchanged for another shade under the store's shade promise.
 - **Price difference:** if the new item is up to $5 dearer, the merchant absorbs it. More than $5 dearer, it isn't offered as a free exchange. If it's more than $2 cheaper, the difference is refunded.
 - **Limits:** stock is re-checked at exchange time; at most 3 renders per return; at most 3 photo attempts; 2 analysis failures escalate to a human.
-- **No dark patterns:** "Continue to refund" is visible on every SecondTry screen, as a full-width button next to the exchange button.
+- **No dark patterns:** "Continue to refund" is visible on every MirrorMatch screen, as a full-width button next to the exchange button.
 
 ## Setup
 
 Requires Node 18.17+ (tested on 20). There is no build step.
 
 ```bash
-git clone https://github.com/sarthak-1111/secondtry && cd secondtry
+git clone https://github.com/sarthak-1111/mirrormatch && cd mirrormatch
 npm install
 cp .env.example .env          # add YOUCAM_API_KEY=...
 npm start                     # http://localhost:3000  (merchant: /merchant)
@@ -229,14 +229,14 @@ Live API verification (spends about 24 units): `node scripts/verify-api.mjs --fa
 | `DEMO_CACHE` | 0 | Opt-in on-disk cache of tone results and renders, keyed by the photo's SHA-256. **Use only with your own photo** |
 | `SESSION_TTL_MIN` | 20 | Idle sessions are wiped after this |
 | `PERSIST_EVENTS` | 1 | `0` keeps live dashboard events in memory only (used by the e2e tests; handy on a hosted demo) |
-| `WEBHOOK_SECRET` | empty | When set, the returns-portal webhook requires the `X-SecondTry-Secret` header |
+| `WEBHOOK_SECRET` | empty | When set, the returns-portal webhook requires the `X-MirrorMatch-Secret` header |
 | `PORT`, `HOST` | 3000, 127.0.0.1 | Server |
 | `YOUCAM_TRANSPORT` | `mcp` | `mcp`: AI tasks go through YouCam's MCP servers, with REST fallback. `rest`: call the REST task endpoints directly |
 | `YOUCAM_CLOTH_FEATURE`, `YOUCAM_GARMENT_CATEGORY`, `YOUCAM_FACE_STRICTNESS` | `cloth-v4`, `full_body`, `medium` | Verified defaults |
 
 ### Credits note
 
-Each participant gets 1,000 free units. SecondTry protects them in five ways:
+Each participant gets 1,000 free units. MirrorMatch protects them in five ways:
 1. It checks the balance at startup and logs the cost of every call.
 2. It caps renders at 3 per return.
 3. It caches tone results and renders per session, so a repeat render request is free.
@@ -259,7 +259,7 @@ YouCam charges only for successful tasks, so a bad photo costs nothing.
 
 - Skin-tone readings depend on lighting and camera white balance. We pre-check brightness and use YouCam's lighting flag, but we can't fully correct colour casts.
 - Undertone and colour-harmony rules are heuristics, not a validated model. The thresholds were tuned on the demo catalogue and YouCam sample images.
-- The garment references are self-made procedural drawings, so try-on fidelity for real fabrics and fits will differ. Fit is out of scope; SecondTry is about colour.
+- The garment references are self-made procedural drawings, so try-on fidelity for real fabrics and fits will differ. Fit is out of scope; MirrorMatch is about colour.
 - The store, orders, stock and exchanges are mocks, and there is no payment or shipping integration.
 - The live dashboard is in-memory plus a local JSONL file, for a single server.
 - YouCam processing takes about 7–11 s for analysis and 7–22 s per render (the three previews run in parallel), so the "about 30 seconds" promise depends on network and queue time.
@@ -268,7 +268,7 @@ YouCam charges only for successful tasks, so a bad photo costs nothing.
 
 - **Returns-portal adapters for real stores.** The generic webhook exists (`docs/INTEGRATION.md`). Next: adapters for specific returns platforms' `return.created` events, writing the exchange back through the store's order API, and posting `exchange_created` / `refund_chosen` back to the portal.
 - YouCam webhooks instead of polling, for lower latency.
-- Publish SecondTry's own eight tools as an MCP server, so a store's existing support assistant can run a SecondTry return.
+- Publish MirrorMatch's own eight tools as an MCP server, so a store's existing support assistant can run a MirrorMatch return.
 - Per-merchant catalogue import: map existing shade swatches to CIELAB with a calibration card.
 - Feed insights back to product pages ("deep · warm shoppers usually choose Shade 5W"), and A/B-test the recommendations.
 - Fit and size alongside colour for apparel.

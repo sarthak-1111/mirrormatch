@@ -71,7 +71,7 @@ export const config = {
   dataDir: resolve(ROOT, process.env.DATA_DIR || 'data'),
   // PERSIST_EVENTS=0 keeps live dashboard events in memory only (e2e runs, hosted demo).
   persistEvents: process.env.PERSIST_EVENTS !== '0',
-  // Optional shared secret for the returns-portal webhook (header X-SecondTry-Secret).
+  // Optional shared secret for the returns-portal webhook (header X-MirrorMatch-Secret).
   webhookSecret: process.env.WEBHOOK_SECRET || '',
 };
 

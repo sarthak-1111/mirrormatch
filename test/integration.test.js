@@ -26,7 +26,7 @@ test('webhook: a colour reason opens a session on the offer step and returns the
     assert.equal(j.url, `${t.base}/#/return/${j.sessionId}`);
     const s = await (await fetch(`${t.base}/api/session/${j.sessionId}`)).json();
     assert.equal(s.step, 'offer');
-    assert.ok(t.events.events.some((e) => e.type === 'secondtry_offered' && e.sessionId === j.sessionId));
+    assert.ok(t.events.events.some((e) => e.type === 'mirrormatch_offered' && e.sessionId === j.sessionId));
   } finally {
     await t.close();
   }
@@ -54,8 +54,8 @@ test('webhook: with WEBHOOK_SECRET set, the header is required', async () => {
   try {
     const body = { orderId: 'HH-10307', reason: 'colour_didnt_suit' };
     assert.equal((await t.post('/api/integrations/return-started', body)).status, 401);
-    assert.equal((await t.post('/api/integrations/return-started', body, { 'X-SecondTry-Secret': 'wrong' })).status, 401);
-    const ok = await t.post('/api/integrations/return-started', body, { 'X-SecondTry-Secret': 'test-shared-secret' });
+    assert.equal((await t.post('/api/integrations/return-started', body, { 'X-MirrorMatch-Secret': 'wrong' })).status, 401);
+    const ok = await t.post('/api/integrations/return-started', body, { 'X-MirrorMatch-Secret': 'test-shared-secret' });
     assert.equal(ok.status, 200);
     assert.equal((await ok.json()).eligible, true);
   } finally {

@@ -38,7 +38,7 @@ async function rpc(method, params, id) {
   }
 }
 
-const init = await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'secondtry-check', version: '1.0.0' } }, 1);
+const init = await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'mirrormatch-check', version: '1.0.0' } }, 1);
 console.log('initialize:', init.status, JSON.stringify(init.json?.result?.serverInfo ?? init.json ?? init.text));
 await rpc('notifications/initialized', {});
 const list = await rpc('tools/list', {}, 2);

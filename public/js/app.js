@@ -1,4 +1,4 @@
-// SecondTry shopper flow (vanilla JS, no build step).
+// MirrorMatch shopper flow (vanilla JS, no build step).
 // All decisions come from the server-side agent; this file only renders its state.
 
 const $app = document.getElementById('app');
@@ -73,7 +73,7 @@ function refundLink(label = 'Continue to refund') {
 const STEPS = ['Why', 'Photo', 'Your match', 'Done'];
 const STEP_OF = { reason: 0, offer: 0, consent: 1, capture: 1, matches: 2, tryon: 2, exchanged: 3 };
 
-/** A slim "where am I" bar for the SecondTry path (not shown on the plain refund path). */
+/** A slim "where am I" bar for the MirrorMatch path (not shown on the plain refund path). */
 function progressBar(step) {
   const at = STEP_OF[step];
   if (at == null) return '';
@@ -97,7 +97,7 @@ function stopSpeaking() {
 }
 
 /** The colour passport: tone numbers only (never the photo), on this device only, opt-in. */
-const PASSPORT_KEY = 'secondtry.passport';
+const PASSPORT_KEY = 'mirrormatch.passport';
 function readPassport() {
   try {
     const p = JSON.parse(localStorage.getItem(PASSPORT_KEY) || 'null');
@@ -175,7 +175,7 @@ function renderOrders() {
       ${passport ? '<section class="card passport-shelf stack" id="passport-shelf" aria-labelledby="shelf-title" hidden></section>' : ''}
       <a class="story-link" href="/story.html">
         <span class="story-dots" aria-hidden="true"><i style="background:#c98f8a"></i><i style="background:#b77a5f"></i></span>
-        <span class="grow"><b>New here? Start with Alex's story</b><span>Why a "wrong shade" return deserves a second try. 1-minute read.</span></span>
+        <span class="grow"><b>New here? Start with Alex's story</b><span>Why a "wrong shade" return deserves a second chance. 1-minute read.</span></span>
         <span aria-hidden="true">→</span>
       </a>
       <ul class="stack" style="list-style:none;margin-bottom:0;padding:0">
@@ -814,7 +814,7 @@ const actions = {
     state.captured = null;
     location.hash = `#/return/${v.id}`;
   },
-  accept: () => sendEvent('accept_secondtry'),
+  accept: () => sendEvent('accept_mirrormatch'),
   async back() {
     state.returnTo = null;
     // Re-read the server state: it is the source of truth (renders may have finished meanwhile).
@@ -826,7 +826,7 @@ const actions = {
     stopPolling();
     if (state.session.step === 'offer') {
       state.returnTo = null;
-      return sendEvent('decline_secondtry');
+      return sendEvent('decline_mirrormatch');
     }
     state.returnTo = ['consent', 'capture', 'matches', 'tryon', 'escalated'].includes(state.session.step) ? state.session.step : null;
     state.session = { ...state.session, step: 'refund_review' };

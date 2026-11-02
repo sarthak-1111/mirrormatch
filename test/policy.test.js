@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { priceDifference, secondTryEligibility, checkStockAndPolicy, renderBudget, POLICY } from '../server/policy/policy.js';
+import { priceDifference, mirrorMatchEligibility, checkStockAndPolicy, renderBudget, POLICY } from '../server/policy/policy.js';
 import { validateRewrite } from '../server/agent/llm.js';
 import { guidanceFor, qualityIssues } from '../server/youcam/errors.js';
 import { UnitMeter } from '../server/youcam/meter.js';
@@ -10,13 +10,13 @@ const now = new Date('2026-11-02T12:00:00Z');
 const order = { id: 'O1', deliveredOn: '2026-10-25' };
 const p = (id, price, stock = 5, category = 'lipstick') => ({ id, price, stock, category, shadeName: id });
 
-test('SecondTry only for colour reasons within the return window', () => {
-  assert.equal(secondTryEligibility({ reason: 'wrong_shade', order, now }).eligible, true);
-  assert.equal(secondTryEligibility({ reason: 'colour_didnt_suit', order, now }).eligible, true);
-  assert.equal(secondTryEligibility({ reason: 'damaged', order, now }).eligible, false);
-  assert.equal(secondTryEligibility({ reason: 'other', order, now }).eligible, false);
-  assert.equal(secondTryEligibility({ reason: 'wrong_shade', order: { deliveredOn: '2026-09-01' }, now }).why, 'outside_return_window');
-  assert.equal(secondTryEligibility({ reason: 'bogus', order, now }).eligible, false);
+test('MirrorMatch only for colour reasons within the return window', () => {
+  assert.equal(mirrorMatchEligibility({ reason: 'wrong_shade', order, now }).eligible, true);
+  assert.equal(mirrorMatchEligibility({ reason: 'colour_didnt_suit', order, now }).eligible, true);
+  assert.equal(mirrorMatchEligibility({ reason: 'damaged', order, now }).eligible, false);
+  assert.equal(mirrorMatchEligibility({ reason: 'other', order, now }).eligible, false);
+  assert.equal(mirrorMatchEligibility({ reason: 'wrong_shade', order: { deliveredOn: '2026-09-01' }, now }).why, 'outside_return_window');
+  assert.equal(mirrorMatchEligibility({ reason: 'bogus', order, now }).eligible, false);
 });
 
 test('price difference rules', () => {
@@ -92,8 +92,8 @@ test('unit meter: costs from feature-cost SKUs, charges only on success', () => 
 test('dashboard aggregates live events per session without double counting', () => {
   const ev = [
     { type: 'return_started', sessionId: 's1', productId: 'lip-l01', category: 'lipstick', price: 22 },
-    { type: 'secondtry_offered', sessionId: 's1' },
-    { type: 'secondtry_accepted', sessionId: 's1' },
+    { type: 'mirrormatch_offered', sessionId: 's1' },
+    { type: 'mirrormatch_accepted', sessionId: 's1' },
     { type: 'tone_analyzed', sessionId: 's1', profileKey: 'deep-warm' },
     { type: 'exchange_created', sessionId: 's1', toProductId: 'lip-l03' },
     { type: 'return_started', sessionId: 's2', productId: 'lip-l01', category: 'lipstick', price: 22 },

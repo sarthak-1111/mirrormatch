@@ -25,7 +25,7 @@ export const GOOD_STATS = { meanLuma: 128, clippedPct: 1, contrast: 45 };
 export async function runToMatches(agent, { orderId = 'HH-10421', reason = 'wrong_shade', hint = { skinHex: '#B9947C', lipHex: '#B5636A' } } = {}) {
   let v = await agent.start({ orderId });
   v = await agent.handle(v.id, 'reason', { reason });
-  v = await agent.handle(v.id, 'accept_secondtry');
+  v = await agent.handle(v.id, 'accept_mirrormatch');
   v = await agent.handle(v.id, 'consent', { accepted: true });
   v = await agent.handle(v.id, 'photo', { image: FAKE_IMAGE, width: 900, height: 1200, stats: GOOD_STATS, hint });
   return v;

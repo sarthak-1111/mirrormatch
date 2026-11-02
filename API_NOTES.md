@@ -25,13 +25,13 @@ Status legend: **D** = confirmed in the official docs/OpenAPI · **L** = confirm
 2. `PUT <requests[0].url>` with exactly the returned headers (`Content-Type`, `Content-Length`) and the raw bytes. Skipping this step gives a 500/404 later. **D**
 3. `POST /s2s/v2.0/task/<feature>` with `src_file_id` (or a public `src_file_url`) and feature params. Returns `data.task_id`. **D**
 4. `GET /s2s/v2.0/task/<feature>/<task_id>`. Poll until `data.task_status` is `success` or `error`. Results are in `data.results`. **D**
-5. Optional cleanup: `POST /s2s/v2.0/task/delete` with `{"task_id": "..."}` deletes the task **and its input and output files**. SecondTry calls this when a return ends (privacy). **D**
+5. Optional cleanup: `POST /s2s/v2.0/task/delete` with `{"task_id": "..."}` deletes the task **and its input and output files**. MirrorMatch calls this when a return ends (privacy). **D**
 
 Implementation: `server/youcam/client.js` (`uploadImage`, `runTask`, `pollTask`, `runAndWait`, `deleteTask`).
 
-## Endpoints used by SecondTry
+## Endpoints used by MirrorMatch
 
-| API | Endpoint | Units (docs) | What it powers in SecondTry | Status |
+| API | Endpoint | Units (docs) | What it powers in MirrorMatch | Status |
 |---|---|---|---|---|
 | Credit balance | `GET /s2s/v1.0/client/credit` → `results[].amount_dec` | 0 | Balance check at startup and after each return; unit floor | D |
 | Feature cost | `GET /s2s/v2.0/credit/feature-cost` → `result.skus[].{amount, unit, run_task_url}` | 0 | Loads the real per-call cost at startup to meter units | D |
@@ -46,7 +46,7 @@ Implementation: `server/youcam/client.js` (`uploadImage`, `runTask`, `pollTask`,
 
 ### skin-tone-analysis: request and response
 
-Request: `{ "src_file_id": "...", "face_angle_strictness_level": "strict|high|medium|low|flexible" }`. The default is `high` (≤10° pitch/yaw/roll). SecondTry uses `medium` (≤15°) so phone selfies pass.
+Request: `{ "src_file_id": "...", "face_angle_strictness_level": "strict|high|medium|low|flexible" }`. The default is `high` (≤10° pitch/yaw/roll). MirrorMatch uses `medium` (≤15°) so phone selfies pass.
 
 Response `data.results`:
 
@@ -61,7 +61,7 @@ color: {
 }
 ```
 
-**No undertone or depth label is returned.** SecondTry derives them deterministically (`server/color/tone.js`):
+**No undertone or depth label is returned.** MirrorMatch derives them deterministically (`server/color/tone.js`):
 - **depth** from the Individual Typology Angle, `ITA° = atan2(L* − 50, b*)`, using Chardon's six bands, grouped into light, medium and deep for the heatmap.
 - **undertone** from the CIELAB hue angle `h_ab` of `skin_color`: below 52° is cool, 52–60° neutral, 60° and up warm. Thresholds shift down 3° when L* < 45.
 - **contrast** from |L*(hair) − L*(skin)|. It sets how bold a garment colour can be.
@@ -76,7 +76,7 @@ Request: `{ src_file_id, version: "1.0", effects: [ … ] }`. Each effect has a 
 - `lip_color`: `shape.name` (from `lipshape.json`, e.g. `"original"`), `style.type` (`full|ombre|twoTone`), and `palettes[]` with `{ color: "#RRGGBB", texture: matte|gloss|holographic|metallic|satin|sheer|shimmer, colorIntensity: 0–100, … }`. `gloss`/`shimmer*`/`transparencyIntensity` are required for some textures.
 - `foundation`: `palettes[]` with `{ color, colorIntensity, glowIntensity, coverageIntensity }`. No pattern.
 - `blush`: `pattern.name` (from `blush.json`) and `palettes[]` with `{ color, texture: matte|satin|shimmer, colorIntensity, … }`.
-- `skin_smooth`: `{ skinSmoothStrength, skinSmoothColorIntensity }`. **The engine applies 50 by default if you omit it.** SecondTry sends 0/0 so previews show the shade without retouching the shopper.
+- `skin_smooth`: `{ skinSmoothStrength, skinSmoothColorIntensity }`. **The engine applies 50 by default if you omit it.** MirrorMatch sends 0/0 so previews show the shade without retouching the shopper.
 - Also available: bronzer, concealer, contour, eyebrows, eye_liner, eye_shadow, eyelashes, highlighter, lip_liner.
 
 Response: `data.results.url`, valid 2 h. Image limits: long side < 1920 (the error text says `width < 1920, height < 1080`) and face width ≥ 100 px. The client downsizes to a 1024 px long side.

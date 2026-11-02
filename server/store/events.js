@@ -51,12 +51,12 @@ export class EventLog {
 }
 
 /** Aggregate a list of return records (live or synthetic) into dashboard numbers.
- *  A "return record" = { sessionId, productId, category, price, profileKey, secondTry, outcome, exchangeValue } */
+ *  A "return record" = { sessionId, productId, category, price, profileKey, mirrorMatch, outcome, exchangeValue } */
 export function aggregate(records) {
   const k = {
     returnsStarted: records.length,
-    secondTryOffered: 0,
-    secondTryAccepted: 0,
+    mirrorMatchOffered: 0,
+    mirrorMatchAccepted: 0,
     exchanges: 0,
     refunds: 0,
     escalations: 0,
@@ -66,8 +66,8 @@ export function aggregate(records) {
   const heat = {}; // productId -> profileKey -> count
   const exchangesTo = {}; // productId -> toProductId -> count
   for (const r of records) {
-    if (r.secondTryOffered) k.secondTryOffered++;
-    if (r.secondTry) k.secondTryAccepted++;
+    if (r.mirrorMatchOffered) k.mirrorMatchOffered++;
+    if (r.mirrorMatch) k.mirrorMatchAccepted++;
     if (r.outcome === 'exchange') {
       k.exchanges++;
       k.refundValueRetained += r.price ?? 0;
@@ -100,18 +100,18 @@ export function recordsFromEvents(events) {
     if (!e.sessionId) continue;
     let r = bySession.get(e.sessionId);
     if (!r) {
-      r = { sessionId: e.sessionId, at: e.at, outcome: null, secondTry: false, secondTryOffered: false };
+      r = { sessionId: e.sessionId, at: e.at, outcome: null, mirrorMatch: false, mirrorMatchOffered: false };
       bySession.set(e.sessionId, r);
     }
     switch (e.type) {
       case 'return_started':
         Object.assign(r, { productId: e.productId, category: e.category, price: e.price });
         break;
-      case 'secondtry_offered':
-        r.secondTryOffered = true;
+      case 'mirrormatch_offered':
+        r.mirrorMatchOffered = true;
         break;
-      case 'secondtry_accepted':
-        r.secondTry = true;
+      case 'mirrormatch_accepted':
+        r.mirrorMatch = true;
         break;
       case 'tone_analyzed':
         r.profileKey = e.profileKey;

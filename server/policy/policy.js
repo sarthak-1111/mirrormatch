@@ -3,7 +3,7 @@
 
 export const POLICY = {
   returnWindowDays: 30,
-  secondTryReasons: ['wrong_shade', 'colour_didnt_suit'],
+  mirrorMatchReasons: ['wrong_shade', 'colour_didnt_suit'],
   // Opened cosmetics can be exchanged for a different shade under the store's shade promise.
   openedCosmeticsExchangeable: true,
   // Price differences: the merchant absorbs small top-ups; larger differences are not offered
@@ -17,10 +17,10 @@ export const POLICY = {
 };
 
 export const REASONS = {
-  wrong_shade: { label: "The shade didn't match", secondTry: true },
-  colour_didnt_suit: { label: "The colour didn't suit me", secondTry: true },
-  damaged: { label: 'It arrived damaged', secondTry: false },
-  other: { label: 'Something else', secondTry: false },
+  wrong_shade: { label: "The shade didn't match", mirrorMatch: true },
+  colour_didnt_suit: { label: "The colour didn't suit me", mirrorMatch: true },
+  damaged: { label: 'It arrived damaged', mirrorMatch: false },
+  other: { label: 'Something else', mirrorMatch: false },
 };
 
 export function daysBetween(fromIso, toDate = new Date()) {
@@ -28,10 +28,10 @@ export function daysBetween(fromIso, toDate = new Date()) {
   return Math.floor((toDate.getTime() - from) / 86400000);
 }
 
-/** Is SecondTry offered for this return at all? */
-export function secondTryEligibility({ reason, order, now = new Date() }) {
+/** Is MirrorMatch offered for this return at all? */
+export function mirrorMatchEligibility({ reason, order, now = new Date() }) {
   if (!REASONS[reason]) return { eligible: false, why: 'unknown_reason' };
-  if (!REASONS[reason].secondTry) return { eligible: false, why: 'reason_not_colour_related' };
+  if (!REASONS[reason].mirrorMatch) return { eligible: false, why: 'reason_not_colour_related' };
   const age = daysBetween(order.deliveredOn, now);
   if (age > POLICY.returnWindowDays) return { eligible: false, why: 'outside_return_window', age };
   return { eligible: true, why: 'colour_related_return', age };
@@ -79,7 +79,7 @@ export function priceDifference(from, to) {
 /** Full check before offering or creating an exchange. */
 export function checkStockAndPolicy({ order, returned, alternative, reason, now = new Date() }) {
   const checks = [];
-  const elig = secondTryEligibility({ reason, order, now });
+  const elig = mirrorMatchEligibility({ reason, order, now });
   checks.push({ rule: 'colour-related reason within return window', ok: elig.eligible, detail: elig.why });
   if (alternative.category !== returned.category) {
     checks.push({ rule: 'same category', ok: false, detail: `${alternative.category} vs ${returned.category}` });

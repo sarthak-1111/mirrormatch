@@ -67,7 +67,7 @@ export class McpSession {
   async init() {
     if (!this.ready) {
       this.ready = (async () => {
-        await this.post({ jsonrpc: '2.0', id: this.nextId++, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'secondtry', version: '1.0.0' } } });
+        await this.post({ jsonrpc: '2.0', id: this.nextId++, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'mirrormatch', version: '1.0.0' } } });
         await this.post({ jsonrpc: '2.0', method: 'notifications/initialized', params: {} });
       })().catch((e) => {
         this.ready = null;

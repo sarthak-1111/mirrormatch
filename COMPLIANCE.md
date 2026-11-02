@@ -6,7 +6,7 @@ Source pages, read 2026-11-02:
 - Resources: https://youcam-api-skin-ai-ecommerce.devpost.com/resources
 
 **Deadline:** Nov 2 2026, 11:45am EST (Nov 3, 01:45 JST). Our target is Nov 2, 21:00 JST.
-**Track:** eCommerce VTO. Per the rules, "bring Virtual Try-On together into one seamless, intuitive experience". SecondTry chains makeup VTO and clothes VTO in one returns flow.
+**Track:** eCommerce VTO. Per the rules, "bring Virtual Try-On together into one seamless, intuitive experience". MirrorMatch chains makeup VTO and clothes VTO in one returns flow.
 
 Legend: ✅ done in the repo · 🟡 partly done or needs a manual step · ⬜ to do
 
@@ -15,7 +15,7 @@ Legend: ✅ done in the repo · 🟡 partly done or needs a manual step · ⬜ t
 | # | Requirement (paraphrased from the rules) | Where it lives | Status |
 |---|---|---|---|
 | 1 | The project integrates at least one YouCam API in a functional web or mobile prototype | `server/youcam/*`: skin-tone analysis, makeup VTO, clothes VTO, file API, credit API, task delete | ✅ |
-| 2 | A code repository URL with **all** source, assets and instructions needed to run it. Public with a relevant licence, or private and shared with the sponsor | Public repo `sarthak-1111/secondtry`, `LICENSE` (MIT), `README.md` setup, `ASSETS.md` | ✅ |
+| 2 | A code repository URL with **all** source, assets and instructions needed to run it. Public with a relevant licence, or private and shared with the sponsor | Public repo `sarthak-1111/mirrormatch`, `LICENSE` (MIT), `README.md` setup, `ASSETS.md` | ✅ |
 | 3 | A text description of the features and functionality that shows **clear consumer or retail value** | `DESCRIPTION.md` (paste into the Devpost form) | ✅ |
 | 4 | Screenshots of the project | `docs/screenshots/*.png` (9 images: offer, lipstick and dress try-on, before/after, colour passport, agent trace, dashboard, shade-fit matrix, story page), embedded in the README | ✅ |
 | 5 | A 1–3 minute demo video showing the experience end-to-end | Produced: 2:52, the story opening, live runs of the lipstick and dress returns, then the merchant dashboard. `VIDEO.md` has the timeline, narration and how it was made | ✅ |
@@ -39,7 +39,7 @@ Legend: ✅ done in the repo · 🟡 partly done or needs a manual step · ⬜ t
 
 ## Quality bar stated on the overview page
 
-| Expectation | How SecondTry meets it | Status |
+| Expectation | How MirrorMatch meets it | Status |
 |---|---|---|
 | "Fresh, unexpected solutions to real-world pain points… **not surface-level wrappers**" | The YouCam calls sit inside a returns workflow: deterministic CIELAB/CIEDE2000 matching, an exchange policy engine, an agent with tool calls, escalation, render caps, unit metering, and a merchant analytics loop (product × tone-profile heatmap). The API output feeds decisions; it isn't just displayed | ✅ |
 | "Intuitive enough that a first-time user instantly grasps its value" | One question per screen, plain-language copy, ~30-second promise, refund always one tap away, friendly retake guidance | ✅ |

@@ -1,11 +1,11 @@
-// The SecondTry agent: a deterministic planner that decides the next step of a return from
+// The MirrorMatch agent: a deterministic planner that decides the next step of a return from
 // tool results, records a PII-free trace (step, tool, timing, units), and asks the optional
 // LLM only to reword text. Every branch here is covered by unit tests.
 import { copy } from './copy.js';
 import { reword } from './llm.js';
 import { ToolError } from './tools.js';
 import { publicProduct } from '../store/catalog.js';
-import { POLICY, REASONS, secondTryEligibility, renderBudget } from '../policy/policy.js';
+import { POLICY, REASONS, mirrorMatchEligibility, renderBudget } from '../policy/policy.js';
 import { createHash } from 'node:crypto';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -65,26 +65,26 @@ export class Agent {
     const { order } = this.ctx(session);
     if (!REASONS[reason]) throw new ToolError('Unknown reason', { code: 'bad_reason' });
     session.reason = reason;
-    const elig = secondTryEligibility({ reason, order });
+    const elig = mirrorMatchEligibility({ reason, order });
     if (elig.eligible) {
       session.step = 'offer';
-      this.events.add('secondtry_offered', { sessionId: session.id, productId: session.returnedId, reason });
-      this.decide(session, `Reason "${reason}" is colour-related and within ${POLICY.returnWindowDays} days → offer SecondTry (refund stays one tap away).`);
+      this.events.add('mirrormatch_offered', { sessionId: session.id, productId: session.returnedId, reason });
+      this.decide(session, `Reason "${reason}" is colour-related and within ${POLICY.returnWindowDays} days → offer MirrorMatch (refund stays one tap away).`);
     } else {
       session.step = 'refund_review';
       session.notEligibleWhy = elig.why;
-      this.decide(session, `Reason "${reason}" → ${elig.why}; standard refund path, no SecondTry.`);
+      this.decide(session, `Reason "${reason}" → ${elig.why}; standard refund path, no MirrorMatch.`);
     }
   }
 
-  async on_accept_secondtry(session) {
+  async on_accept_mirrormatch(session) {
     session.step = 'consent';
-    this.events.add('secondtry_accepted', { sessionId: session.id, productId: session.returnedId });
+    this.events.add('mirrormatch_accepted', { sessionId: session.id, productId: session.returnedId });
   }
 
-  async on_decline_secondtry(session) {
+  async on_decline_mirrormatch(session) {
     session.step = 'refund_review';
-    this.events.add('secondtry_declined', { sessionId: session.id, productId: session.returnedId });
+    this.events.add('mirrormatch_declined', { sessionId: session.id, productId: session.returnedId });
   }
 
   async on_consent(session, { accepted }) {
@@ -360,7 +360,7 @@ export class Agent {
       copy: {
         consent: copy.consent(),
         capture: ctx ? copy.capture(ctx.returned.category) : '',
-        offer: ctx ? copy.offerSecondTry(ctx.returned) : '',
+        offer: ctx ? copy.offerMirrorMatch(ctx.returned) : '',
         reasonPrompt: ctx ? copy.reasonPrompt(ctx.returned) : '',
         notEligible: session.notEligibleWhy ? copy.notEligible(session.notEligibleWhy) : '',
         tryonLabel: copy.tryonLabel(),

@@ -1,7 +1,7 @@
 {
-  "name": "secondtry",
+  "name": "mirrormatch",
   "version": "1.0.0",
-  "description": "SecondTry: the returns desk that gets it right the second time. Skin-tone matching and virtual try-on at the moment of return, powered by YouCam APIs.",
+  "description": "MirrorMatch: the returns desk that gets it right the second time. Skin-tone matching and virtual try-on at the moment of return, powered by YouCam APIs.",
   "type": "module",
   "license": "MIT",
   "author": "Sarthak",

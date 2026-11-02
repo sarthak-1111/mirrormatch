@@ -7,9 +7,9 @@ const $ = (id) => document.getElementById(id);
 
 const EVENT_LABEL = {
   return_started: 'Return started',
-  secondtry_offered: 'SecondTry offered',
-  secondtry_accepted: 'Shopper tried SecondTry',
-  secondtry_declined: 'Shopper went straight to refund',
+  mirrormatch_offered: 'MirrorMatch offered',
+  mirrormatch_accepted: 'Shopper tried MirrorMatch',
+  mirrormatch_declined: 'Shopper went straight to refund',
   photo_retake: 'Photo retake requested',
   tone_analyzed: 'Skin tone analysed',
   renders_done: 'Try-on previews ready',
@@ -51,8 +51,8 @@ function renderChips(s) {
 function renderKpis(k) {
   const rate = k.exchangeRate == null ? '–' : `${Math.round(k.exchangeRate * 100)}%`;
   $('kpis').innerHTML = [
-    ['Returns started', k.returnsStarted, `${k.secondTryOffered} colour-related`],
-    ['Tried SecondTry', k.secondTryAccepted, `of ${k.secondTryOffered} offered`],
+    ['Returns started', k.returnsStarted, `${k.mirrorMatchOffered} colour-related`],
+    ['Tried MirrorMatch', k.mirrorMatchAccepted, `of ${k.mirrorMatchOffered} offered`],
     ['Exchanges accepted', k.exchanges, `${k.refunds} refunds · ${k.escalations} escalated`],
     ['Refund value retained', money(k.refundValueRetained), `${money(k.refundValuePaid)} refunded`, 'accent'],
     ['Exchange rate', rate, 'exchanges ÷ (exchanges + refunds)'],

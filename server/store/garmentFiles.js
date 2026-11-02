@@ -2,7 +2,7 @@
 // File API for clothes try-on.
 //
 // Verified live: POST /s2s/v2.0/task/delete removes a task's input files too, including the
-// garment reference. Because SecondTry deletes every task when a return ends (privacy), a
+// garment reference. Because MirrorMatch deletes every task when a return ends (privacy), a
 // garment file_id must not be reused across sessions. So we upload per session (uploads are
 // free: 0 units, ~0.3 s) and reuse the id only within the session.
 

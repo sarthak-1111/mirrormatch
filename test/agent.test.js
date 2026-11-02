@@ -25,7 +25,7 @@ test('happy path: lipstick return → matches → 3 renders → exchange, photo 
   assert.equal(agent.sessions.get(v.id).photo, null, 'photo wiped');
   assert.ok(agent.sessions.get(v.id).renders.every((r) => r.buffer === null), 'renders wiped');
   const types = events.events.map((e) => e.type);
-  for (const t of ['return_started', 'secondtry_offered', 'secondtry_accepted', 'tone_analyzed', 'exchange_created']) assert.ok(types.includes(t), t);
+  for (const t of ['return_started', 'mirrormatch_offered', 'mirrormatch_accepted', 'tone_analyzed', 'exchange_created']) assert.ok(types.includes(t), t);
 });
 
 test('trace records every tool with timing and units, and no colours or photo data', async () => {
@@ -42,7 +42,7 @@ test('trace records every tool with timing and units, and no colours or photo da
   assert.ok(!blob.includes('base64'), 'no image data in trace');
 });
 
-test('non-colour reasons never trigger SecondTry', async () => {
+test('non-colour reasons never trigger MirrorMatch', async () => {
   const { agent } = await mockApp();
   let v = await agent.start({ orderId: 'HH-10421' });
   v = await agent.handle(v.id, 'reason', { reason: 'damaged' });
@@ -52,12 +52,12 @@ test('non-colour reasons never trigger SecondTry', async () => {
   assert.equal(v.refund.amount, 22);
 });
 
-test('refund is available at every SecondTry step', async () => {
+test('refund is available at every MirrorMatch step', async () => {
   const { agent } = await mockApp();
   for (const stopAfter of ['offer', 'consent', 'capture', 'matches']) {
     let v = await agent.start({ orderId: 'HH-10421' });
     v = await agent.handle(v.id, 'reason', { reason: 'wrong_shade' });
-    if (stopAfter !== 'offer') v = await agent.handle(v.id, 'accept_secondtry');
+    if (stopAfter !== 'offer') v = await agent.handle(v.id, 'accept_mirrormatch');
     if (['capture', 'matches'].includes(stopAfter)) v = await agent.handle(v.id, 'consent', { accepted: true });
     if (stopAfter === 'matches') v = await agent.handle(v.id, 'photo', { image: FAKE_IMAGE, width: 900, height: 1200, stats: GOOD_STATS });
     assert.equal(v.step, stopAfter);
@@ -70,7 +70,7 @@ test('poor lighting → friendly retake guidance, no units spent', async () => {
   const { agent, meter } = await mockApp();
   let v = await agent.start({ orderId: 'HH-10421' });
   v = await agent.handle(v.id, 'reason', { reason: 'wrong_shade' });
-  v = await agent.handle(v.id, 'accept_secondtry');
+  v = await agent.handle(v.id, 'accept_mirrormatch');
   v = await agent.handle(v.id, 'consent', { accepted: true });
   const before = meter.snapshot().spentThisRun;
   v = await agent.handle(v.id, 'photo', { image: FAKE_IMAGE, width: 900, height: 1200, stats: { meanLuma: 30, clippedPct: 0, contrast: 10 } });
@@ -83,7 +83,7 @@ test('face not found → retake; three failed attempts → human specialist offe
   const { agent } = await mockApp();
   let v = await agent.start({ orderId: 'HH-10421' });
   v = await agent.handle(v.id, 'reason', { reason: 'wrong_shade' });
-  v = await agent.handle(v.id, 'accept_secondtry');
+  v = await agent.handle(v.id, 'accept_mirrormatch');
   v = await agent.handle(v.id, 'consent', { accepted: true });
   for (let i = 0; i < 3; i++) {
     v = await agent.handle(v.id, 'photo', { image: FAKE_IMAGE, width: 900, height: 1200, stats: GOOD_STATS, hint: { forceError: 'error_no_face' } });
@@ -100,7 +100,7 @@ test('analysis failing twice (non-photo error) escalates automatically', async (
   const { agent } = await mockApp();
   let v = await agent.start({ orderId: 'HH-10421' });
   v = await agent.handle(v.id, 'reason', { reason: 'wrong_shade' });
-  v = await agent.handle(v.id, 'accept_secondtry');
+  v = await agent.handle(v.id, 'accept_mirrormatch');
   v = await agent.handle(v.id, 'consent', { accepted: true });
   const bad = { image: FAKE_IMAGE, width: 900, height: 1200, stats: GOOD_STATS, hint: { forceError: 'unknown_internal_error' } };
   v = await agent.handle(v.id, 'photo', bad);

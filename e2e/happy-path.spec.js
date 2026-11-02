@@ -69,7 +69,7 @@ test('the story page leads into the demo store', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toContainText('need to return');
 });
 
-test('damaged items skip SecondTry and refund in one step', async ({ page }) => {
+test('damaged items skip MirrorMatch and refund in one step', async ({ page }) => {
   await page.goto('/');
   await page.locator('[data-order="HH-10388"]').click();
   await page.getByRole('radio', { name: 'It arrived damaged' }).check();

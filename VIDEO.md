@@ -1,4 +1,4 @@
-# SecondTry: demo video (2:52)
+# MirrorMatch: demo video (2:52)
 
 **The final cut is 2:52**, 1920×1080, with captions burned in. Everything shown is a real run of this repo in **live** mode against the YouCam API, called through YouCam's hosted MCP servers. The video file is not in the repo. It is uploaded to YouTube, and the link is in the Devpost submission.
 
@@ -18,11 +18,11 @@ The YouCam APIs are named in **bold**.
 
 ### 0:00–0:23: The problem, as a story
 
-**On screen:** the story page (`/story.html`) in a desktop browser: Alex's order, "On the screen / In the mirror", the return about to happen. Then the SecondTry wordmark.
+**On screen:** the story page (`/story.html`) in a desktop browser: Alex's order, "On the screen / In the mirror", the return about to happen. Then the MirrorMatch wordmark.
 
 > **0:00.6** Alex ordered a lipstick called Shell, for a friend's wedding. On the screen, it looked like a soft rose.
 > **0:07.3** In the mirror, it looked grey. So Alex starts a return, and the store is about to lose the sale.
-> **0:18.4** SecondTry turns that moment into a second chance.
+> **0:18.4** MirrorMatch turns that moment into a second chance.
 
 ### 0:23–1:35: The lipstick return
 
@@ -35,10 +35,10 @@ The YouCam APIs are named in **bold**.
 - Exchange for Bare Honey, then the confirmation: "Your photo has been deleted".
 - The opt-in colour passport, then the orders page with the "Picked for you" shelf and "Your pick".
 
-> **0:23.0** Here is that return, live. Only colour reasons start SecondTry, and the refund stays one tap away.
+> **0:23.0** Here is that return, live. Only colour reasons start MirrorMatch, and the refund stays one tap away.
 > **0:31.0** It starts with an apology, then asks for one selfie, used only for this return, and deleted when it ends.
 > **0:39.0** YouCam's **AI Facial Color Tones Analyzer** measures their skin, lip, eye and hair colour.
-> **0:46.9** SecondTry works out depth and undertone itself, and says it kindly: medium, warm.
+> **0:46.9** MirrorMatch works out depth and undertone itself, and says it kindly: medium, warm.
 > **0:54.7** Plain code ranks the lipsticks in stock by colour distance to a richer version of their own lip colour.
 > **1:01.9** YouCam's **AI Makeup Virtual Try-On** shows the returned shade and the top two picks, on their own face.
 > **1:09.8** Then side by side, on the same photo: only the shade changes. Each one is labelled a preview, not a guarantee.
@@ -72,14 +72,14 @@ The YouCam APIs are named in **bold**.
 ### 2:35–2:52: Close
 
 **On screen:** the end card shows:
-- the SecondTry wordmark;
+- the MirrorMatch wordmark;
 - the three YouCam APIs with feature names and units (skin-tone-analysis 20, makeup-vto 1, cloth-v4 2);
-- github.com/sarthak-1111/secondtry;
+- github.com/sarthak-1111/mirrormatch;
 - two phones showing the lipstick and dress before/after cards.
 
 The tagline then changes to the last line.
 
-> **2:34.9** SecondTry: try-on at the moment that matters, the return.
+> **2:34.9** MirrorMatch: try-on at the moment that matters, the return.
 > **2:39.3** Built with YouCam's tone analyzer, makeup try-on and clothes try-on. The code is linked below.
 > **2:47.5** Give the next return a second try.
 

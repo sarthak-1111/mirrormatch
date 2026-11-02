@@ -8,7 +8,7 @@ const CAT_NOUN = { lipstick: 'shade', foundation: 'shade', dress: 'colour' };
 export const copy = {
   reasonPrompt: (product) =>
     `Sorry ${product.shadeName} didn't work out. What went wrong?`,
-  offerSecondTry: (product) =>
+  offerMirrorMatch: (product) =>
     `Want to see a better match on you before you decide? It takes about 30 seconds. Your refund stays one tap away.`,
   notEligible: (why) =>
     why === 'outside_return_window'

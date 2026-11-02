@@ -17,7 +17,7 @@ import { createDemoCache } from './store/demoCache.js';
 import { createGarmentFiles } from './store/garmentFiles.js';
 import { createTools, ToolError } from './agent/tools.js';
 import { Agent } from './agent/agent.js';
-import { REASONS, POLICY, secondTryEligibility } from './policy/policy.js';
+import { REASONS, POLICY, mirrorMatchEligibility } from './policy/policy.js';
 
 export function createApp(config, { log = console.log, persistEvents = true } = {}) {
   const meter = new UnitMeter();
@@ -146,20 +146,20 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
 
   // ---------- returns-portal integration ----------
   // A real store's returns portal calls this when a shopper starts a return. For colour reasons
-  // it opens a SecondTry session and returns the link to send the shopper to; otherwise the
+  // it opens a MirrorMatch session and returns the link to send the shopper to; otherwise the
   // portal carries on with its normal refund flow.
   const secretDigest = (v) => createHash('sha256').update(String(v ?? '')).digest();
   app.post('/api/integrations/return-started', asyncRoute(async (req, res) => {
     if (config.webhookSecret) {
-      const ok = timingSafeEqual(secretDigest(req.get('X-SecondTry-Secret')), secretDigest(config.webhookSecret));
-      if (!ok) return res.status(401).json({ error: 'Invalid or missing X-SecondTry-Secret' });
+      const ok = timingSafeEqual(secretDigest(req.get('X-MirrorMatch-Secret')), secretDigest(config.webhookSecret));
+      if (!ok) return res.status(401).json({ error: 'Invalid or missing X-MirrorMatch-Secret' });
     }
     const { orderId, lineId, reason } = req.body ?? {};
     const order = typeof orderId === 'string' ? catalog.order(orderId) : null;
     if (!order) return res.json({ eligible: false, why: 'order_not_found' });
     const line = lineId == null ? order.lines[0] : order.lines.find((l) => l.lineId === lineId);
     if (!line) return res.json({ eligible: false, why: 'order_line_not_found' });
-    const elig = secondTryEligibility({ reason, order });
+    const elig = mirrorMatchEligibility({ reason, order });
     if (!elig.eligible) return res.json({ eligible: false, why: elig.why });
     const started = await agent.start({ orderId: order.id, lineId: line.lineId });
     // The portal already asked for the reason, so the shopper lands straight on the offer.
@@ -171,7 +171,7 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
   function merchantSummary() {
     const liveRecords = recordsFromEvents(events.events);
     const live = aggregate(liveRecords);
-    const synth = aggregate(synthetic.records.map((r) => ({ ...r, secondTry: false })));
+    const synth = aggregate(synthetic.records.map((r) => ({ ...r, mirrorMatch: false })));
     const productsInHeat = (heat) =>
       Object.keys(heat)
         .map((id) => catalog.product(id))

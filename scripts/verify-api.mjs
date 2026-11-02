@@ -1,4 +1,4 @@
-// Hour-1 live verification of the YouCam endpoints SecondTry uses.
+// Hour-1 live verification of the YouCam endpoints MirrorMatch uses.
 // Usage: node scripts/verify-api.mjs --face <selfie.jpg> [--body <chest-up.jpg>] [--garment <garment.png>]
 //        [--noface <image-without-face.jpg>] [--skip-tone] [--only credit,costs,templates]
 // Prints a summary (shapes, keys, timings, units). Raw JSON goes to ./raw/ (gitignored) and is
