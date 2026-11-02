@@ -18,6 +18,9 @@ import { createGarmentFiles } from './store/garmentFiles.js';
 import { createTools, ToolError } from './agent/tools.js';
 import { Agent } from './agent/agent.js';
 import { REASONS, POLICY, mirrorMatchEligibility } from './policy/policy.js';
+// Workspace, sample model and merchant suggestions (see the "workspace" block in createApp).
+import { buildSuggestions, createSampleStore, createPreviewRenderer, PREVIEW_LABEL, SYNTHETIC_LABEL } from './store/suggestions.js';
+import { reword } from './agent/llm.js';
 
 export function createApp(config, { log = console.log, persistEvents = true } = {}) {
   const meter = new UnitMeter();
@@ -239,6 +242,158 @@ export function createApp(config, { log = console.log, persistEvents = true } = 
       unsub();
     });
   });
+
+  // ======================================================================================
+  // Workspace, YouCam sample model, agent console and merchant agent suggestions.
+  // (One block on purpose: everything the /workspace.html page and the suggestions section
+  //  of /merchant need. Deterministic logic lives in server/store/suggestions.js.)
+  // ======================================================================================
+  const samples = createSampleStore({
+    dir: resolve(ROOT, config.samplesDir || process.env.SAMPLES_DIR || 'samples-local'),
+    ...(config.sampleUrls ? { urls: config.sampleUrls } : {}),
+    ...(config.sampleFetch ? { fetchImpl: config.sampleFetch } : {}),
+  });
+  const previews = createPreviewRenderer({ youcam, meter, config, demoCache, samples, log });
+
+  // GET /api/samples/:kind (face | body): YouCam's official sample photo, byte for byte, so the
+  // demo cache (keyed by the photo's SHA-256) makes repeat sample runs cost 0 units.
+  app.get('/api/samples/:kind', asyncRoute(async (req, res) => {
+    if (!samples.kinds.includes(req.params.kind)) return res.status(404).json({ error: 'Unknown sample. Use face or body.' });
+    let s;
+    try {
+      s = await samples.get(req.params.kind);
+    } catch {
+      return res.status(404).json({ error: 'Sample photo not available on this server. Please upload a photo instead.', code: 'sample_unavailable' });
+    }
+    res.setHeader('Content-Type', s.mime);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('X-Sample-Source', 'YouCam API official sample image');
+    res.end(s.buffer);
+  }));
+
+  // A PII-free trace for the workspace's agent console. Not under /api/session, so its 1 s
+  // polling doesn't count against the write rate limit, and reading it doesn't extend the TTL.
+  app.get('/api/trace/:id', (req, res) => {
+    const s = sessions.sessions.get(req.params.id);
+    if (!s) return res.status(404).json({ error: 'Session not found or expired', code: 'session_not_found' });
+    const p = s.returnedId ? catalog.product(s.returnedId) : null;
+    res.json({
+      id: s.id,
+      createdAt: new Date(s.createdAt).toISOString(),
+      step: s.step,
+      status: s.status,
+      outcome: s.outcome,
+      mode: s.mode,
+      transport: youcam.transport,
+      returned: p ? { id: p.id, name: `${p.productLine} · ${p.shadeName}`, category: p.category } : null,
+      profileKey: s.profile?.profileKey ?? null,
+      unitsUsed: s.unitsUsed,
+      rendersUsed: s.rendersUsed,
+      maxRenders: config.budget.maxRendersPerReturn,
+      hasPhoto: Boolean(s.photo),
+      trace: s.trace,
+    });
+  });
+
+  // What is connected, for the workspace's environment panel (alongside /api/health).
+  app.get('/api/workspace/env', (req, res) => {
+    res.json({
+      mode: youcam.mode,
+      transport: youcam.transport,
+      llm: { enabled: llmOn(), optional: true },
+      demoCache: config.demoCache.enabled,
+      units: meter.snapshot(),
+      limits: { maxRendersPerReturn: config.budget.maxRendersPerReturn, unitFloor: config.budget.unitFloor, dailyUnitCap: config.budget.dailyUnitCap },
+      webhook: { method: 'POST', path: '/api/integrations/return-started', secretRequired: Boolean(config.webhookSecret), docs: 'docs/INTEGRATION.md' },
+      samples: { face: samples.hasLocal('face') ? 'local' : 'official-url', body: samples.hasLocal('body') ? 'local' : 'official-url' },
+      privacy: {
+        sessionTtlMin: config.sessionTtlMin,
+        deleteTasksOnEnd: config.youcam.deleteTasksOnEnd,
+        guarantees: [
+          'The photo is used only for this return and is deleted when it ends (exchange, refund, escalation, "Delete it now" or a ' + config.sessionTtlMin + '-minute idle timeout).',
+          'YouCam tasks are deleted too (task/delete removes their input and output files).',
+          'No selfies, colours or raw API output in logs, traces or dashboard events.',
+          'The API key stays on the server; the browser only talks to this server.',
+        ],
+      },
+    });
+  });
+
+  // ---- merchant agent suggestions ----
+  // Text is templated; when an LLM is configured it may reword a suggestion (wording only,
+  // validated, cached), and the template is shown until a rewording arrives.
+  // LLM on/off from this app's config (the reword helper itself reads the same env).
+  const llmOn = () => Boolean(config.llm?.baseUrl && config.llm?.model) && llmEnabled();
+  const reworded = new Map(); // template text -> { text } | 'pending'
+  function wordOf(s) {
+    const hit = reworded.get(s.text);
+    if (hit && hit !== 'pending') return { ...s, text: hit.text, wording: 'llm' };
+    if (llmOn() && !hit) {
+      reworded.set(s.text, 'pending');
+      const mustInclude = [s.kind === 'shade' ? s.hex : s.shadeName, s.synthetic ? SYNTHETIC_LABEL : null].filter(Boolean);
+      reword({ purpose: 'a short, factual merchandising suggestion for a store manager', facts: { suggestion: s.text }, fallback: s.text, mustInclude })
+        .then((r) => reworded.set(s.text, r.source === 'llm' ? { text: r.text } : { text: s.text }))
+        .catch(() => reworded.set(s.text, { text: s.text }));
+    }
+    return { ...s, wording: 'template' };
+  }
+  const currentSuggestions = () =>
+    buildSuggestions({ catalog, events: events.events, synthetic, liveEscalations: lowConfidenceEscalations(events.events) }).map(wordOf);
+
+  app.get('/api/merchant/suggestions', (req, res) => {
+    res.json({
+      generatedAt: new Date().toISOString(),
+      llm: llmOn(),
+      previewLabel: PREVIEW_LABEL,
+      syntheticLabel: SYNTHETIC_LABEL,
+      mode: youcam.mode,
+      suggestions: currentSuggestions(),
+    });
+  });
+
+  // Approve / Dismiss only log an event; nothing external happens.
+  app.post('/api/merchant/suggestions/:id/decision', (req, res) => {
+    const decision = req.body?.decision;
+    if (!['approved', 'dismissed'].includes(decision)) return res.status(400).json({ error: 'decision must be approved or dismissed' });
+    const s = currentSuggestions().find((x) => x.id === req.params.id);
+    if (!s) return res.status(404).json({ error: 'Suggestion not found' });
+    const ev = events.add(decision === 'approved' ? 'suggestion_approved' : 'suggestion_dismissed', {
+      suggestionId: s.id,
+      kind: s.kind,
+      category: s.category,
+      profileKey: s.profileKey,
+      ...(s.productId ? { productId: s.productId } : {}),
+      ...(s.kind === 'shade' ? { hex: s.hex } : {}),
+      synthetic: s.synthetic,
+    });
+    res.json({ ok: true, id: s.id, decision, at: ev.at, external: false });
+  });
+
+  // Preview a proposed shade on YouCam's face sample (makeup-vto, 1 unit, cached per colour).
+  app.post('/api/merchant/suggestions/:id/preview', asyncRoute(async (req, res) => {
+    const s = currentSuggestions().find((x) => x.id === req.params.id);
+    if (!s || s.kind !== 'shade') return res.status(404).json({ error: 'Suggestion not found' });
+    if (!s.previewable) return res.status(400).json({ error: 'Clothes try-on needs a garment image, so proposed colourways have no preview yet.', code: 'not_previewable' });
+    try {
+      const r = await previews.render({ category: s.category, hex: s.hex });
+      log(`[suggestions] preview ${s.id}: ${r.cached ? 'cache' : `${r.units} unit(s)`}`);
+      res.json({ url: `/api/merchant/suggestions/preview/${r.key}`, cached: r.cached, units: r.units, mode: youcam.mode, label: PREVIEW_LABEL });
+    } catch (e) {
+      if (e.code === 'sample_unavailable') return res.status(503).json({ error: 'The sample model photo is not available on this server.', code: e.code });
+      if (e.code === 'unit_floor') return res.status(402).json({ error: 'Unit balance is below the safety floor, so no preview was rendered.', code: e.code });
+      log(`[suggestions] preview failed: ${e.code || e.message}`);
+      res.status(502).json({ error: 'The preview could not be rendered right now.', code: e.code ?? 'preview_failed' });
+    }
+  }));
+
+  app.get('/api/merchant/suggestions/preview/:key', (req, res) => {
+    const img = previews.image(req.params.key);
+    if (!img) return res.status(404).end();
+    res.setHeader('Content-Type', img.contentType || 'image/jpeg');
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    res.end(img.buffer);
+  });
+  // ======================================================================================
 
   app.use(express.static(resolve(ROOT, 'public'), { extensions: ['html'] }));
 
