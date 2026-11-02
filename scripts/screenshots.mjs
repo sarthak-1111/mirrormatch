@@ -34,7 +34,7 @@ async function toMatches(page, photo) {
 }
 
 // 1 + 2: mobile, lipstick return: offer screen, then matches + try-on
-if (want(1, 2)) {
+if (want(1, 2, 6, 9)) {
   const ctx = await browser.newContext({ ...devices['iPhone 13'], deviceScaleFactor: 2 });
   const page = await ctx.newPage();
   await runReturn(page, { order: 'HH-10421', reason: "The shade didn't match" });
@@ -45,6 +45,23 @@ if (want(1, 2)) {
     window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 150);
   });
   await page.screenshot({ path: `${out}/02-lipstick-tryon.png` });
+  if (want(6, 9)) {
+    // 6: the before / after slider (let the one-time reveal finish first)
+    await page.locator('#compare-card').scrollIntoViewIfNeeded();
+    await page.evaluate(() => {
+      const el = document.querySelector('#compare-card');
+      window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 70);
+    });
+    await page.waitForTimeout(1800);
+    await page.screenshot({ path: `${out}/06-before-after.png` });
+    // 9: exchange, save the colour passport, and see "Picked for you" on the orders page
+    await page.locator('#sticky [data-action="exchange"]').click();
+    await page.getByRole('button', { name: 'Save my colour profile' }).click();
+    await page.getByRole('link', { name: 'Back to orders' }).click();
+    await page.locator('#passport-shelf:not([hidden])').waitFor();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: `${out}/09-colour-passport.png` });
+  }
   await ctx.close();
 }
 // 3: mobile, dress return with clothes try-on
@@ -58,6 +75,9 @@ if (want(3)) {
     window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 150);
   });
   await page.screenshot({ path: `${out}/03-dress-tryon.png` });
+  // exchange too, so the dashboard shows both returns live
+  await page.locator('#sticky [data-action="exchange"]').click();
+  await page.getByRole('heading', { name: /ships today/ }).waitFor();
   await ctx.close();
 }
 // 4: desktop, shopper flow with the agent trace panel (foundation return)
@@ -78,6 +98,22 @@ if (want(5)) {
   await page.waitForSelector('table.heat');
   await page.waitForTimeout(1200);
   await page.screenshot({ path: `${out}/05-merchant-dashboard.png`, fullPage: true });
+  // 8: the catalogue's "Who is each shade for?" matrix
+  if (want(8)) {
+    const sec = page.getByRole('heading', { name: 'Who is each shade for?' }).locator('xpath=ancestor::section[1]');
+    await sec.scrollIntoViewIfNeeded();
+    await sec.screenshot({ path: `${out}/08-shade-fit.png` });
+  }
+  await ctx.close();
+}
+// 7: desktop, the story page hero
+if (want(7)) {
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 1.5 });
+  const page = await ctx.newPage();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(`${base}/story.html`);
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: `${out}/07-story.png` });
   await ctx.close();
 }
 await browser.close();

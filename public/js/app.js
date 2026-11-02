@@ -214,7 +214,14 @@ async function loadPassportShelf(passport) {
   } catch {
     return; // the shelf is a bonus; the orders page works without it
   }
-  const picks = Object.entries(data.picks || {}).map(([cat, list]) => [cat, (list || [])[0]]).filter(([, p]) => p);
+  const kept = passport.kept;
+  const picks = Object.entries(data.picks || {})
+    .map(([cat, list]) =>
+      kept?.category === cat
+        ? [cat, { ...kept, reason: 'Your pick from your last return. We\'ll remember it works for you.', yours: true }]
+        : [cat, (list || [])[0]],
+    )
+    .filter(([, p]) => p);
   if (!picks.length) return;
   const catName = { lipstick: 'Lipstick', foundation: 'Foundation', dress: 'Dress colour' };
   el.innerHTML = `
@@ -231,7 +238,7 @@ async function loadPassportShelf(passport) {
           <img src="${esc(p.image)}" alt="" width="56" height="72" />
           <div class="grow">
             <div class="muted small">${esc(catName[cat] || cat)}</div>
-            <div style="font-weight:600">${esc(p.shadeName)} <span class="badge best">Suits you</span></div>
+            <div style="font-weight:600">${esc(p.shadeName)} <span class="badge ${p.yours ? 'mine' : 'best'}">${p.yours ? 'Your pick' : 'Suits you'}</span></div>
             <div class="small muted">${esc(p.reason || '')}</div>
           </div>
         </li>`,
@@ -861,7 +868,7 @@ const actions = {
     const p = state.session?.profile || state.lastProfile;
     const card = document.getElementById('passport-offer');
     if (!p?.skinHex) return;
-    const ok = writePassport({ skinHex: p.skinHex, lipHex: p.lipHex || null, hairHex: p.hairHex || null, depthLabel: p.depthLabel, undertone: p.undertone, savedAt: new Date().toISOString().slice(0, 10) });
+    const ok = writePassport({ skinHex: p.skinHex, lipHex: p.lipHex || null, hairHex: p.hairHex || null, depthLabel: p.depthLabel, undertone: p.undertone, kept: state.kept || null, savedAt: new Date().toISOString().slice(0, 10) });
     if (card) card.innerHTML = ok
       ? '<p style="margin:0"><b>Saved on this device.</b> Your orders page will now show shades picked for you. You can forget them there any time.</p>'
       : '<p style="margin:0">This browser blocks saving, so nothing was stored.</p>';
@@ -876,6 +883,9 @@ const actions = {
   },
   async exchange(el) {
     stopPolling();
+    const s = state.session;
+    const p = s.picks.find((x) => x.product.id === el.dataset.pid)?.product;
+    state.kept = p ? { category: s.returned.category, id: p.id, shadeName: p.shadeName, productLine: p.productLine, image: p.image } : null;
     await sendEvent('exchange', { productId: el.dataset.pid });
   },
   escalate: () => sendEvent('escalate'),

@@ -12,15 +12,21 @@ Merchants get a dashboard: refunds turned into exchanges, and which products get
 
 Built for the **YouCam API Skin AI & eCommerce VTO Hackathon**, **eCommerce VTO** track. Makeup try-on and clothes try-on work together in one returns flow.
 
-Demo store: **Hue & Hem**, a fictional shop. No real brands.
+Demo store: **Hue & Hem**, a fictional shop. No real brands. Start with the one-minute story at **`/story.html`**.
 
-| Return offer | Lipstick try-on | Dress try-on |
+**Why it's different.** Shade finders guess *before* a purchase. A return is the only time a store learns what actually failed: *this shade, on this tone profile, didn't work*. SecondTry turns each of those moments into a saved sale for the shopper and a fix for the store's catalogue.
+
+| Return offer | Lipstick try-on | Before / after on you |
 |---|---|---|
-| ![Return offer](docs/screenshots/01-return-offer.png) | ![Lipstick matches and try-on](docs/screenshots/02-lipstick-tryon.png) | ![Dress colourway try-on](docs/screenshots/03-dress-tryon.png) |
+| ![Return offer](docs/screenshots/01-return-offer.png) | ![Lipstick matches and try-on](docs/screenshots/02-lipstick-tryon.png) | ![Before and after slider](docs/screenshots/06-before-after.png) |
 
-| Agent trace (desktop) | Merchant dashboard |
-|---|---|
-| ![Agent trace](docs/screenshots/04-agent-trace.png) | ![Merchant dashboard](docs/screenshots/05-merchant-dashboard.png) |
+| Dress try-on | Colour passport ("Picked for you") | Agent trace (desktop) |
+|---|---|---|
+| ![Dress colourway try-on](docs/screenshots/03-dress-tryon.png) | ![Colour passport](docs/screenshots/09-colour-passport.png) | ![Agent trace](docs/screenshots/04-agent-trace.png) |
+
+| Merchant dashboard | Who is each shade for? | Alex's story |
+|---|---|---|
+| ![Merchant dashboard](docs/screenshots/05-merchant-dashboard.png) | ![Shade-fit matrix with gap cards](docs/screenshots/08-shade-fit.png) | ![Story page](docs/screenshots/07-story.png) |
 
 *The people in the screenshots are YouCam's official API sample images (see `ASSETS.md`). Every preview is labelled "Visual preview, not a guarantee".*
 
@@ -41,6 +47,26 @@ Today's returns portals treat that moment as paperwork. SecondTry treats it as a
 
 We don't quote industry return-rate statistics here. The dashboard shows only what happens in live demo sessions, plus a clearly labelled synthetic history for illustration.
 
+## What's in it
+
+**For the shopper** (mobile-first)
+- **Only for colour returns.** "The shade didn't match" or "The colour didn't suit me" opens the offer; damaged items go straight to a refund.
+- **One selfie, then their match.** Skin-tone analysis is turned into a kind summary (depth and undertone), and in-stock alternatives are ranked by colour science, each with a one-line reason.
+- **Try-on, makeup and clothes.** The returned item and the top two picks are rendered on the shopper's own photo: lipstick and foundation with makeup try-on, dresses with clothes try-on.
+- **Before / after slider.** The returned shade and the chosen pick are shown on the same photo, so only the colour changes. It can be dragged or used from the keyboard.
+- **Read my results aloud.** The browser's speech synthesis reads the summary, picks and reasons, for shoppers who'd rather listen.
+- **A four-step progress bar**, kind copy ("that's on us, not you"), and the refund one tap away on every screen.
+- **Colour passport (opt-in).** After an exchange, the shopper can save their tone numbers (never the photo) on their own device. The orders page then shows "Picked for you" from the same matcher, including the shade they chose. One tap forgets it.
+
+**For the merchant** (desktop)
+- **Live:** returns started, exchanges accepted, refund value kept, an event feed and a product × tone-profile return heatmap.
+- **Who is each shade for?** Every product is scored against nine reference tone profiles by the shopper matcher itself. Gap cards flag profiles with no good in-stock option ("a gap in your range"), profiles with just one ("one stock-out away"), and live returns that had to be escalated.
+- **Insights** from the same matcher ("Shell is returned most by … profiles: recommend … on the product page"). Synthetic illustration data is labelled and kept apart.
+- **Agent traces** for every session (tools, timings, units, "over MCP"), and the unit budget from the credit API.
+
+**For a real store's stack**
+- **Returns-portal webhook:** `POST /api/integrations/return-started` hands a colour-reason return to SecondTry and gets a link back for the shopper. See [`docs/INTEGRATION.md`](docs/INTEGRATION.md).
+
 ## The flow
 
 ```
@@ -57,10 +83,12 @@ Orders ─▶ Start a return ─▶ Reason?
                     find_alternatives (CIEDE2000 + rules) → check_stock_and_policy
                                     ▼                      └─ low confidence → escalate_to_human
                     render_tryon ×3 (returned + top 2; YouCam makeup VTO or clothes VTO)
-                                    ▼
+                                    ▼  before / after slider · read aloud
                     [Exchange now: free, ships today]   [Continue to refund]
                                     ▼
                     create_exchange → confirmation → photo + YouCam tasks deleted → dashboard event
+                                    ▼
+                    optional: save colour passport on this device → "Picked for you" next time
 ```
 
 ## YouCam APIs used
@@ -152,6 +180,8 @@ score = contrast    0.4·max(0, 22 − |L*garment − L*skin|) + 4·[ΔE00(garme
 
 These are transparent heuristics from colour science and common shade-matching practice. They are not a validated model, and every preview is labelled "Visual preview, not a guarantee".
 
+**Reference profiles (merchant matrix and insights).** Each heatmap column gets a representative skin colour from its depth and undertone band. Its lip colour is calibrated to what YouCam's tone analysis actually reports on our test photos: lighter than the skin and moderately saturated (lip L* ≈ 0.58 · skin L* + 32, C* 27, hue 14° cool / 22° neutral / 30° warm). Real shoppers' measured colours, including hair and eyes, decide their own picks.
+
 ## Exchange policy (`server/policy/policy.js`)
 
 - **When SecondTry is offered:** only for colour-related reasons (`wrong_shade`, `colour_didnt_suit`) within 30 days of delivery. Damaged and other returns go straight to refund.
@@ -175,9 +205,11 @@ To run without a key, use `npm run mock` (or leave `YOUCAM_API_KEY` empty). The 
 
 Tests:
 ```bash
-npm test                      # 40 unit tests: colour science, matching, policy, agent decision paths, MCP parsing
+npm test                      # 52 unit tests: colour science, matching, policy, agent decision paths, MCP parsing,
+                              #   shade-fit matrix and gaps, webhook, colour passport
 npx playwright install chromium   # once (or set PW_CHANNEL=chrome to use local Chrome)
-npm run test:e2e              # end-to-end happy path in a real browser (mock mode)
+npm run test:e2e              # 3 end-to-end tests in a real browser (mock mode): the happy path with the
+                              #   before/after slider, passport and dashboard; the story page; a damaged-item refund
 npm run secret-scan           # checks every tracked file for keys
 ```
 
@@ -197,6 +229,7 @@ Live API verification (spends about 24 units): `node scripts/verify-api.mjs --fa
 | `DEMO_CACHE` | 0 | Opt-in on-disk cache of tone results and renders, keyed by the photo's SHA-256. **Use only with your own photo** |
 | `SESSION_TTL_MIN` | 20 | Idle sessions are wiped after this |
 | `PERSIST_EVENTS` | 1 | `0` keeps live dashboard events in memory only (used by the e2e tests; handy on a hosted demo) |
+| `WEBHOOK_SECRET` | empty | When set, the returns-portal webhook requires the `X-SecondTry-Secret` header |
 | `PORT`, `HOST` | 3000, 127.0.0.1 | Server |
 | `YOUCAM_TRANSPORT` | `mcp` | `mcp`: AI tasks go through YouCam's MCP servers, with REST fallback. `rest`: call the REST task endpoints directly |
 | `YOUCAM_CLOTH_FEATURE`, `YOUCAM_GARMENT_CATEGORY`, `YOUCAM_FACE_STRICTNESS` | `cloth-v4`, `full_body`, `medium` | Verified defaults |
@@ -218,6 +251,7 @@ YouCam charges only for successful tasks, so a bad photo costs nothing.
 - **Memory only:** the selfie is never written to disk unless the operator opts into `DEMO_CACHE`.
 - **Deleted when the return ends:** on exchange, refund, escalation, an explicit "Delete it now", or a 20-minute idle timeout. The server wipes the photo and renders and calls YouCam `task/delete` for every task.
 - **No PII in logs or events:** the trace and dashboard store only the product, a coarse profile key (e.g. `deep-warm`), and timings and units.
+- **Colour passport stays on the device:** it is opt-in, holds only tone numbers and the chosen shade (never the photo), lives in the shopper's own browser storage, and is forgotten with one tap. The server's `/api/profile/matches` is stateless and logs nothing.
 - **Key handling:** the API key never reaches the browser; the client only talks to our server.
 - **Kind language:** tone summaries use neutral descriptors, and the LLM is blocked from judgemental words.
 
@@ -232,7 +266,7 @@ YouCam charges only for successful tasks, so a bad photo costs nothing.
 
 ## Roadmap
 
-- **Returns-portal webhook integration for real stores.** Subscribe to a returns platform's `return.created` webhook, and launch SecondTry only when the return reason is colour-related. Write the exchange back through the store's order API, and post `exchange_created` / `refund_chosen` back to the portal.
+- **Returns-portal adapters for real stores.** The generic webhook exists (`docs/INTEGRATION.md`). Next: adapters for specific returns platforms' `return.created` events, writing the exchange back through the store's order API, and posting `exchange_created` / `refund_chosen` back to the portal.
 - YouCam webhooks instead of polling, for lower latency.
 - Publish SecondTry's own eight tools as an MCP server, so a store's existing support assistant can run a SecondTry return.
 - Per-merchant catalogue import: map existing shade swatches to CIELAB with a calibration card.
@@ -247,8 +281,9 @@ server/            Express app, agent, tools, colour + policy engines, YouCam cl
   color/           color.js (Lab, ΔE2000, ITA), tone.js (profile), match.js (scoring)
   policy/          policy.js (exchange rules)
   youcam/          mcp.js (MCP transport, default), client.js (REST V2 + fallback), mock.js, meter.js, errors.js
-  store/           catalog, sessions, events, insights, caches
-public/            shopper flow (index.html), merchant dashboard (merchant.html), assets
+  store/           catalog, sessions, events, insights, fit (shade-fit matrix, gaps, passport), caches
+public/            shopper flow (index.html), story (story.html), merchant dashboard (merchant.html), assets
+docs/              screenshots, INTEGRATION.md (returns-portal webhook)
 data/              catalog.json, synthetic-history.json (labelled synthetic)
 scripts/           catalogue/asset generators, API verification, MCP check, screenshots, secret scan
 test/, e2e/        unit tests (node:test) and Playwright end-to-end tests

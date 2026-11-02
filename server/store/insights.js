@@ -14,13 +14,19 @@ export const PROFILE_KEYS = [
 const DEPTH_L = { light: 78, medium: 62, deep: 40 };
 const DEPTH_C = { light: 17, medium: 21, deep: 21 };
 const TONE_H = { cool: 47, neutral: 56, warm: 65 };
+// Lip colour as YouCam's tone analysis actually reports it: lighter than the skin, moderately
+// saturated. Calibrated against live results on our test photos (medium · warm measured lip
+// ≈ L 68, C 28, h 30 on skin L 62; deep · warm ≈ L 61, C 26, h 32 on skin L 50). Lip L follows
+// skin L along the line through those two points (≈ 0.58 L + 32), extrapolated for light and deep.
+const LIP_L = { light: 75, medium: 68, deep: 55 };
+const LIP_H = { cool: 14, neutral: 22, warm: 30 };
 
 /** A representative tone profile for a heatmap column (used only to generate advice). */
 export function representativeProfile(profileKey) {
   const [depth, tone] = profileKey.split('-');
   const L = DEPTH_L[depth];
   const skin = labToHex(lchToLab({ L, C: DEPTH_C[depth], h: TONE_H[tone] - (depth === 'deep' ? 3 : 0) }));
-  const lip = labToHex(lchToLab({ L: L - 18, C: 30, h: tone === 'cool' ? 12 : tone === 'warm' ? 30 : 22 }));
+  const lip = labToHex(lchToLab({ L: LIP_L[depth], C: 27, h: LIP_H[tone] }));
   const p = buildToneProfile({ skin_color: skin, lip_color: lip, hair_color: depth === 'light' ? '#42280E' : '#000000' });
   // The derived labels can drift at band edges, so pin them to the column being explained.
   return { ...p, depthGroup: depth, undertone: tone, profileKey };

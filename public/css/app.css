@@ -187,6 +187,7 @@ details.how summary { cursor: pointer; color: var(--ink-2); }
 .badge.best { background: var(--accent); color: #fff; }
 .badge.alt { background: var(--surface-2); color: var(--ink-2); }
 .badge.returned { background: #ece6df; color: var(--muted); }
+.badge.mine { background: var(--ok-soft); color: var(--ok); }
 .reason { color: var(--ink-2); font-size: 14.5px; margin: 0; }
 .de { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .tryon-grid { display: grid; grid-auto-flow: column; grid-auto-columns: 64%; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 8px; margin: 0 -2px; }

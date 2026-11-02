@@ -45,23 +45,34 @@ test('every product fits at least one reference profile, or is called out in a n
   }
 });
 
-test('a sold-out shade leaves deep-warm lipstick with one option: a thin-coverage card says restock it', () => {
+test('a profile with exactly one in-stock fit gets a thin-coverage card naming it', () => {
   const catalog = new Catalog();
   const m = fitMatrix({ catalog, category: 'lipstick' });
-  const thin = m.gaps.find((g) => g.kind === 'thin' && g.profileKey === 'deep-warm');
-  assert.ok(thin, 'expected a thin-coverage card for deep-warm');
-  assert.equal(thin.onlyName, 'Cinnamon');
-  assert.deepEqual(thin.soldOutFits, ['Classic Red']);
-  assert.match(thin.text, /Restocking Classic Red/);
+  const thin = m.gaps.filter((g) => g.kind === 'thin');
+  assert.ok(thin.length >= 1, 'expected at least one thin-coverage card on the demo catalogue');
+  for (const card of thin) {
+    const j = PROFILE_KEYS.indexOf(card.profileKey);
+    const fitting = m.products.filter((p, i) => p.inStock && m.cells[i][j].level !== 'poor');
+    assert.deepEqual(fitting.map((p) => p.shadeName), [card.onlyName]);
+    assert.match(card.text, new RegExp(`Only one lipstick in stock, ${card.onlyName},`));
+  }
 });
 
-test('when stock runs out, a thin profile becomes a range gap', () => {
+test('a sold-out shade that would fit is suggested as the restock', () => {
   const catalog = new Catalog();
-  catalog.product('lip-l11').stock = 0; // Cinnamon
+  const m0 = fitMatrix({ catalog, category: 'lipstick' });
+  const thin = m0.gaps.find((g) => g.kind === 'thin');
+  const j = PROFILE_KEYS.indexOf(thin.profileKey);
+  // Sell out a second shade that fits this profile only if one exists; otherwise sell out the only fit.
+  const only = m0.products.find((p) => p.shadeName === thin.onlyName);
+  catalog.product(only.id).stock = 0;
   const m = fitMatrix({ catalog, category: 'lipstick' });
-  const gap = m.gaps.find((g) => g.kind === 'range' && g.profileKey === 'deep-warm');
-  assert.ok(gap);
-  assert.match(gap.text, /^No lipstick in stock suits deep · warm profiles well: a gap in your range\./);
+  const gap = m.gaps.find((g) => g.profileKey === thin.profileKey);
+  assert.equal(gap.kind, 'range', 'with its only fit sold out, the profile becomes a range gap');
+  assert.match(gap.text, /^No lipstick in stock suits .+ profiles well: a gap in your range\./);
+  assert.ok(gap.soldOutFits.includes(thin.onlyName));
+  assert.match(gap.text, new RegExp(`Restocking .*${thin.onlyName}`));
+  assert.ok(m.cells[m.products.findIndex((p) => p.id === only.id)][j].level !== 'poor');
   assert.equal(gapCounts({ catalog }).lipstick >= 1, true);
 });
 
@@ -79,8 +90,9 @@ test('live low-confidence escalations are joined to the session profile and ment
   const catalog = new Catalog();
   const m = fitMatrix({ catalog, category: 'lipstick', liveEscalations: esc });
   const card = m.gaps.find((g) => g.profileKey === 'deep-warm');
+  assert.ok(card, 'a live escalation always surfaces a card for that profile');
   assert.equal(card.liveEscalations, 1);
-  assert.match(card.text, /1 live return was escalated/);
+  assert.match(card.text, /1 live return (was|from deep · warm profiles was) escalated/);
 });
 
 test('colour passport: top two in-stock picks per category, with reasons, and strict hex validation', () => {
