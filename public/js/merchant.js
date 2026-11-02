@@ -139,6 +139,18 @@ function renderFeed(list) {
   $('feed').innerHTML = list.length ? list.map((e) => feedItem(e)).join('') : '<li class="empty" style="display:block">Waiting for the first return…</li>';
 }
 
+// Wall-clock time inside tool calls: parallel previews overlap, so merge their intervals.
+function wallClockMs(tools) {
+  const spans = tools.map((t) => [Date.parse(t.at), Date.parse(t.at) + (t.ms || 0)]).sort((a, b) => a[0] - b[0]);
+  let total = 0;
+  let end = -Infinity;
+  for (const [a, b] of spans) {
+    if (b > end) total += b - Math.max(a, end);
+    end = Math.max(end, b);
+  }
+  return total;
+}
+
 function renderTraces(traces) {
   if (!traces.length) {
     $('traces').innerHTML = '<div class="empty">No sessions yet on this server.</div>';
@@ -147,10 +159,10 @@ function renderTraces(traces) {
   $('traces').innerHTML = traces
     .map((s, idx) => {
       const tools = s.trace.filter((t) => t.kind === 'tool');
-      const ms = tools.reduce((a, t) => a + (t.ms || 0), 0);
+      const ms = wallClockMs(tools);
       return `
       <details ${idx === 0 ? 'open' : ''}>
-        <summary><span class="id">${esc(s.id)}</span><b>${esc(products[s.returnedId]?.name ?? s.returnedId)}</b><span class="chip">${esc(s.outcome ?? s.step)}</span><span class="chip">${tools.length} tools · ${(ms / 1000).toFixed(1)} s · ${s.unitsUsed} units</span>${s.profileKey ? `<span class="chip">${esc(s.profileKey.replace('-', ' · '))}</span>` : ''}</summary>
+        <summary><span class="id">${esc(s.id)}</span><b>${esc(products[s.returnedId]?.name ?? s.returnedId)}</b><span class="chip">${esc(s.outcome ?? s.step)}</span><span class="chip">${tools.length} tools · ${(ms / 1000).toFixed(1)} s in tools · ${s.unitsUsed} units</span>${s.profileKey ? `<span class="chip">${esc(s.profileKey.replace('-', ' · '))}</span>` : ''}</summary>
         <div class="trace-panel"><ol class="trace-list">
           ${s.trace
             .map((t, i) =>
