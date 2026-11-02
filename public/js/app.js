@@ -341,7 +341,7 @@ function toneCard(s) {
           <div class="pills"><span class="pill">${esc(cap(p.depthLabel))} depth</span><span class="pill">${esc(cap(p.undertone))} undertone</span>${p.lipHex ? `<span class="pill" style="display:inline-flex;gap:6px;align-items:center"><span class="swatch" style="width:14px;height:14px;background:${esc(p.lipHex)}"></span>Natural lip</span>` : ''}</div>
         </div>
       </div>
-      <p style="margin:0">${esc(p.summary)}</p>
+      <p style="margin:0" id="tone-summary">${esc(p.summary)}</p>
       <details class="how">
         <summary>How we measured this</summary>
         <p>YouCam's skin-tone analysis measured your skin, lip, eye and hair colours. We converted them to CIELAB and ranked in-stock options by colour distance (CIEDE2000) plus undertone rules. Measured on this photo only; lighting can shift results.</p>
@@ -380,7 +380,7 @@ function viewMatches(s) {
             <div class="match-head">
               <span class="swatch" style="background:${esc(p.product.hex)}"></span>
               <div class="grow"><div style="font-weight:600">${esc(p.product.shadeName)} <span class="badge ${i === 0 ? 'best' : 'alt'}">${i === 0 ? 'Best match' : 'Also great'}</span></div>
-              ${p.deltaE != null && s.returned.category !== 'dress' ? `<div class="de">ΔE ${esc(p.deltaE)} from your target</div>` : ''}</div>
+              ${p.deltaE != null && s.returned.category === 'foundation' ? `<div class="de">ΔE2000 ${esc(p.deltaE)} from your measured skin tone</div>` : ''}</div>
               <span class="price">${money(p.product.price)}</span>
             </div>
             <p class="reason">${esc(p.reason)}</p>
@@ -424,6 +424,8 @@ function renderImg(s, r, o) {
 }
 
 function updateRenders(s) {
+  const ts = document.getElementById('tone-summary');
+  if (ts && s.profile && ts.textContent !== s.profile.summary) ts.textContent = s.profile.summary;
   const options = [s.returned, ...s.picks.map((p) => p.product)];
   for (const p of options) {
     const el = $app.querySelector(`[data-img="${CSS.escape(p.id)}"]`);

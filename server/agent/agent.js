@@ -155,9 +155,15 @@ export class Agent {
     }
     session.picks = picks;
 
-    const llm = await llmPromise;
-    session.toneSummary = llm.text;
-    session.trace.push({ kind: 'llm', tool: 'llm.reword', at: new Date().toISOString(), ms: llm.ms, units: 0, ok: llm.source === 'llm', summary: llm.source === 'llm' ? 'tone summary reworded' : `template used (${llm.why})` });
+    // The LLM only rewords text, so it never blocks the flow: the templated summary is shown
+    // at once and swapped for the reworded one when (and if) it arrives within the timeout.
+    session.toneSummary = summaryDraft;
+    session.llmPending = true;
+    llmPromise.then((llm) => {
+      session.llmPending = false;
+      if (llm.source === 'llm' && session.status === 'active') session.toneSummary = llm.text;
+      session.trace.push({ kind: 'llm', tool: 'llm.reword', at: new Date().toISOString(), ms: llm.ms, units: 0, ok: llm.source === 'llm', summary: llm.source === 'llm' ? 'tone summary reworded (wording only)' : `template kept (${llm.why})` });
+    });
 
     if (!picks.length || alt.confidence === 'low' || alt.confidence === 'none') {
       this.decide(session, `Match confidence ${alt.confidence} (best ${alt.ranked[0]?.score ?? '–'} vs returned ${alt.returnedScore}) → escalate instead of guessing.`);

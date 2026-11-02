@@ -73,15 +73,19 @@ function scoreLipstick(product, profile, returned) {
   const chalk = lab.L >= profile.skinLab.L - 4 && lch.C < 32 ? 6 : 0;
   const score = dE + tone + family + chalk;
 
-  const bits = [];
-  const rel = relativeWords(product, returned);
-  if (dE < 10) bits.push('close to a richer version of your natural lip tone');
-  else if (tone === 0) bits.push(`a ${product.undertone} shade for your ${profile.undertone} undertone`);
-  if (bits.length < 2 && tone === 0 && dE < 10) bits.push(`${product.undertone} like your undertone`);
-  if (family === 0 && returned) bits.push(`same ${product.family} family you picked`);
-  const reason = rel
-    ? `${rel}, ${bits[0] ?? `a ${product.family} that suits a ${profile.undertone} undertone`}.`
-    : `${cap(bits[0] ?? `a ${product.family} for a ${profile.undertone} undertone`)}.`;
+  // One-line reason: what the shade is, how it differs from the returned one, and why it suits.
+  const targetC = labToLch(target).C;
+  const intensity = lch.C > targetC + 10 ? 'bolder ' : lch.C < targetC - 10 ? 'softer ' : '';
+  const what = `A ${intensity}${product.undertone === 'neutral' ? '' : product.undertone + ' '}${product.family}`;
+  const relRaw = relativeWords(product, returned);
+  const rel = relRaw ? relRaw[0].toLowerCase() + relRaw.slice(1) : '';
+  let why;
+  if (dE < 12 && intensity === 'bolder ') why = 'a brighter take on your natural lip tone';
+  else if (dE < 8) why = 'very close to a richer version of your natural lip tone';
+  else if (dE < 12) why = 'close to your natural lip tone, just richer';
+  else if (tone === 0) why = `matches your ${profile.undertone} undertone`;
+  else why = `works with a ${profile.undertone} undertone`;
+  const reason = rel ? `${what}, ${rel}: ${why}.` : `${what}: ${why}.`;
   return {
     score,
     components: { deltaE: round1(dE), undertone: tone, family, chalk },

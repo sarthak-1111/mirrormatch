@@ -24,6 +24,8 @@ const ctx = await browser.newContext(desktop ? { viewport: { width: 1360, height
 const page = await ctx.newPage();
 page.on('console', (m) => m.type() === 'error' && console.log('console error:', m.text()));
 const shot = async (name) => {
+  // Full-page captures would paint the fixed bottom bar mid-page; pin it to the end instead.
+  await page.addStyleTag({ content: '.sticky-cta{position:static!important} .topbar{position:static!important}' });
   await page.screenshot({ path: `${out}/${prefix}-${name}.png`, fullPage: true });
   console.log('saved', `${out}/${prefix}-${name}.png`);
 };

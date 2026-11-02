@@ -26,13 +26,14 @@ export class UnitMeter {
 
   setCostsFromSkus(skus) {
     let n = 0;
+    const seen = new Set();
     for (const s of skus ?? []) {
       const m = /\/task\/([^/?#]+)$/.exec(s.run_task_url || '');
       if (!m || typeof s.amount !== 'number') continue;
       const feature = m[1];
       // Several SKUs can share an endpoint (e.g. skin analysis tiers): keep the lowest.
-      if (this.costSource !== 'api' || this.costs[feature] === undefined || n === 0) this.costs[feature] = s.amount;
-      else this.costs[feature] = Math.min(this.costs[feature], s.amount);
+      this.costs[feature] = seen.has(feature) ? Math.min(this.costs[feature], s.amount) : s.amount;
+      seen.add(feature);
       n++;
     }
     if (n) this.costSource = 'api';
