@@ -65,6 +65,10 @@ function productThumb(p, cls = 'thumb') {
   return `<img class="${cls}" src="${esc(p.image)}" alt="${esc(p.productLine)} in ${esc(p.shadeName)}" width="64" height="84" />`;
 }
 
+/** "Shade", "Colour" or "Texture" for a product category; nouns follow the same rule. */
+const variantLabel = (category) => ({ dress: 'Colour', skincare: 'Texture' })[category] ?? 'Shade';
+const variantNoun = (category) => variantLabel(category).toLowerCase();
+
 function refundLink(label = 'Continue to refund') {
   return `<button class="btn ghost" data-action="refund-review">${esc(label)}</button>`;
 }
@@ -189,7 +193,7 @@ function renderOrders() {
             <div class="grow">
               <div class="meta">Order ${esc(o.id)} · delivered ${esc(fmtDate(o.deliveredOn))}</div>
               <div class="name">${esc(l.product.productLine)}</div>
-              <div class="muted small">${esc(l.product.category === 'dress' ? 'Colour' : 'Shade')}: ${esc(l.product.shadeName)} · <span class="price">${money(l.price)}</span></div>
+              <div class="muted small">${esc(variantLabel(l.product.category))}: ${esc(l.product.shadeName)} · <span class="price">${money(l.price)}</span></div>
               <button class="btn secondary" style="margin-top:10px;min-height:40px;padding:8px 14px;font-size:14.5px" data-action="start-return" data-order="${esc(o.id)}" data-line="${esc(l.lineId)}">Start a return</button>
             </div>
           </li>`,
@@ -284,7 +288,8 @@ function returnedHeader(s) {
 
 function viewReason(s) {
   $sticky.hidden = true;
-  const reasons = state.reasons;
+  // Colour reasons for colour products, "It didn't suit my skin" for skincare only.
+  const reasons = Object.fromEntries(Object.entries(state.reasons).filter(([, r]) => !r.categories || r.categories.includes(s.returned.category)));
   $app.innerHTML = `
     <section class="stack-lg">
       ${returnedHeader(s)}
@@ -317,17 +322,25 @@ function viewReason(s) {
 
 function viewOffer(s) {
   $sticky.hidden = true;
-  const noun = s.returned.category === 'dress' ? 'colour' : 'shade';
+  const cat = s.returned.category;
+  const noun = variantNoun(cat);
+  const skincare = cat === 'skincare';
   $app.innerHTML = `
     <section class="stack-lg">
       ${returnedHeader(s)}
-      <p class="empathy">Sorry ${esc(s.returned.shadeName)} wasn't right. Colour is hard to judge through a screen, and that's on us, not you.</p>
+      <p class="empathy">${skincare
+        ? `Sorry ${esc(s.returned.shadeName)} wasn't right for your skin. Skin is personal and hard to judge from a product page, and that's on us, not you.`
+        : `Sorry ${esc(s.returned.shadeName)} wasn't right. Colour is hard to judge through a screen, and that's on us, not you.`}</p>
       <div class="hero-offer stack">
         <p class="timer">◷ About 30 seconds</p>
-        <h1>See a better match on you before you decide?</h1>
-        <p class="lede">We'll measure your skin tone from a selfie, find the right ${noun} in stock, and show it on your own photo.</p>
+        <h1>${skincare ? 'Find the texture that suits your skin?' : 'See a better match on you before you decide?'}</h1>
+        <p class="lede">${skincare
+          ? "We'll read your skin from a selfie (shine, hydration and redness) and suggest the texture that suits it. Skincare can't be previewed, so there's no try-on."
+          : cat === 'hair'
+            ? "We'll measure your skin tone and natural hair colour from a selfie, find the right shade in stock, and show it on your own hair."
+            : `We'll measure your skin tone from a selfie, find the right ${noun} in stock, and show it on your own photo.`}</p>
         <div class="steps-mini" aria-hidden="true">
-          <div><b>1</b>Selfie</div><div><b>2</b>Your match</div><div><b>3</b>See it on you</div>
+          ${skincare ? '<div><b>1</b>Selfie</div><div><b>2</b>Your skin</div><div><b>3</b>Your match</div>' : '<div><b>1</b>Selfie</div><div><b>2</b>Your match</div><div><b>3</b>See it on you</div>'}
         </div>
       </div>
       <div class="btn-col">
@@ -367,7 +380,7 @@ function viewConsent(s) {
         <p class="eyebrow">Step 1 of 3 · Selfie</p>
         <h1>Before we take a photo</h1>
         <ul class="privacy">
-          <li><b>Used only for this return:</b> to measure your skin tone and show previews.</li>
+          <li><b>Used only for this return:</b> ${s.returned.category === 'skincare' ? 'to read your skin (shine, hydration and redness). No previews.' : 'to measure your skin tone and show previews.'}</li>
           <li><b>Deleted when this return ends</b>, from our server and from the YouCam processing service.</li>
           <li>Never used for marketing or to train models. You can delete it any time.</li>
         </ul>
@@ -456,7 +469,166 @@ function toneCard(s) {
 
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
+// ---------- "Your skin today" (YouCam skin analysis) ----------
+function skinCard(s) {
+  const k = s.skin;
+  if (!k) return '';
+  const pick = s.picks.find((p) => p.product.id === state.selected) ?? s.picks[0];
+  let body;
+  if (k.status === 'running') {
+    body = `<p class="muted small" style="margin:0" role="status">Reading your skin for finish tips…</p><div class="skeleton" style="height:14px;border-radius:7px;width:70%"></div>`;
+  } else if (k.status === 'failed') {
+    body = `<p class="small muted" style="margin:0">${esc(k.message)}</p>`;
+  } else {
+    body = `
+      <div class="pills">${k.chips.map((c) => `<span class="pill">${esc(c.label)}</span>`).join('')}</div>
+      <p style="margin:0">${esc(k.text)}</p>
+      ${k.advice ? `
+        <div class="advice">
+          <div class="small muted">How to wear ${esc(pick?.product.shadeName ?? 'your match')}</div>
+          <div class="advice-row"><span><b>${esc(cap(k.advice.finish))}</b> finish</span><span><b>${esc(cap(k.advice.coverage))}</b> coverage</span></div>
+          <p class="small" style="margin:0;color:var(--ink-2)">${esc(k.advice.reason)}</p>
+        </div>` : ''}
+      <p class="small muted" style="margin:0">${esc(k.note)}</p>
+      <details class="how">
+        <summary>How we read this</summary>
+        <p>YouCam's AI Skin Analysis looked at shine, hydration, redness and skin type on this photo. Simple, published rules turn that into ${k.advice ? 'a finish and coverage tip' : 'a texture suggestion'}. We don't show scores, and it isn't medical advice.</p>
+      </details>`;
+  }
+  return `
+    <section class="card skin-card stack" id="skin-card" data-key="${esc(skinKey(s))}" aria-labelledby="skin-title">
+      <div class="row" style="gap:10px"><span class="skin-dot" aria-hidden="true"></span><h2 id="skin-title" style="margin:0">Your skin today</h2></div>
+      ${body}
+    </section>`;
+}
+const skinKey = (s) => `${s.skin?.status}|${state.selected}`;
+
+// ---------- "Complete the look" (opt-in extra previews) ----------
+function lookImg(s, look, alt) {
+  if (!look || look.status === 'rendering') return `<div class="skeleton" style="width:100%;height:100%" role="img" aria-label="Preview loading"></div>`;
+  if (look.status === 'done' && look.url) {
+    return `<img src="${esc(look.url)}" alt="${esc(alt)}" />${s.mode === 'mock' ? `<div class="mock-tint" style="background:${esc(look.lip?.hex || '#c77')}"></div>` : ''}<span class="label-vp">${s.mode === 'mock' ? 'Mock preview · ' : ''}Visual preview, not a guarantee</span>`;
+  }
+  return `<div class="failed">${esc(look.error || 'Preview unavailable')}</div>`;
+}
+
+function lookCard(s) {
+  const cat = s.returned.category;
+  if (!['dress', 'lipstick'].includes(cat) || !s.picks.length) return '';
+  const pick = s.picks.find((p) => p.product.id === state.selected) ?? s.picks[0];
+  const render = s.renders.find((r) => r.productId === pick.product.id);
+  const ready = render?.status === 'done';
+  const left = Math.max(0, (s.maxLooks ?? 2) - (s.looksUsed ?? 0));
+  let inner;
+  if (cat === 'dress') {
+    const look = s.looks.find((l) => l.kind === 'lips_dress' && l.dressId === pick.product.id);
+    const head = `
+      <div>
+        <p class="eyebrow" style="margin:0">Optional · complete the look</p>
+        <h2 id="look-title" style="margin-top:4px">Lips for ${esc(pick.product.shadeName)}</h2>
+        <p class="muted small" style="margin:4px 0 0">We pick a lipstick that suits you and the new dress, then show both on your photo: makeup and clothes try-on together.</p>
+      </div>`;
+    if (!look) {
+      inner = `${head}
+        <button class="btn block secondary" data-action="look-lips" data-pid="${esc(pick.product.id)}" ${ready && left ? '' : 'disabled'}>Complete the look: lips for ${esc(pick.product.shadeName)}</button>
+        <p class="small muted" style="margin:0">${!left ? 'You have seen all the extra previews for this return.' : ready ? 'One extra preview. Nothing is added to your exchange unless you choose it.' : 'Available once the dress preview is ready.'}</p>`;
+    } else {
+      const on = state.addOn?.lipId === look.lipId && state.addOn?.dressId === look.dressId;
+      inner = `${head}
+        <div class="look-result">
+          <div class="look-img zoom">${lookImg(s, look, `Your photo in the ${pick.product.shadeName} dress wearing ${look.lip?.shadeName ?? 'the lipstick'}`)}</div>
+          <div class="stack" style="gap:6px">
+            <div class="row" style="gap:8px"><span class="swatch" style="background:${esc(look.lip.hex)}"></span><div class="grow"><div style="font-weight:600">${esc(look.lip.shadeName)}</div><div class="small muted">${esc(look.lip.productLine)} · ${money(look.lip.price)}</div></div></div>
+            <p class="reason" style="margin:0">${esc(look.lipReason)}</p>
+          </div>
+        </div>
+        ${look.addOn?.allowed ? `
+          <label class="addon" for="addon-check">
+            <input type="checkbox" id="addon-check" data-lip="${esc(look.lipId)}" data-dress="${esc(look.dressId)}" ${on ? 'checked' : ''} />
+            <span>Add ${esc(look.lip.shadeName)} to my order: <b>${money(look.addOn.customerPays)}</b>, charged separately. Your ${esc(pick.product.shadeName)} exchange stays free.</span>
+          </label>` : ''}`;
+    }
+  } else {
+    const look = s.looks.find((l) => l.kind === 'lip_blush' && l.lipId === pick.product.id);
+    const head = `
+      <div>
+        <p class="eyebrow" style="margin:0">Optional · complete the look</p>
+        <h2 id="look-title" style="margin-top:4px">${esc(pick.product.shadeName)} with a matching blush</h2>
+        <p class="muted small" style="margin:4px 0 0">A blush colour picked to go with this lipstick and your undertone, on your photo. A styling idea: there's nothing extra to buy.</p>
+      </div>`;
+    inner = !look
+      ? `${head}
+        <button class="btn block secondary" data-action="look-blush" data-pid="${esc(pick.product.id)}" ${left ? '' : 'disabled'}>See it with a matching blush</button>
+        ${left ? '' : '<p class="small muted" style="margin:0">You have seen all the extra previews for this return.</p>'}`
+      : `${head}
+        <div class="look-result">
+          <div class="look-img">${lookImg(s, look, `Your photo with ${pick.product.shadeName} and a ${look.blush?.name ?? ''} blush`)}</div>
+          <div class="stack" style="gap:6px">
+            <div class="row" style="gap:8px"><span class="swatch" style="background:${esc(look.blush.hex)}"></span><div class="grow"><div style="font-weight:600">${esc(cap(look.blush.name))} blush</div><div class="small muted">Paired with ${esc(pick.product.shadeName)}</div></div></div>
+            <p class="reason" style="margin:0">${esc(look.blush.reason)}</p>
+          </div>
+        </div>`;
+  }
+  return `<section class="card look-card stack" id="look-card" data-key="${esc(lookKey(s))}" aria-labelledby="look-title">${inner}</section>`;
+}
+const lookKey = (s) => `${state.selected}|${(s.looks || []).map((l) => `${l.kind}:${l.dressId || l.lipId}:${l.status}`).join(',')}|${s.renders.map((r) => r.status).join(',')}|${s.looksUsed}`;
+
+/** Re-render the skin and look cards in place when their state changes (during polling). */
+function updateExtras(s) {
+  for (const [id, key, html] of [['skin-card', skinKey(s), () => skinCard(s)], ['look-card', lookKey(s), () => lookCard(s)]]) {
+    const el = document.getElementById(id);
+    if (el && el.dataset.key !== key) el.outerHTML = html();
+  }
+}
+
+const busyExtras = (s) => s.renders.some((r) => r.status === 'queued' || r.status === 'rendering') || (s.looks || []).some((l) => l.status === 'rendering') || s.skin?.status === 'running';
+
+/** Skincare: the skin reading and a texture exchange. No try-on: skincare can't be previewed. */
+function viewSkincare(s) {
+  if (!state.selected || !s.picks.some((p) => p.product.id === state.selected)) state.selected = s.picks[0]?.product.id ?? null;
+  $app.innerHTML = `
+    <section class="stack-lg">
+      <div class="stack">
+        <p class="eyebrow">Step 2 of 3 · Your match</p>
+        <h1>A better texture for your skin</h1>
+        ${canSpeak() ? '<button class="btn ghost listen" data-action="listen" aria-pressed="false"><span aria-hidden="true">🔊</span><span class="lbl">Read my results aloud</span></button>' : ''}
+      </div>
+      ${skinCard(s)}
+      <div class="stack">
+        <h2>${esc(s.matches?.intro ?? '')}</h2>
+        ${s.matches?.returnedCaution ? `<p class="small muted" style="margin:4px 0 0">${esc(s.matches.returnedCaution)} That's about the product, not about you.</p>` : ''}
+        <div class="texture-list" role="list">
+          ${s.picks
+            .map((p, i) => {
+              const current = state.selected === p.product.id;
+              return `
+            <div class="tryon texture" role="listitem" data-pid="${esc(p.product.id)}" ${current ? 'aria-current="true"' : ''}>
+              <button class="select" data-action="select" data-pid="${esc(p.product.id)}" aria-label="Choose ${esc(p.product.shadeName)}" aria-pressed="${current}">
+                <div class="texture-row">
+                  ${productThumb(p.product, 'thumb sm')}
+                  <div class="grow">
+                    <div style="font-weight:600">${esc(p.product.productLine)} · ${esc(p.product.shadeName)} <span class="badge ${i === 0 ? 'best' : 'alt'}">${i === 0 ? 'Suits you today' : 'Also good'}</span></div>
+                    <div class="small muted">${esc(p.product.blurb || '')}</div>
+                    <p class="reason" style="margin:6px 0 0">${esc(p.reason)}</p>
+                    ${p.price?.type !== 'even' ? `<p class="small muted" style="margin:4px 0 0">${esc(p.price.note)}</p>` : ''}
+                  </div>
+                  <span class="price">${money(p.product.price)}</span>
+                </div>
+              </button>
+            </div>`;
+            })
+            .join('')}
+        </div>
+        <p class="muted small" style="text-align:center;margin-top:2px">Suggestions from a skin reading, not medical advice. Patch-test new skincare.</p>
+      </div>
+      <div class="banner info small"><span aria-hidden="true">🔒</span><div>Your photo is deleted as soon as you choose. <button class="btn ghost" style="min-height:0;padding:0" data-action="delete-photo">Delete it now</button></div></div>
+    </section>`;
+  renderSticky(s);
+  focusTitle();
+}
+
 function viewMatches(s) {
+  if (s.returned.category === 'skincare') return viewSkincare(s);
   const options = [
     { role: 'returned', product: s.returned, reason: s.matches?.returnedCaution || 'The one you bought.', badge: 'Returned' },
     ...s.picks.map((p, i) => ({ role: `pick${i + 1}`, product: p.product, reason: p.reason, deltaE: p.deltaE, badge: i === 0 ? 'Best match' : 'Also great', offer: p.offer })),
@@ -470,6 +642,7 @@ function viewMatches(s) {
         ${canSpeak() ? '<button class="btn ghost listen" data-action="listen" aria-pressed="false"><span aria-hidden="true">🔊</span><span class="lbl">Read my results aloud</span></button>' : ''}
       </div>
       ${toneCard(s)}
+      ${skinCard(s)}
       <div class="stack">
         <h2>${esc(s.matches?.intro ?? '')}</h2>
         <p class="muted small" style="margin-top:4px">Step 3 of 3 · See them on you. Tap a preview to choose.</p>
@@ -479,6 +652,7 @@ function viewMatches(s) {
         <p class="muted small" style="text-align:center;margin-top:2px">${esc(s.copy.tryonLabel)}. Colours on screens vary.</p>
       </div>
       <section class="card compare-card stack" id="compare-card" aria-label="Before and after" hidden></section>
+      ${lookCard(s)}
       <div class="stack" id="reasons">
         ${s.matches?.returnedCaution
           ? `<div class="card tint match"><div class="match-head"><span class="swatch" style="background:${esc(s.returned.hex)}"></span><div class="grow"><div style="font-weight:600">Why ${esc(s.returned.shadeName)} may not have worked</div></div></div><p class="reason">${esc(s.matches.returnedCaution)} That's about the colour, not about you.</p></div>`
@@ -504,7 +678,7 @@ function viewMatches(s) {
   renderSticky(s);
   updateCompare(s);
   if (s.step === 'matches') sendEvent('render', {}, { quiet: true });
-  else if (s.renders.some((r) => r.status === 'queued' || r.status === 'rendering')) startPolling();
+  else if (busyExtras(s)) startPolling();
   focusTitle();
 }
 
@@ -592,6 +766,7 @@ function updateCompare(s) {
 function resultsSpeech(s) {
   const parts = [];
   if (s.profile?.summary) parts.push(s.profile.summary);
+  if (s.skin?.status === 'done') parts.push(s.skin.text, s.skin.advice ? s.skin.advice.reason : '', s.skin.note);
   if (s.matches?.returnedCaution) parts.push(`Why ${s.returned.shadeName} may not have worked: ${s.matches.returnedCaution}`);
   s.picks.forEach((p, i) => parts.push(`${i === 0 ? 'Best match' : 'Also great'}: ${p.product.shadeName}, ${money(p.product.price)}. ${p.reason}`));
   parts.push('The previews are a visual guide, not a guarantee. Your refund stays one tap away.');
@@ -637,6 +812,7 @@ function updateRenders(s) {
     }
   }
   updateCompare(s);
+  updateExtras(s);
 }
 
 function renderSticky(s) {
@@ -645,14 +821,21 @@ function renderSticky(s) {
     return;
   }
   const pick = s.picks.find((p) => p.product.id === state.selected) ?? s.picks[0];
+  const addOn = chosenAddOn(s, pick);
   $sticky.hidden = false;
   $sticky.innerHTML = `
     <div class="inner">
-      <button class="btn block accent" data-action="exchange" data-pid="${esc(pick.product.id)}">
-        <span>Exchange for ${esc(pick.product.shadeName)}<span class="btn-sub">Free, ships today</span></span>
+      <button class="btn block accent" data-action="exchange" data-pid="${esc(pick.product.id)}" ${addOn ? `data-addon="${esc(addOn.lipId)}"` : ''}>
+        <span>Exchange for ${esc(pick.product.shadeName)}<span class="btn-sub">Free, ships today${addOn ? ` · + ${esc(addOn.lip.shadeName)} lipstick ${money(addOn.addOn.customerPays)}` : ''}</span></span>
       </button>
       <button class="btn block secondary" data-action="refund-review">Continue to refund</button>
     </div>`;
+}
+
+/** The opt-in lipstick add-on, only if the shopper ticked it for the dress they're exchanging to. */
+function chosenAddOn(s, pick) {
+  if (!state.addOn || state.addOn.dressId !== pick?.product.id) return null;
+  return (s.looks || []).find((l) => l.kind === 'lips_dress' && l.lipId === state.addOn.lipId && l.dressId === state.addOn.dressId && l.addOn?.allowed) ?? null;
 }
 
 function viewExchanged(s) {
@@ -664,11 +847,12 @@ function viewExchanged(s) {
     <section class="stack-lg">
       <div class="done-icon" aria-hidden="true">✓</div>
       <div class="stack">
-        <h1>Your new ${s.returned.category === 'dress' ? 'colour' : 'shade'} ships today</h1>
+        <h1>Your new ${esc(variantNoun(s.returned.category))} ships today</h1>
         <p class="lede">We think this one's you.</p>
       </div>
       <ol class="timeline card flat" aria-label="What happens next">
         <li class="done"><span class="when">Today · exchange order ${esc(x.id)}</span><span><b>${esc(x.toName)}</b> ships, free.</span></li>
+        ${x.addOn ? `<li class="done"><span class="when">Your add-on</span><span><b>${esc(x.addOn.name)}</b> ships with it: ${money(x.addOn.customerPays)}, charged separately (demo: nothing is charged).</span></li>` : ''}
         <li><span class="when">Within 30 days, no rush</span><span>Send ${esc(x.fromName)} back with the prepaid label ${esc(x.returnLabel)}.</span></li>
         ${x.price?.refundToCustomer ? `<li class="done"><span class="when">Price difference</span><span>${money(x.price.refundToCustomer)} goes back to your card.</span></li>` : ''}
       </ol>
@@ -797,7 +981,7 @@ function startPolling() {
       state.session = v;
       updateRenders(v);
       renderTrace();
-      if (!v.renders.some((r) => r.status === 'queued' || r.status === 'rendering')) stopPolling();
+      if (!busyExtras(v)) stopPolling();
     } catch {
       stopPolling();
     }
@@ -813,6 +997,7 @@ const actions = {
     const v = await api('POST', '/api/returns', { orderId: el.dataset.order, lineId: el.dataset.line });
     state.session = v;
     state.selected = null;
+    state.addOn = null;
     state.captured = null;
     location.hash = `#/return/${v.id}`;
   },
@@ -865,6 +1050,17 @@ const actions = {
     });
     renderSticky(state.session);
     updateCompare(state.session);
+    updateExtras(state.session);
+  },
+  async 'look-lips'(el) {
+    el.disabled = true;
+    await sendEvent('look_lips', { dressId: el.dataset.pid });
+    if (busyExtras(state.session)) startPolling();
+  },
+  async 'look-blush'(el) {
+    el.disabled = true;
+    await sendEvent('look_blush', { lipId: el.dataset.pid });
+    if (busyExtras(state.session)) startPolling();
   },
   listen(el) {
     if (!canSpeak()) return;
@@ -899,7 +1095,7 @@ const actions = {
     const s = state.session;
     const p = s.picks.find((x) => x.product.id === el.dataset.pid)?.product;
     state.kept = p ? { category: s.returned.category, id: p.id, shadeName: p.shadeName, productLine: p.productLine, image: p.image } : null;
-    await sendEvent('exchange', { productId: el.dataset.pid });
+    await sendEvent('exchange', { productId: el.dataset.pid, ...(el.dataset.addon ? { addOnId: el.dataset.addon } : {}) });
   },
   escalate: () => sendEvent('escalate'),
   // YouCam's official sample photo (face for makeup, waist-up body for dresses). The original
@@ -942,6 +1138,12 @@ document.addEventListener('click', (e) => {
   }
 });
 $traceToggle.addEventListener('click', () => actions['toggle-trace']());
+// Opt-in lipstick add-on (never pre-ticked): updates the exchange button's price line.
+document.addEventListener('change', (e) => {
+  if (e.target?.id !== 'addon-check') return;
+  state.addOn = e.target.checked ? { lipId: e.target.dataset.lip, dressId: e.target.dataset.dress } : null;
+  renderSticky(state.session);
+});
 
 // ---------- camera & image prep ----------
 async function startCamera() {

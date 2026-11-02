@@ -56,9 +56,42 @@ function dress(p) {
 </svg>\n`;
 }
 
+// Hair colour kit: a box with a lock of hair in the shade (drawn as flowing strands).
+function hair(p) {
+  const c = p.hex;
+  const light = hexToLab(c).L > 60;
+  const strands = [0, 1, 2, 3, 4]
+    .map((i) => `<path d="M${44 + i * 7} 46 C ${38 + i * 7} 70, ${56 + i * 7} 86, ${46 + i * 7} 118" stroke="${shade(c, i % 2 ? 8 : -6)}" stroke-width="7" fill="none" stroke-linecap="round"/>`)
+    .join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160" role="img" aria-label="${esc(p.productLine)} kit in ${esc(p.shadeName)}">
+  <rect width="120" height="160" rx="14" fill="#f6f1ea"/>
+  <rect x="24" y="22" width="72" height="120" rx="6" fill="#fbf9f5" stroke="#d9cfc3"/>
+  <rect x="24" y="22" width="72" height="18" rx="6" fill="#2b2522"/>
+  <text x="60" y="35" font-family="Georgia, serif" font-size="9" text-anchor="middle" fill="#fbf6ef">GLOSS</text>
+  <rect x="32" y="44" width="56" height="78" rx="28" fill="${shade(c, light ? -4 : 10)}" opacity=".25"/>
+  ${strands}
+  <text x="60" y="134" font-family="Georgia, serif" font-size="10" text-anchor="middle" fill="#3b2f2a">${esc(p.shadeCode)}</text>
+</svg>\n`;
+}
+
+// Moisturiser jar, tinted per texture variant.
+function skincare(p) {
+  const c = p.hex;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160" role="img" aria-label="${esc(p.productLine)}, ${esc(p.shadeName)}">
+  <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="${shade(c, 4)}"/><stop offset=".6" stop-color="${c}"/><stop offset="1" stop-color="${shade(c, -8)}"/></linearGradient></defs>
+  <rect width="120" height="160" rx="14" fill="#f6f1ea"/>
+  <rect x="28" y="50" width="64" height="20" rx="6" fill="#2b2522"/>
+  <rect x="24" y="68" width="72" height="66" rx="14" fill="url(#g)" stroke="#ffffff" stroke-opacity=".5"/>
+  <text x="60" y="98" font-family="Georgia, serif" font-size="10" text-anchor="middle" fill="#3b2f2a">Cloud</text>
+  <text x="60" y="114" font-family="Inter, Arial, sans-serif" font-size="8.5" text-anchor="middle" fill="#3b2f2a">${esc(p.shadeName.toUpperCase())}</text>
+</svg>\n`;
+}
+
+const ART = { lipstick, foundation, dress, hair, skincare };
+
 let n = 0;
 for (const p of catalog.products) {
-  const svg = p.category === 'lipstick' ? lipstick(p) : p.category === 'foundation' ? foundation(p) : dress(p);
+  const svg = ART[p.category](p);
   writeFileSync(new URL(`.${p.image.replace('/assets/products', '')}`, outDir), svg);
   n++;
 }

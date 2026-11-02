@@ -291,3 +291,25 @@ details.how summary { cursor: pointer; color: var(--ink-2); }
 
 .footer-note { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 28px; }
 .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 14px; z-index: 40; }
+
+/* ---------- your skin today · complete the look · skincare textures ---------- */
+.skin-card { background: linear-gradient(160deg, #fff 0%, #f3f6f2 100%); }
+.skin-dot { width: 14px; height: 14px; border-radius: 50%; flex: none; background: radial-gradient(circle at 35% 35%, #fff 0 18%, #cfe3d6 40%, #9cc3ab 100%); box-shadow: 0 0 0 1px var(--line); }
+.advice { display: grid; gap: 6px; padding: 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.advice-row { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 15px; }
+.look-card { background: linear-gradient(160deg, #fff 0%, #f8efe9 100%); }
+.look-result { display: grid; gap: 12px; }
+.look-img { position: relative; aspect-ratio: 4 / 5; border-radius: 12px; overflow: hidden; background: var(--surface-2); }
+/* Lips on a waist-up dress render: zoom to the face and neckline so the lipstick reads. */
+.look-img.zoom img { transform: scale(1.9); transform-origin: 50% 8%; }
+.look-img img { width: 100%; height: 100%; object-fit: cover; object-position: center 35%; }
+.look-img .label-vp { position: absolute; left: 6px; right: 6px; bottom: 6px; font-size: 10.5px; color: #fff; background: rgba(20, 16, 14, 0.62); border-radius: 7px; padding: 3px 5px; text-align: center; }
+.look-img .failed { display: grid; place-items: center; height: 100%; padding: 12px; text-align: center; font-size: 13px; color: var(--muted); }
+.addon { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 12px; border: 1.5px dashed var(--line); font-size: 14.5px; color: var(--ink-2); cursor: pointer; }
+.addon input { width: 20px; height: 20px; margin: 2px 0 0; flex: none; accent-color: var(--accent); }
+.addon:has(input:checked) { border-style: solid; border-color: var(--ink); background: var(--surface); }
+.addon input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.texture-list { display: grid; gap: 10px; }
+.tryon.texture { scroll-snap-align: none; }
+.texture-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px; }
+.texture-row .price { font-weight: 600; white-space: nowrap; }

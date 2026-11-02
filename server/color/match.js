@@ -3,6 +3,8 @@
 // explicit, explainable rule penalties. No randomness and no LLM: the same tone profile
 // and catalogue always produce the same ranking.
 import { hexToLab, labToLch, lchToLab, deltaE2000, round1 } from './color.js';
+import { scoreHair } from './hair.js';
+import { scoreSkincareVariant } from './skin.js';
 
 export const PRICE_BAND_PCT = 0.25;
 
@@ -175,7 +177,27 @@ function scoreDress(product, profile) {
   };
 }
 
-const SCORERS = { lipstick: scoreLipstick, foundation: scoreFoundation, dress: scoreDress };
+/** Skincare variants are scored from the YouCam skin-analysis reading attached to the profile
+ *  (`profile.skin`), not from colour. Without a reading every variant scores the same. */
+function scoreSkincare(product, profile) {
+  if (!profile?.skin) return { score: 2, components: { variant: 'no reading' }, deltaE: null, reason: 'Needs a skin reading.', caution: null };
+  const r = scoreSkincareVariant(product.variant, profile.skin);
+  const reason =
+    r.distance === 0
+      ? r.reason
+      : r.distance === 1
+        ? `${product.shadeName} is one step from what your skin asks for today, so it's a gentle alternative.`
+        : `The ${product.shadeName.toLowerCase()} texture is the opposite of what your skin asks for today.`;
+  return {
+    score: r.score,
+    components: { variant: product.variant, recommended: r.recommended, distance: r.distance },
+    deltaE: null,
+    reason,
+    caution: r.distance === 2 ? `${product.shadeName} is made for ${product.variant === 'rich' ? 'skin that needs more hydration' : 'skin with more shine'} than yours shows today.` : null,
+  };
+}
+
+const SCORERS = { lipstick: scoreLipstick, foundation: scoreFoundation, dress: scoreDress, hair: scoreHair, skincare: scoreSkincare };
 
 export function scoreProduct(product, profile, returned) {
   const scorer = SCORERS[product.category];
@@ -195,6 +217,16 @@ export function fitConfidence(category, result) {
   if (category === 'lipstick') {
     if (result.score <= 10) return 'high';
     if (result.score <= 16) return 'medium';
+    return 'low';
+  }
+  if (category === 'hair') {
+    if (result.score <= 2) return 'high';
+    if (result.score <= 4.5) return 'medium';
+    return 'low';
+  }
+  if (category === 'skincare') {
+    if (result.score <= 0.5) return 'high';
+    if (result.score <= 2) return 'medium';
     return 'low';
   }
   // dress

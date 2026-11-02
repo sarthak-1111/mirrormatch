@@ -9,7 +9,8 @@ export const DOCUMENTED_COSTS = {
   'cloth-v3': 2,
   'cloth-v4': 2,
   'look-vto': 2,
-  'skin-analysis': 9,
+  'skin-analysis': 9, // SD, 1–4 concerns (5–8 concerns cost 12; HD costs more)
+  'hair-color': 1,
 };
 
 export class UnitMeter {

@@ -56,7 +56,8 @@ test('lipstick return becomes an exchange, and the dashboard shows it live', asy
   const dash = await context.newPage();
   await dash.goto('/merchant');
   await expect(dash.locator('#kpis')).toContainText('Exchanges accepted');
-  await expect(dash.locator('#kpis .kpi').nth(2).locator('.value')).toHaveText('1');
+  // At least this exchange (other spec files share the server and may add more in parallel).
+  await expect(dash.locator('#kpis .kpi').nth(2).locator('.value')).toHaveText(/^[1-9]\d*$/);
   await expect(dash.locator('#feed')).toContainText('Exchange created');
   await expect(dash.getByText('Synthetic demo data').first()).toBeVisible();
   await expect(dash.getByRole('heading', { name: 'Who is each shade for?' })).toBeVisible();
