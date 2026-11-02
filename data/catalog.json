@@ -1,0 +1,943 @@
+{
+  "store": {
+    "name": "Hue & Hem",
+    "note": "Fictional demo store. All product names are invented."
+  },
+  "products": [
+    {
+      "id": "lip-l01",
+      "sku": "HH-VL-L01",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Shell",
+      "shadeCode": "L01",
+      "hex": "#C99089",
+      "family": "nude",
+      "undertone": "neutral",
+      "finish": "matte",
+      "price": 22,
+      "stock": 14,
+      "image": "/assets/products/l01.svg"
+    },
+    {
+      "id": "lip-l02",
+      "sku": "HH-VL-L02",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Bare Honey",
+      "shadeCode": "L02",
+      "hex": "#B97A5E",
+      "family": "nude",
+      "undertone": "warm",
+      "finish": "matte",
+      "price": 22,
+      "stock": 22,
+      "image": "/assets/products/l02.svg"
+    },
+    {
+      "id": "lip-l03",
+      "sku": "HH-VL-L03",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Toffee",
+      "shadeCode": "L03",
+      "hex": "#8F5743",
+      "family": "nude",
+      "undertone": "warm",
+      "finish": "matte",
+      "price": 22,
+      "stock": 18,
+      "image": "/assets/products/l03.svg"
+    },
+    {
+      "id": "lip-l04",
+      "sku": "HH-VL-L04",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Rosewood",
+      "shadeCode": "L04",
+      "hex": "#A5585E",
+      "family": "rose",
+      "undertone": "neutral",
+      "finish": "matte",
+      "price": 22,
+      "stock": 25,
+      "image": "/assets/products/l04.svg"
+    },
+    {
+      "id": "lip-l05",
+      "sku": "HH-VL-L05",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Mauve Mist",
+      "shadeCode": "L05",
+      "hex": "#9A6575",
+      "family": "rose",
+      "undertone": "cool",
+      "finish": "matte",
+      "price": 22,
+      "stock": 16,
+      "image": "/assets/products/l05.svg"
+    },
+    {
+      "id": "lip-l06",
+      "sku": "HH-VL-L06",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Coral Bay",
+      "shadeCode": "L06",
+      "hex": "#DC6A55",
+      "family": "coral",
+      "undertone": "warm",
+      "finish": "matte",
+      "price": 22,
+      "stock": 20,
+      "image": "/assets/products/l06.svg"
+    },
+    {
+      "id": "lip-l07",
+      "sku": "HH-VL-L07",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Terracotta",
+      "shadeCode": "L07",
+      "hex": "#B0503A",
+      "family": "coral",
+      "undertone": "warm",
+      "finish": "matte",
+      "price": 22,
+      "stock": 12,
+      "image": "/assets/products/l07.svg"
+    },
+    {
+      "id": "lip-l08",
+      "sku": "HH-VL-L08",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Classic Red",
+      "shadeCode": "L08",
+      "hex": "#B5162F",
+      "family": "red",
+      "undertone": "neutral",
+      "finish": "matte",
+      "price": 22,
+      "stock": 0,
+      "image": "/assets/products/l08.svg"
+    },
+    {
+      "id": "lip-l09",
+      "sku": "HH-VL-L09",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Berry Hush",
+      "shadeCode": "L09",
+      "hex": "#8C3656",
+      "family": "berry",
+      "undertone": "cool",
+      "finish": "matte",
+      "price": 22,
+      "stock": 19,
+      "image": "/assets/products/l09.svg"
+    },
+    {
+      "id": "lip-l10",
+      "sku": "HH-VL-L10",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Plum Velvet",
+      "shadeCode": "L10",
+      "hex": "#5C2840",
+      "family": "berry",
+      "undertone": "cool",
+      "finish": "matte",
+      "price": 22,
+      "stock": 11,
+      "image": "/assets/products/l10.svg"
+    },
+    {
+      "id": "lip-l11",
+      "sku": "HH-VL-L11",
+      "category": "lipstick",
+      "productLine": "Velvet Lip Matte",
+      "shadeName": "Cinnamon",
+      "shadeCode": "L11",
+      "hex": "#7E4636",
+      "family": "brown",
+      "undertone": "warm",
+      "finish": "matte",
+      "price": 22,
+      "stock": 15,
+      "image": "/assets/products/l11.svg"
+    },
+    {
+      "id": "fdn-1c",
+      "sku": "HH-SV-1C",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "1C Linen",
+      "shadeCode": "1C",
+      "hex": "#EACBC0",
+      "undertone": "cool",
+      "depthLevel": 1,
+      "lch": {
+        "L": 84,
+        "C": 13,
+        "h": 47
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 11,
+      "image": "/assets/products/fdn-1c.svg"
+    },
+    {
+      "id": "fdn-1n",
+      "sku": "HH-SV-1N",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "1N Linen",
+      "shadeCode": "1N",
+      "hex": "#E8CCBE",
+      "undertone": "neutral",
+      "depthLevel": 1,
+      "lch": {
+        "L": 84,
+        "C": 13,
+        "h": 56
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 20,
+      "image": "/assets/products/fdn-1n.svg"
+    },
+    {
+      "id": "fdn-1w",
+      "sku": "HH-SV-1W",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "1W Linen",
+      "shadeCode": "1W",
+      "hex": "#E5CDBC",
+      "undertone": "warm",
+      "depthLevel": 1,
+      "lch": {
+        "L": 84,
+        "C": 13,
+        "h": 65
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 12,
+      "image": "/assets/products/fdn-1w.svg"
+    },
+    {
+      "id": "fdn-2c",
+      "sku": "HH-SV-2C",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "2C Ivory",
+      "shadeCode": "2C",
+      "hex": "#DDB9AC",
+      "undertone": "cool",
+      "depthLevel": 2,
+      "lch": {
+        "L": 78,
+        "C": 16,
+        "h": 47
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 18,
+      "image": "/assets/products/fdn-2c.svg"
+    },
+    {
+      "id": "fdn-2n",
+      "sku": "HH-SV-2N",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "2N Ivory",
+      "shadeCode": "2N",
+      "hex": "#DBBAA9",
+      "undertone": "neutral",
+      "depthLevel": 2,
+      "lch": {
+        "L": 78,
+        "C": 16,
+        "h": 56
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 10,
+      "image": "/assets/products/fdn-2n.svg"
+    },
+    {
+      "id": "fdn-2w",
+      "sku": "HH-SV-2W",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "2W Ivory",
+      "shadeCode": "2W",
+      "hex": "#D8BCA6",
+      "undertone": "warm",
+      "depthLevel": 2,
+      "lch": {
+        "L": 78,
+        "C": 16,
+        "h": 65
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 19,
+      "image": "/assets/products/fdn-2w.svg"
+    },
+    {
+      "id": "fdn-3c",
+      "sku": "HH-SV-3C",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "3C Sand",
+      "shadeCode": "3C",
+      "hex": "#CEA595",
+      "undertone": "cool",
+      "depthLevel": 3,
+      "lch": {
+        "L": 71,
+        "C": 19,
+        "h": 47
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 8,
+      "image": "/assets/products/fdn-3c.svg"
+    },
+    {
+      "id": "fdn-3n",
+      "sku": "HH-SV-3N",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "3N Sand",
+      "shadeCode": "3N",
+      "hex": "#CBA692",
+      "undertone": "neutral",
+      "depthLevel": 3,
+      "lch": {
+        "L": 71,
+        "C": 19,
+        "h": 56
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 17,
+      "image": "/assets/products/fdn-3n.svg"
+    },
+    {
+      "id": "fdn-3w",
+      "sku": "HH-SV-3W",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "3W Sand",
+      "shadeCode": "3W",
+      "hex": "#C8A88F",
+      "undertone": "warm",
+      "depthLevel": 3,
+      "lch": {
+        "L": 71,
+        "C": 19,
+        "h": 65
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 9,
+      "image": "/assets/products/fdn-3w.svg"
+    },
+    {
+      "id": "fdn-4c",
+      "sku": "HH-SV-4C",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "4C Honey",
+      "shadeCode": "4C",
+      "hex": "#BF917F",
+      "undertone": "cool",
+      "depthLevel": 4,
+      "lch": {
+        "L": 64,
+        "C": 22,
+        "h": 47
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 15,
+      "image": "/assets/products/fdn-4c.svg"
+    },
+    {
+      "id": "fdn-4n",
+      "sku": "HH-SV-4N",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "4N Honey",
+      "shadeCode": "4N",
+      "hex": "#BC927B",
+      "undertone": "neutral",
+      "depthLevel": 4,
+      "lch": {
+        "L": 64,
+        "C": 22,
+        "h": 56
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 0,
+      "image": "/assets/products/fdn-4n.svg"
+    },
+    {
+      "id": "fdn-4w",
+      "sku": "HH-SV-4W",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "4W Honey",
+      "shadeCode": "4W",
+      "hex": "#B89478",
+      "undertone": "warm",
+      "depthLevel": 4,
+      "lch": {
+        "L": 64,
+        "C": 22,
+        "h": 65
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 16,
+      "image": "/assets/products/fdn-4w.svg"
+    },
+    {
+      "id": "fdn-5c",
+      "sku": "HH-SV-5C",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "5C Amber",
+      "shadeCode": "5C",
+      "hex": "#AB7B69",
+      "undertone": "cool",
+      "depthLevel": 5,
+      "lch": {
+        "L": 56,
+        "C": 24,
+        "h": 47
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 22,
+      "image": "/assets/products/fdn-5c.svg"
+    },
+    {
+      "id": "fdn-5n",
+      "sku": "HH-SV-5N",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "5N Amber",
+      "shadeCode": "5N",
+      "hex": "#A87D64",
+      "undertone": "neutral",
+      "depthLevel": 5,
+      "lch": {
+        "L": 56,
+        "C": 24,
+        "h": 56
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 14,
+      "image": "/assets/products/fdn-5n.svg"
+    },
+    {
+      "id": "fdn-5w",
+      "sku": "HH-SV-5W",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "5W Amber",
+      "shadeCode": "5W",
+      "hex": "#A47F61",
+      "undertone": "warm",
+      "depthLevel": 5,
+      "lch": {
+        "L": 56,
+        "C": 24,
+        "h": 65
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 23,
+      "image": "/assets/products/fdn-5w.svg"
+    },
+    {
+      "id": "fdn-6c",
+      "sku": "HH-SV-6C",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "6C Chestnut",
+      "shadeCode": "6C",
+      "hex": "#936553",
+      "undertone": "cool",
+      "depthLevel": 6,
+      "lch": {
+        "L": 47,
+        "C": 24,
+        "h": 47
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 12,
+      "image": "/assets/products/fdn-6c.svg"
+    },
+    {
+      "id": "fdn-6n",
+      "sku": "HH-SV-6N",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "6N Chestnut",
+      "shadeCode": "6N",
+      "hex": "#8F664F",
+      "undertone": "neutral",
+      "depthLevel": 6,
+      "lch": {
+        "L": 47,
+        "C": 24,
+        "h": 56
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 21,
+      "image": "/assets/products/fdn-6n.svg"
+    },
+    {
+      "id": "fdn-6w",
+      "sku": "HH-SV-6W",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "6W Chestnut",
+      "shadeCode": "6W",
+      "hex": "#8B684B",
+      "undertone": "warm",
+      "depthLevel": 6,
+      "lch": {
+        "L": 47,
+        "C": 24,
+        "h": 65
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 13,
+      "image": "/assets/products/fdn-6w.svg"
+    },
+    {
+      "id": "fdn-7c",
+      "sku": "HH-SV-7C",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "7C Cocoa",
+      "shadeCode": "7C",
+      "hex": "#785040",
+      "undertone": "cool",
+      "depthLevel": 7,
+      "lch": {
+        "L": 38,
+        "C": 22,
+        "h": 47
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 19,
+      "image": "/assets/products/fdn-7c.svg"
+    },
+    {
+      "id": "fdn-7n",
+      "sku": "HH-SV-7N",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "7N Cocoa",
+      "shadeCode": "7N",
+      "hex": "#75513D",
+      "undertone": "neutral",
+      "depthLevel": 7,
+      "lch": {
+        "L": 38,
+        "C": 22,
+        "h": 56
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 11,
+      "image": "/assets/products/fdn-7n.svg"
+    },
+    {
+      "id": "fdn-7w",
+      "sku": "HH-SV-7W",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "7W Cocoa",
+      "shadeCode": "7W",
+      "hex": "#72533A",
+      "undertone": "warm",
+      "depthLevel": 7,
+      "lch": {
+        "L": 38,
+        "C": 22,
+        "h": 65
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 20,
+      "image": "/assets/products/fdn-7w.svg"
+    },
+    {
+      "id": "fdn-8c",
+      "sku": "HH-SV-8C",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "8C Espresso",
+      "shadeCode": "8C",
+      "hex": "#603F32",
+      "undertone": "cool",
+      "depthLevel": 8,
+      "lch": {
+        "L": 30,
+        "C": 19,
+        "h": 47
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 9,
+      "image": "/assets/products/fdn-8c.svg"
+    },
+    {
+      "id": "fdn-8n",
+      "sku": "HH-SV-8N",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "8N Espresso",
+      "shadeCode": "8N",
+      "hex": "#5E402F",
+      "undertone": "neutral",
+      "depthLevel": 8,
+      "lch": {
+        "L": 30,
+        "C": 19,
+        "h": 56
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 18,
+      "image": "/assets/products/fdn-8n.svg"
+    },
+    {
+      "id": "fdn-8w",
+      "sku": "HH-SV-8W",
+      "category": "foundation",
+      "productLine": "Skin Veil Serum Foundation",
+      "shadeName": "8W Espresso",
+      "shadeCode": "8W",
+      "hex": "#5B412C",
+      "undertone": "warm",
+      "depthLevel": 8,
+      "lch": {
+        "L": 30,
+        "C": 19,
+        "h": 65
+      },
+      "finish": "natural",
+      "price": 36,
+      "stock": 10,
+      "image": "/assets/products/fdn-8w.svg"
+    },
+    {
+      "id": "dress-wrap-marigold",
+      "sku": "HH-WRAP-MAR",
+      "category": "dress",
+      "productLine": "Hem Wrap Dress",
+      "style": "wrap",
+      "shadeName": "Marigold",
+      "shadeCode": "Marigold",
+      "hex": "#E0A526",
+      "temperature": "warm",
+      "lab": {
+        "L": 71.5,
+        "a": 11.3,
+        "b": 67.9
+      },
+      "price": 68,
+      "stock": 9,
+      "image": "/assets/products/dress-wrap-marigold.svg",
+      "garmentImage": "/assets/garments/dress-wrap-marigold.png"
+    },
+    {
+      "id": "dress-wrap-coral",
+      "sku": "HH-WRAP-COR",
+      "category": "dress",
+      "productLine": "Hem Wrap Dress",
+      "style": "wrap",
+      "shadeName": "Coral",
+      "shadeCode": "Coral",
+      "hex": "#E5735C",
+      "temperature": "warm",
+      "lab": {
+        "L": 61.4,
+        "a": 42.3,
+        "b": 33.1
+      },
+      "price": 68,
+      "stock": 7,
+      "image": "/assets/products/dress-wrap-coral.svg",
+      "garmentImage": "/assets/garments/dress-wrap-coral.png"
+    },
+    {
+      "id": "dress-wrap-cobalt",
+      "sku": "HH-WRAP-COB",
+      "category": "dress",
+      "productLine": "Hem Wrap Dress",
+      "style": "wrap",
+      "shadeName": "Cobalt",
+      "shadeCode": "Cobalt",
+      "hex": "#2350A6",
+      "temperature": "cool",
+      "lab": {
+        "L": 35.7,
+        "a": 16.7,
+        "b": -50.7
+      },
+      "price": 68,
+      "stock": 11,
+      "image": "/assets/products/dress-wrap-cobalt.svg",
+      "garmentImage": "/assets/garments/dress-wrap-cobalt.png"
+    },
+    {
+      "id": "dress-wrap-emerald",
+      "sku": "HH-WRAP-EME",
+      "category": "dress",
+      "productLine": "Hem Wrap Dress",
+      "style": "wrap",
+      "shadeName": "Emerald",
+      "shadeCode": "Emerald",
+      "hex": "#137A5B",
+      "temperature": "cool",
+      "lab": {
+        "L": 45.4,
+        "a": -35.7,
+        "b": 9.2
+      },
+      "price": 68,
+      "stock": 6,
+      "image": "/assets/products/dress-wrap-emerald.svg",
+      "garmentImage": "/assets/garments/dress-wrap-emerald.png"
+    },
+    {
+      "id": "dress-wrap-blush",
+      "sku": "HH-WRAP-BLU",
+      "category": "dress",
+      "productLine": "Hem Wrap Dress",
+      "style": "wrap",
+      "shadeName": "Blush",
+      "shadeCode": "Blush",
+      "hex": "#E7BCB2",
+      "temperature": "warm",
+      "lab": {
+        "L": 79.7,
+        "a": 13.9,
+        "b": 10.9
+      },
+      "price": 68,
+      "stock": 10,
+      "image": "/assets/products/dress-wrap-blush.svg",
+      "garmentImage": "/assets/garments/dress-wrap-blush.png"
+    },
+    {
+      "id": "dress-wrap-camel",
+      "sku": "HH-WRAP-CAM",
+      "category": "dress",
+      "productLine": "Hem Wrap Dress",
+      "style": "wrap",
+      "shadeName": "Camel",
+      "shadeCode": "Camel",
+      "hex": "#BF9468",
+      "temperature": "warm",
+      "lab": {
+        "L": 64.4,
+        "a": 10.5,
+        "b": 29.4
+      },
+      "price": 68,
+      "stock": 8,
+      "image": "/assets/products/dress-wrap-camel.svg",
+      "garmentImage": "/assets/garments/dress-wrap-camel.png"
+    },
+    {
+      "id": "dress-wrap-plum",
+      "sku": "HH-WRAP-PLU",
+      "category": "dress",
+      "productLine": "Hem Wrap Dress",
+      "style": "wrap",
+      "shadeName": "Plum",
+      "shadeCode": "Plum",
+      "hex": "#5E2D50",
+      "temperature": "neutral",
+      "lab": {
+        "L": 26.3,
+        "a": 27.4,
+        "b": -11.4
+      },
+      "price": 68,
+      "stock": 5,
+      "image": "/assets/products/dress-wrap-plum.svg",
+      "garmentImage": "/assets/garments/dress-wrap-plum.png"
+    },
+    {
+      "id": "dress-wrap-ivory",
+      "sku": "HH-WRAP-IVO",
+      "category": "dress",
+      "productLine": "Hem Wrap Dress",
+      "style": "wrap",
+      "shadeName": "Ivory",
+      "shadeCode": "Ivory",
+      "hex": "#EFE8D8",
+      "temperature": "neutral",
+      "lab": {
+        "L": 92.1,
+        "a": -0.3,
+        "b": 8.6
+      },
+      "price": 68,
+      "stock": 12,
+      "image": "/assets/products/dress-wrap-ivory.svg",
+      "garmentImage": "/assets/garments/dress-wrap-ivory.png"
+    },
+    {
+      "id": "dress-wrap-black",
+      "sku": "HH-WRAP-BLA",
+      "category": "dress",
+      "productLine": "Hem Wrap Dress",
+      "style": "wrap",
+      "shadeName": "Black",
+      "shadeCode": "Black",
+      "hex": "#1E1E22",
+      "temperature": "neutral",
+      "lab": {
+        "L": 11.4,
+        "a": 1,
+        "b": -2.7
+      },
+      "price": 68,
+      "stock": 0,
+      "image": "/assets/products/dress-wrap-black.svg",
+      "garmentImage": "/assets/garments/dress-wrap-black.png"
+    },
+    {
+      "id": "dress-slip-sage",
+      "sku": "HH-SLIP-SAG",
+      "category": "dress",
+      "productLine": "Hem Slip Dress",
+      "style": "slip",
+      "shadeName": "Sage",
+      "shadeCode": "Sage",
+      "hex": "#8FA58A",
+      "temperature": "neutral",
+      "lab": {
+        "L": 65.4,
+        "a": -12.9,
+        "b": 11.5
+      },
+      "price": 62,
+      "stock": 6,
+      "image": "/assets/products/dress-slip-sage.svg",
+      "garmentImage": "/assets/garments/dress-slip-sage.png"
+    },
+    {
+      "id": "dress-slip-navy",
+      "sku": "HH-SLIP-NAV",
+      "category": "dress",
+      "productLine": "Hem Slip Dress",
+      "style": "slip",
+      "shadeName": "Navy",
+      "shadeCode": "Navy",
+      "hex": "#1F2D4D",
+      "temperature": "cool",
+      "lab": {
+        "L": 18.8,
+        "a": 5.1,
+        "b": -21.6
+      },
+      "price": 62,
+      "stock": 9,
+      "image": "/assets/products/dress-slip-navy.svg",
+      "garmentImage": "/assets/garments/dress-slip-navy.png"
+    },
+    {
+      "id": "dress-slip-rust",
+      "sku": "HH-SLIP-RUS",
+      "category": "dress",
+      "productLine": "Hem Slip Dress",
+      "style": "slip",
+      "shadeName": "Rust",
+      "shadeCode": "Rust",
+      "hex": "#A4492C",
+      "temperature": "warm",
+      "lab": {
+        "L": 42.5,
+        "a": 35.7,
+        "b": 34.9
+      },
+      "price": 62,
+      "stock": 4,
+      "image": "/assets/products/dress-slip-rust.svg",
+      "garmentImage": "/assets/garments/dress-slip-rust.png"
+    }
+  ],
+  "orders": [
+    {
+      "id": "HH-10421",
+      "placedOn": "2026-10-24",
+      "deliveredOn": "2026-10-27",
+      "customer": {
+        "firstName": "Alex"
+      },
+      "lines": [
+        {
+          "lineId": "HH-10421-1",
+          "productId": "lip-l01",
+          "qty": 1,
+          "price": 22
+        }
+      ]
+    },
+    {
+      "id": "HH-10388",
+      "placedOn": "2026-10-20",
+      "deliveredOn": "2026-10-23",
+      "customer": {
+        "firstName": "Alex"
+      },
+      "lines": [
+        {
+          "lineId": "HH-10388-1",
+          "productId": "fdn-3w",
+          "qty": 1,
+          "price": 36
+        }
+      ]
+    },
+    {
+      "id": "HH-10307",
+      "placedOn": "2026-10-17",
+      "deliveredOn": "2026-10-21",
+      "customer": {
+        "firstName": "Alex"
+      },
+      "lines": [
+        {
+          "lineId": "HH-10307-1",
+          "productId": "dress-wrap-camel",
+          "qty": 1,
+          "price": 68
+        }
+      ]
+    }
+  ]
+}

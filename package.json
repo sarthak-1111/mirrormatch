@@ -1,0 +1,26 @@
+{
+  "name": "secondtry",
+  "version": "1.0.0",
+  "description": "SecondTry: the returns desk that gets it right the second time. Skin-tone matching and virtual try-on at the moment of return, powered by YouCam APIs.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Sarthak",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "mock": "node server/index.js --mock",
+    "test": "node --test test/",
+    "test:e2e": "playwright test",
+    "verify-api": "node scripts/verify-api.mjs",
+    "secret-scan": "node scripts/secret-scan.mjs"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
+  }
+}
